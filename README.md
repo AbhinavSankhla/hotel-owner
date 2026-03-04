@@ -6,6 +6,52 @@ A full-stack, production-grade hotel reservation system built as a multi-tenant 
 
 ---
 
+## 🚀 Quick Start (Local Development)
+
+### Prerequisites
+1. **Node.js 20+** - [Download here](https://nodejs.org/)
+2. **Docker Desktop** - [Download here](https://www.docker.com/products/docker-desktop/)
+
+### Automated Setup (Recommended)
+```powershell
+# Run the setup script (installs dependencies, starts services, seeds database)
+.\setup.ps1
+
+# Start both servers (opens in new windows)
+.\start.ps1
+```
+
+### Manual Setup
+```powershell
+# 1. Install dependencies
+npm install
+
+# 2. Start database & cache
+docker compose up postgres redis -d
+
+# 3. Setup database
+cd apps/api
+npx prisma generate
+npx prisma db push
+npx prisma db seed
+cd ../..
+
+# 4. Start servers (in separate terminals)
+npm run dev:api   # → http://localhost:4000
+npm run dev:web   # → http://localhost:3000
+```
+
+**Access URLs:**
+- Web: http://localhost:3000
+- GraphQL: http://localhost:4000/graphql
+- Swagger: http://localhost:4000/api/docs
+
+**Login:** `admin@bluestay.in` / `password123`
+
+> **Detailed setup guide:** See [SETUP.md](SETUP.md) for troubleshooting and more options.
+
+---
+
 ## Architecture
 
 ```
