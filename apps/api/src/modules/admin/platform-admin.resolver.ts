@@ -404,7 +404,7 @@ class PlatformApiKeyEntry {
   @Field(() => [String])
   allowedOrigins: string[];
 
-  @Field({ nullable: true })
+  @Field(() => Date, { nullable: true })
   lastUsedAt: Date | null;
 
   @Field(() => Int)
@@ -413,7 +413,7 @@ class PlatformApiKeyEntry {
   @Field()
   isActive: boolean;
 
-  @Field({ nullable: true })
+  @Field(() => Date, { nullable: true })
   expiresAt: Date | null;
 
   @Field()

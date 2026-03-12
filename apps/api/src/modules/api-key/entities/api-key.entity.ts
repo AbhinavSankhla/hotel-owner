@@ -31,7 +31,7 @@ export class ApiKeyType {
   @Field(() => [String])
   allowedOrigins: string[];
 
-  @Field({ nullable: true })
+  @Field(() => Date, { nullable: true })
   lastUsedAt: Date | null;
 
   @Field(() => Int)
@@ -40,7 +40,7 @@ export class ApiKeyType {
   @Field()
   isActive: boolean;
 
-  @Field({ nullable: true })
+  @Field(() => Date, { nullable: true })
   expiresAt: Date | null;
 
   @Field()

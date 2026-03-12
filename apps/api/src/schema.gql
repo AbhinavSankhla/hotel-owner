@@ -24,6 +24,40 @@ type AdminDashboardStats {
   totalRooms: Int!
 }
 
+type ApiKeyDeleteResult {
+  message: String!
+  success: Boolean!
+}
+
+"""Permissions that can be assigned to an API key"""
+enum ApiKeyPermission {
+  CREATE_BOOKING
+  MANAGE_BOOKINGS
+  MANAGE_INVENTORY
+  MANAGE_ROOMS
+  READ_AVAILABILITY
+  READ_BOOKINGS
+  READ_HOTEL
+  READ_REVIEWS
+  READ_ROOMS
+}
+
+type ApiKeyType {
+  allowedOrigins: [String!]!
+  createdAt: DateTime!
+  expiresAt: DateTime
+  hotelId: String!
+  id: ID!
+  isActive: Boolean!
+  keyPrefix: String!
+  lastUsedAt: DateTime
+  name: String!
+  permissions: [ApiKeyPermission!]!
+  rateLimitPerMinute: Int!
+  requestCount: Int!
+  updatedAt: DateTime!
+}
+
 input ApplyPriceSuggestionsInput {
   roomTypeId: String!
   suggestions: [PriceApplyItem!]!
@@ -360,6 +394,15 @@ type ConfirmPaymentResult {
   success: Boolean!
 }
 
+input CreateApiKeyInput {
+  allowedOrigins: [String!]
+  expiresAt: DateTime
+  hotelId: String!
+  name: String!
+  permissions: [ApiKeyPermission!]
+  rateLimitPerMinute: Int
+}
+
 """Create a new blog post"""
 input CreateBlogPostInput {
   category: String
@@ -460,6 +503,13 @@ type DeactivateResponse {
 type DeleteResult {
   message: String!
   success: Boolean!
+}
+
+type GeneratedApiKey {
+  apiKey: ApiKeyType!
+
+  """The full API key — shown only once, store it securely"""
+  plainTextKey: String!
 }
 
 type GuestAnalytics {
@@ -733,6 +783,9 @@ type Mutation {
   """Deactivate current user's account"""
   deactivateMyAccount: DeactivateResponse!
 
+  """Permanently delete an API key"""
+  deleteApiKey(keyId: ID!): ApiKeyDeleteResult!
+
   """Delete a blog post permanently"""
   deleteBlogPost(id: ID!): Boolean!
 
@@ -747,6 +800,11 @@ type Mutation {
 
   """Mark a commission as disputed"""
   disputeCommission(commissionId: ID!, reason: String!): CommissionRecord!
+
+  """
+  Generate a new API key for a hotel. Returns the full key once — store it securely.
+  """
+  generateApiKey(input: CreateApiKeyInput!): GeneratedApiKey!
 
   """Login or register with Google ID token"""
   googleLogin(idToken: String!): AuthResponse!
@@ -778,11 +836,17 @@ type Mutation {
   """Bulk settle multiple commissions"""
   platformBulkSettleCommissions(commissionIds: [ID!]!): BulkSettleResult!
 
+  """Permanently delete an API key"""
+  platformDeleteApiKey(keyId: ID!): PlatformDeleteResult!
+
   """Delete a review"""
   platformDeleteReview(reviewId: ID!): PlatformDeleteResult!
 
   """Mark a commission as settled"""
   platformSettleCommission(commissionId: ID!): CommissionEntry!
+
+  """Enable or disable an API key"""
+  platformToggleApiKey(isActive: Boolean!, keyId: ID!): PlatformApiKeyEntry!
 
   """Activate or deactivate a hotel"""
   platformToggleHotelActive(hotelId: ID!, isActive: Boolean!): Hotel!
@@ -829,11 +893,20 @@ type Mutation {
   """Resolve a disputed commission"""
   resolveDispute(commissionId: ID!, resolution: String!): CommissionRecord!
 
+  """Deactivate an API key (reversible)"""
+  revokeApiKey(keyId: ID!): ApiKeyDeleteResult!
+
+  """Revoke an existing key and generate a new one with the same settings"""
+  rotateApiKey(keyId: ID!): GeneratedApiKey!
+
   """Set a domain as the primary domain for the hotel"""
   setPrimaryDomain(domainId: ID!, hotelId: ID!): HotelDomain!
 
   """Settle pending commissions for a hotel"""
   settleCommissions(commissionIds: [ID!], hotelId: ID!): SettleResult!
+
+  """Update an API key's name, permissions, rate limit, or allowed origins"""
+  updateApiKey(input: UpdateApiKeyInput!): ApiKeyType!
 
   """Update a blog post"""
   updateBlogPost(input: UpdateBlogPostInput!): BlogPost!
@@ -1030,6 +1103,44 @@ type PlatformAnalytics {
   monthlyRevenue: [PlatformMonthlyData!]!
   sourceDistribution: [SourceDistribution!]!
   topHotels: [TopHotelData!]!
+}
+
+type PlatformApiKeyEntry {
+  allowedOrigins: [String!]!
+  createdAt: DateTime!
+  expiresAt: DateTime
+  hotel: PlatformApiKeyHotelInfo!
+  hotelId: String!
+  id: ID!
+  isActive: Boolean!
+  keyPrefix: String!
+  lastUsedAt: DateTime
+  name: String!
+  permissions: [ApiKeyPermission!]!
+  rateLimitPerMinute: Int!
+  requestCount: Int!
+  updatedAt: DateTime!
+}
+
+type PlatformApiKeyHotelInfo {
+  name: String!
+  slug: String!
+}
+
+input PlatformApiKeysFilter {
+  hotelId: String
+  isActive: Boolean
+  limit: Int
+  page: Int
+  search: String
+}
+
+type PlatformApiKeysList {
+  hasMore: Boolean!
+  keys: [PlatformApiKeyEntry!]!
+  limit: Int!
+  page: Int!
+  total: Int!
 }
 
 type PlatformCommissionSummary {
@@ -1283,6 +1394,9 @@ type Query {
   """Get current logged in user"""
   me: User!
 
+  """List all API keys for the authenticated hotel"""
+  myApiKeys(hotelId: ID!): [ApiKeyType!]!
+
   """Get current user's bookings"""
   myBookings(limit: Int = 10, offset: Int = 0): [Booking!]!
 
@@ -1306,6 +1420,9 @@ type Query {
 
   """Get platform-wide analytics"""
   platformAnalytics(months: Int = 6): PlatformAnalytics!
+
+  """List all API keys across all hotels"""
+  platformApiKeys(filters: PlatformApiKeysFilter): PlatformApiKeysList!
 
   """Get platform-wide commission summary"""
   platformCommissionSummary: PlatformCommissionSummary!
@@ -1620,6 +1737,16 @@ type TopRoomType {
 type TypeBreakdown {
   count: Int!
   type: String!
+}
+
+input UpdateApiKeyInput {
+  allowedOrigins: [String!]
+  expiresAt: DateTime
+  id: String!
+  isActive: Boolean
+  name: String
+  permissions: [ApiKeyPermission!]
+  rateLimitPerMinute: Int
 }
 
 """Update a blog post"""
