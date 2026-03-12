@@ -535,14 +535,6 @@ type HotelDomain {
   sslStatus: String!
 }
 
-"""Hotel website template style"""
-enum HotelTemplate {
-  STARTER
-  MODERN_MINIMAL
-  LUXURY_RESORT
-  HERITAGE_BOUTIQUE
-}
-
 input HotelFiltersInput {
   amenities: [String!]
   checkInDate: DateTime

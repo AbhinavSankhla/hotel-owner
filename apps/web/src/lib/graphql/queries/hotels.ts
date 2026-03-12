@@ -39,6 +39,7 @@ export const HOTEL_DETAIL_FRAGMENT = gql`
     hourlyMinHours
     hourlyMaxHours
     themeConfig
+    template
   }
   ${HOTEL_CARD_FRAGMENT}
 `;

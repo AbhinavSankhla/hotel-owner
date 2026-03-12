@@ -203,58 +203,121 @@ export default function AdminBrandingPage() {
         </CardHeader>
         <CardContent>
           <div className="rounded-lg overflow-hidden border border-gray-200">
-            {/* Preview Header */}
-            <div
-              className="px-6 py-4 flex items-center justify-between"
-              style={{
-                backgroundColor: theme.headerStyle === 'dark' ? theme.primaryColor : 
-                                 theme.headerStyle === 'light' ? '#ffffff' : 'transparent',
-                background: theme.headerStyle === 'transparent' 
-                  ? `linear-gradient(135deg, ${theme.primaryColor}, ${theme.secondaryColor})`
-                  : undefined,
-              }}
-            >
-              <span
-                className="font-bold text-lg"
-                style={{
-                  color: theme.headerStyle === 'light' ? theme.primaryColor : '#ffffff',
-                  fontFamily: theme.fontFamily,
-                }}
-              >
-                {hotelData?.hotel?.name || 'Your Hotel'}
-              </span>
-              <div className="flex gap-4 text-sm" style={{ color: theme.headerStyle === 'light' ? '#6b7280' : '#ffffffcc' }}>
-                <span>Rooms</span>
-                <span>Gallery</span>
-                <span>Contact</span>
-              </div>
-            </div>
-            {/* Preview Hero */}
-            <div
-              className="px-6 py-12 text-center"
-              style={{
-                background: `linear-gradient(135deg, ${theme.primaryColor}ee, ${theme.secondaryColor}ee)`,
-              }}
-            >
-              <h2
-                className="text-2xl font-bold text-white mb-2"
-                style={{ fontFamily: theme.fontFamily }}
-              >
-                Welcome to {hotelData?.hotel?.name || 'Your Hotel'}
-              </h2>
-              <p className="text-white/80 mb-4" style={{ fontFamily: theme.fontFamily }}>
-                Your perfect stay awaits
-              </p>
-              <button
-                className="px-6 py-2 rounded-lg font-medium text-sm"
-                style={{
-                  backgroundColor: theme.accentColor,
-                  color: '#ffffff',
-                }}
-              >
-                Book Now
-              </button>
-            </div>
+            {selectedTemplate === 'MODERN_MINIMAL' ? (
+              /* Modern Minimal — clean split layout with dark nav */
+              <>
+                <div className="px-6 py-3 bg-white flex items-center justify-between border-b border-gray-100">
+                  <span className="text-sm font-light tracking-widest uppercase text-gray-900" style={{ fontFamily: 'Inter' }}>
+                    {hotelData?.hotel?.name || 'Your Hotel'}
+                  </span>
+                  <div className="flex gap-5 text-xs tracking-wide text-gray-500 uppercase">
+                    <span>Rooms</span><span>Experience</span><span>Contact</span>
+                  </div>
+                </div>
+                <div className="flex">
+                  <div className="w-1/2 bg-gray-100 py-10 px-6 flex flex-col justify-center">
+                    <p className="text-xs uppercase tracking-widest text-gray-400 mb-2">Welcome to</p>
+                    <h2 className="text-xl font-light text-gray-900 mb-3" style={{ fontFamily: 'Inter' }}>
+                      {hotelData?.hotel?.name || 'Your Hotel'}
+                    </h2>
+                    <button className="self-start px-5 py-2 bg-gray-900 text-white text-xs uppercase tracking-wider rounded-none hover:bg-gray-800">
+                      Book Now
+                    </button>
+                  </div>
+                  <div className="w-1/2 bg-gradient-to-br from-gray-300 to-gray-400 py-16 flex items-center justify-center">
+                    <span className="text-gray-500 text-xs">Hero Image</span>
+                  </div>
+                </div>
+              </>
+            ) : selectedTemplate === 'LUXURY_RESORT' ? (
+              /* Luxury Resort — cinematic dark full-width */
+              <>
+                <div className="px-6 py-3 bg-stone-900 flex items-center justify-between">
+                  <span className="text-sm font-semibold text-amber-200 tracking-wide" style={{ fontFamily: 'Playfair Display, serif' }}>
+                    {hotelData?.hotel?.name || 'Your Hotel'}
+                  </span>
+                  <div className="flex gap-5 text-xs tracking-wide text-stone-400">
+                    <span>Suites</span><span>Dining</span><span>Spa</span>
+                  </div>
+                </div>
+                <div
+                  className="px-6 py-14 text-center"
+                  style={{ background: 'linear-gradient(135deg, #1c1917ee, #78350fee)' }}
+                >
+                  <p className="text-xs uppercase tracking-[0.3em] text-amber-300/70 mb-3">An Exquisite Escape</p>
+                  <h2 className="text-2xl font-bold text-white mb-3" style={{ fontFamily: 'Playfair Display, serif' }}>
+                    {hotelData?.hotel?.name || 'Your Hotel'}
+                  </h2>
+                  <button className="px-6 py-2 border border-amber-400 text-amber-200 text-xs uppercase tracking-widest hover:bg-amber-400/10">
+                    Reserve Your Suite
+                  </button>
+                </div>
+              </>
+            ) : selectedTemplate === 'HERITAGE_BOUTIQUE' ? (
+              /* Heritage Boutique — warm sepia tones with ornamental style */
+              <>
+                <div className="px-6 py-3 flex items-center justify-between" style={{ backgroundColor: '#f5f0e8' }}>
+                  <span className="text-sm font-semibold text-amber-900" style={{ fontFamily: 'Lora, serif' }}>
+                    ◇ {hotelData?.hotel?.name || 'Your Hotel'} ◇
+                  </span>
+                  <div className="flex gap-5 text-xs text-amber-800/70">
+                    <span>Heritage</span><span>Rooms</span><span>Stories</span>
+                  </div>
+                </div>
+                <div
+                  className="px-6 py-14 text-center"
+                  style={{ background: 'linear-gradient(135deg, #92400eee, #78716cee)' }}
+                >
+                  <div className="text-amber-200/50 text-xs mb-2">◈ ◇ ◈</div>
+                  <p className="text-xs uppercase tracking-[0.2em] text-amber-200/70 mb-2">Est. Since 1920</p>
+                  <h2 className="text-2xl font-bold text-white mb-3" style={{ fontFamily: 'Playfair Display, serif' }}>
+                    {hotelData?.hotel?.name || 'Your Hotel'}
+                  </h2>
+                  <button className="px-6 py-2 bg-amber-800 text-amber-100 text-xs uppercase tracking-wider rounded-sm hover:bg-amber-700">
+                    Explore Our Heritage
+                  </button>
+                </div>
+              </>
+            ) : (
+              /* STARTER — default BlueStay classic layout */
+              <>
+                <div
+                  className="px-6 py-4 flex items-center justify-between"
+                  style={{
+                    backgroundColor: theme.headerStyle === 'dark' ? theme.primaryColor :
+                                     theme.headerStyle === 'light' ? '#ffffff' : 'transparent',
+                    background: theme.headerStyle === 'transparent'
+                      ? `linear-gradient(135deg, ${theme.primaryColor}, ${theme.secondaryColor})`
+                      : undefined,
+                  }}
+                >
+                  <span
+                    className="font-bold text-lg"
+                    style={{
+                      color: theme.headerStyle === 'light' ? theme.primaryColor : '#ffffff',
+                      fontFamily: theme.fontFamily,
+                    }}
+                  >
+                    {hotelData?.hotel?.name || 'Your Hotel'}
+                  </span>
+                  <div className="flex gap-4 text-sm" style={{ color: theme.headerStyle === 'light' ? '#6b7280' : '#ffffffcc' }}>
+                    <span>Rooms</span><span>Gallery</span><span>Contact</span>
+                  </div>
+                </div>
+                <div
+                  className="px-6 py-12 text-center"
+                  style={{ background: `linear-gradient(135deg, ${theme.primaryColor}ee, ${theme.secondaryColor}ee)` }}
+                >
+                  <h2 className="text-2xl font-bold text-white mb-2" style={{ fontFamily: theme.fontFamily }}>
+                    Welcome to {hotelData?.hotel?.name || 'Your Hotel'}
+                  </h2>
+                  <p className="text-white/80 mb-4" style={{ fontFamily: theme.fontFamily }}>Your perfect stay awaits</p>
+                  <button className="px-6 py-2 rounded-lg font-medium text-sm" style={{ backgroundColor: theme.accentColor, color: '#ffffff' }}>
+                    Book Now
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </CardContent>
       </Card>

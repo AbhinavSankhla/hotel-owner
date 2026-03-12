@@ -1,79 +1,127 @@
 import { InputType, Field, Float, Int, ID } from '@nestjs/graphql';
 import { GraphQLJSON } from 'graphql-scalars';
+import { IsNotEmpty, IsOptional, IsString, IsNumber, IsEnum, IsEmail } from 'class-validator';
 import { BookingModel, HotelTemplate } from '../../hotel/entities/hotel.entity';
 
 @InputType()
 export class UpdateHotelInput {
   @Field(() => ID)
+  @IsNotEmpty()
+  @IsString()
   hotelId: string;
 
   @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
   name?: string;
 
   @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
   description?: string;
 
   @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
   address?: string;
 
   @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
   city?: string;
 
   @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
   state?: string;
 
   @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
   pincode?: string;
 
   @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
   phone?: string;
 
   @Field({ nullable: true })
+  @IsOptional()
+  @IsEmail()
   email?: string;
 
   @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
   whatsapp?: string;
 
   @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
   heroImageUrl?: string;
 
   @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
   logoUrl?: string;
 
   @Field(() => Int, { nullable: true })
+  @IsOptional()
+  @IsNumber()
   starRating?: number;
 
   @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
   checkInTime?: string;
 
   @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
   checkOutTime?: string;
 
   @Field(() => Float, { nullable: true })
+  @IsOptional()
+  @IsNumber()
   latitude?: number;
 
   @Field(() => Float, { nullable: true })
+  @IsOptional()
+  @IsNumber()
   longitude?: number;
 
   @Field(() => GraphQLJSON, { nullable: true })
+  @IsOptional()
   themeConfig?: Record<string, unknown>;
 
   @Field(() => BookingModel, { nullable: true })
+  @IsOptional()
+  @IsEnum(BookingModel)
   bookingModel?: BookingModel;
 
   @Field(() => Int, { nullable: true })
+  @IsOptional()
+  @IsNumber()
   hourlyMinHours?: number;
 
   @Field(() => Int, { nullable: true })
+  @IsOptional()
+  @IsNumber()
   hourlyMaxHours?: number;
 
   @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
   razorpayAccountId?: string;
 
   @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
   stripeAccountId?: string;
 
   @Field(() => HotelTemplate, { nullable: true })
+  @IsOptional()
+  @IsEnum(HotelTemplate)
   template?: HotelTemplate;
 }
 
