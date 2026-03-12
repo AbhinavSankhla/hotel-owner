@@ -10,7 +10,6 @@ export const TENANT_HOTEL_FRAGMENT = gql`
     id
     name
     slug
-    tagline
     description
     address
     city
@@ -19,7 +18,6 @@ export const TENANT_HOTEL_FRAGMENT = gql`
     phone
     email
     whatsapp
-    website
     latitude
     longitude
     starRating
@@ -27,19 +25,15 @@ export const TENANT_HOTEL_FRAGMENT = gql`
     reviewCount
     heroImageUrl
     logoUrl
-    galleryImages
     startingPrice
-    startingHourlyPrice
     bookingModel
     checkInTime
     checkOutTime
     hourlyMinHours
     hourlyMaxHours
-    amenities
-    policies
     themeConfig
+    template
     isFeatured
-    isVerified
   }
 `;
 
@@ -107,7 +101,6 @@ export const GET_TENANT_ROOM_TYPES = gql`
       amenities
       images
       isActive
-      availableRooms
     }
   }
 `;

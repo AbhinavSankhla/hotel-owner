@@ -7,6 +7,7 @@
 
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@apollo/client/react';
+import { gql } from '@apollo/client';
 import { useAuth } from '@/lib/auth/auth-context';
 import { GET_HOTEL_BY_ID } from '@/lib/graphql/queries/hotels';
 import { UPDATE_HOTEL } from '@/lib/graphql/queries/admin';
@@ -23,6 +24,10 @@ import {
   Clock,
   Image as ImageIcon,
   CalendarDays,
+  Globe,
+  Trash2,
+  Plus,
+  Star as StarIcon,
 } from 'lucide-react';
 
 interface HotelData {
@@ -47,6 +52,47 @@ interface HotelData {
   latitude?: number;
   longitude?: number;
 }
+
+const GET_HOTEL_DOMAINS = gql`
+  query GetHotelDomains($hotelId: ID!) {
+    hotelDomains(hotelId: $hotelId) {
+      id
+      domain
+      isPrimary
+      sslStatus
+    }
+  }
+`;
+
+const ADD_HOTEL_DOMAIN = gql`
+  mutation AddHotelDomain($hotelId: ID!, $domain: String!) {
+    addHotelDomain(hotelId: $hotelId, domain: $domain) {
+      id
+      domain
+      isPrimary
+      sslStatus
+    }
+  }
+`;
+
+const REMOVE_HOTEL_DOMAIN = gql`
+  mutation RemoveHotelDomain($hotelId: ID!, $domainId: ID!) {
+    removeHotelDomain(hotelId: $hotelId, domainId: $domainId) {
+      success
+      message
+    }
+  }
+`;
+
+const SET_PRIMARY_DOMAIN = gql`
+  mutation SetPrimaryDomain($hotelId: ID!, $domainId: ID!) {
+    setPrimaryDomain(hotelId: $hotelId, domainId: $domainId) {
+      id
+      domain
+      isPrimary
+    }
+  }
+`;
 
 export default function AdminSettingsPage() {
   const { user } = useAuth();
@@ -486,6 +532,169 @@ export default function AdminSettingsPage() {
           </Button>
         </div>
       </form>
+
+      {/* Domain Management Section */}
+      <DomainManagement hotelId={hotelId} />
     </div>
+  );
+}
+
+// ============================================
+// Domain Management Component
+// ============================================
+
+function DomainManagement({ hotelId }: { hotelId: string }) {
+  const [newDomain, setNewDomain] = useState('');
+  const [domainError, setDomainError] = useState('');
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, loading, refetch } = useQuery<any>(GET_HOTEL_DOMAINS, {
+    variables: { hotelId },
+  });
+
+  const [addDomain, { loading: adding }] = useMutation(ADD_HOTEL_DOMAIN, {
+    onCompleted: () => {
+      setNewDomain('');
+      setDomainError('');
+      refetch();
+    },
+    onError: (err) => setDomainError(err.message),
+  });
+
+  const [removeDomain] = useMutation(REMOVE_HOTEL_DOMAIN, {
+    onCompleted: () => refetch(),
+  });
+
+  const [setPrimary] = useMutation(SET_PRIMARY_DOMAIN, {
+    onCompleted: () => refetch(),
+  });
+
+  const handleAddDomain = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const domain = newDomain.trim().toLowerCase();
+    if (!domain) return;
+    if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/.test(domain)) {
+      setDomainError('Please enter a valid domain (e.g., myhotel.com)');
+      return;
+    }
+    setDomainError('');
+    await addDomain({ variables: { hotelId, domain } });
+  };
+
+  const domains = data?.hotelDomains || [];
+
+  return (
+    <Card className="border-0 shadow-sm">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-base flex items-center gap-2">
+          <Globe className="w-4 h-4 text-brand-600" />
+          Custom Domains
+        </CardTitle>
+        <p className="text-sm text-gray-500 mt-1">
+          Add custom domains for your hotel&apos;s white-label website. Point your domain&apos;s DNS to our server.
+        </p>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {loading ? (
+          <div className="flex items-center gap-2 text-gray-400 text-sm">
+            <Loader2 className="w-4 h-4 animate-spin" /> Loading domains...
+          </div>
+        ) : domains.length === 0 ? (
+          <p className="text-sm text-gray-400">No custom domains configured yet.</p>
+        ) : (
+          <div className="space-y-2">
+            {domains.map((d: { id: string; domain: string; isPrimary: boolean; sslStatus: string }) => (
+              <div key={d.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <Globe className="w-4 h-4 text-gray-400" />
+                  <span className="text-sm font-medium text-gray-900">{d.domain}</span>
+                  {d.isPrimary && (
+                    <span className="text-xs bg-brand-100 text-brand-700 px-2 py-0.5 rounded-full font-medium">
+                      Primary
+                    </span>
+                  )}
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${
+                    d.sslStatus === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                  }`}>
+                    SSL: {d.sslStatus}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {!d.isPrimary && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setPrimary({ variables: { hotelId, domainId: d.id } })}
+                      className="text-xs"
+                    >
+                      <StarIcon className="w-3 h-3 mr-1" /> Set Primary
+                    </Button>
+                  )}
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      if (confirm(`Remove domain "${d.domain}"?`)) {
+                        removeDomain({ variables: { hotelId, domainId: d.id } });
+                      }
+                    }}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Add domain form */}
+        <form onSubmit={handleAddDomain} className="flex gap-2 pt-2">
+          <input
+            type="text"
+            value={newDomain}
+            onChange={(e) => { setNewDomain(e.target.value); setDomainError(''); }}
+            placeholder="myhotel.com"
+            className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500"
+          />
+          <Button type="submit" disabled={adding || !newDomain.trim()} size="sm">
+            {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4 mr-1" />}
+            Add Domain
+          </Button>
+        </form>
+        {domainError && (
+          <p className="text-sm text-red-600 flex items-center gap-1">
+            <AlertCircle className="w-3 h-3" /> {domainError}
+          </p>
+        )}
+
+        {/* DNS Instructions */}
+        <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-100">
+          <h4 className="text-sm font-medium text-blue-900 mb-2">DNS Configuration</h4>
+          <p className="text-xs text-blue-700 mb-2">
+            To connect your custom domain, add these DNS records at your domain registrar:
+          </p>
+          <div className="bg-white rounded border border-blue-200 p-3 font-mono text-xs space-y-1">
+            <div className="flex gap-4">
+              <span className="text-blue-500 w-12">Type</span>
+              <span className="text-blue-500 w-20">Name</span>
+              <span className="text-blue-500">Value</span>
+            </div>
+            <div className="flex gap-4">
+              <span className="text-gray-700 w-12">A</span>
+              <span className="text-gray-700 w-20">@</span>
+              <span className="text-gray-900">&lt;server-ip&gt;</span>
+            </div>
+            <div className="flex gap-4">
+              <span className="text-gray-700 w-12">CNAME</span>
+              <span className="text-gray-700 w-20">www</span>
+              <span className="text-gray-900">bluestay.in</span>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

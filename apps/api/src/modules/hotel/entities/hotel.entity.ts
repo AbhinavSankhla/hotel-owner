@@ -15,6 +15,13 @@ export enum CommissionType {
   FLAT = 'FLAT',
 }
 
+export enum HotelTemplate {
+  STARTER = 'STARTER',
+  MODERN_MINIMAL = 'MODERN_MINIMAL',
+  LUXURY_RESORT = 'LUXURY_RESORT',
+  HERITAGE_BOUTIQUE = 'HERITAGE_BOUTIQUE',
+}
+
 registerEnumType(BookingModel, {
   name: 'BookingModel',
   description: 'Booking model type',
@@ -23,6 +30,11 @@ registerEnumType(BookingModel, {
 registerEnumType(CommissionType, {
   name: 'CommissionType',
   description: 'Commission calculation type',
+});
+
+registerEnumType(HotelTemplate, {
+  name: 'HotelTemplate',
+  description: 'Hotel website template style',
 });
 
 @ObjectType({ description: 'Hotel entity' })
@@ -111,6 +123,9 @@ export class Hotel {
   // Theme
   @Field(() => GraphQLJSON, { nullable: true })
   themeConfig?: Record<string, unknown>;
+
+  @Field(() => HotelTemplate)
+  template: HotelTemplate;
 
   // Status
   @Field()

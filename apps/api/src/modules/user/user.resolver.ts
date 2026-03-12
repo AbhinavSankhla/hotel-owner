@@ -96,4 +96,18 @@ export class UserResolver {
   ) {
     return this.userService.deactivateAccount(user.id);
   }
+
+  /**
+   * GDPR hard delete - permanently anonymizes all personal data
+   */
+  @UseGuards(GqlAuthGuard)
+  @Mutation(() => DeactivateResponse, {
+    name: 'deleteMyAccount',
+    description: 'Permanently delete account and anonymize all personal data (GDPR)',
+  })
+  async deleteMyAccount(
+    @GqlCurrentUser() user: User,
+  ) {
+    return this.userService.deleteAccount(user.id);
+  }
 }

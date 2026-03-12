@@ -214,4 +214,44 @@ export class ReviewService {
       },
     });
   }
+
+  /**
+   * Approve a review (hotel admin publishes it)
+   */
+  async approveReview(hotelId: string, reviewId: string) {
+    const review = await this.prisma.review.findUnique({ where: { id: reviewId } });
+    if (!review) throw new NotFoundException('Review not found');
+    if (review.hotelId !== hotelId) throw new ForbiddenException('Not your hotel review');
+
+    const updated = await this.prisma.review.update({
+      where: { id: reviewId },
+      data: { isPublished: true },
+      include: { guest: { select: { name: true, avatarUrl: true } } },
+    });
+
+    await this.redis.delPattern(`reviews:hotel:${hotelId}:*`);
+    await this.redis.del(`reviews:stats:${hotelId}`);
+
+    return updated;
+  }
+
+  /**
+   * Reject / unpublish a review with optional reason
+   */
+  async rejectReview(hotelId: string, reviewId: string) {
+    const review = await this.prisma.review.findUnique({ where: { id: reviewId } });
+    if (!review) throw new NotFoundException('Review not found');
+    if (review.hotelId !== hotelId) throw new ForbiddenException('Not your hotel review');
+
+    const updated = await this.prisma.review.update({
+      where: { id: reviewId },
+      data: { isPublished: false },
+      include: { guest: { select: { name: true, avatarUrl: true } } },
+    });
+
+    await this.redis.delPattern(`reviews:hotel:${hotelId}:*`);
+    await this.redis.del(`reviews:stats:${hotelId}`);
+
+    return updated;
+  }
 }

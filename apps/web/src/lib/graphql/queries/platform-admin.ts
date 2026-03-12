@@ -32,15 +32,13 @@ export const PLATFORM_DASHBOARD_STATS = gql`
         bookingNumber
         status
         totalAmount
-        checkIn
-        checkOut
+        checkInDate
+        checkOutDate
         createdAt
+        guestName
+        guestEmail
         hotel {
           name
-        }
-        guest {
-          name
-          email
         }
       }
     }
@@ -112,12 +110,11 @@ export const UPDATE_HOTEL_COMMISSION = gql`
 // ============================================
 
 export const PLATFORM_COMMISSIONS = gql`
-  query PlatformCommissions($filters: CommissionsFilter) {
-    platformCommissions(filters: $filters) {
+  query PlatformCommissions($status: String, $hotelId: ID, $page: Int, $limit: Int) {
+    platformCommissions(status: $status, hotelId: $hotelId, page: $page, limit: $limit) {
       commissions {
         id
         hotelId
-        hotelName
         bookingId
         bookingAmount
         commissionRate
@@ -125,7 +122,12 @@ export const PLATFORM_COMMISSIONS = gql`
         status
         settledAt
         createdAt
-        bookingInfo {
+        hotel {
+          id
+          name
+          slug
+        }
+        booking {
           bookingNumber
           totalAmount
           status
@@ -135,9 +137,7 @@ export const PLATFORM_COMMISSIONS = gql`
       total
       page
       limit
-      hasMore
-      totalCommissionAmount
-      totalBookingAmount
+      totalPages
     }
   }
 `;

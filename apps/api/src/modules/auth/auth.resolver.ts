@@ -9,6 +9,10 @@ import {
   VerifyOTPInput,
   RefreshTokenInput,
   ChangePasswordInput,
+  RequestPasswordResetInput,
+  ResetPasswordInput,
+  VerifyEmailInput,
+  ResendVerificationInput,
 } from './dto/auth.input';
 import { GqlAuthGuard } from './guards/jwt-auth.guard';
 import { GqlCurrentUser } from './decorators/current-user.decorator';
@@ -153,5 +157,61 @@ export class AuthResolver {
     @Args('input') input: ChangePasswordInput,
   ) {
     return this.authService.changePassword(user.id, input);
+  }
+
+  /**
+   * Request password reset
+   */
+  @Public()
+  @Mutation(() => LogoutResponse, {
+    name: 'requestPasswordReset',
+    description: 'Request a password reset link via email',
+  })
+  async requestPasswordReset(
+    @Args('input') input: RequestPasswordResetInput,
+  ) {
+    return this.authService.requestPasswordReset(input);
+  }
+
+  /**
+   * Reset password with token
+   */
+  @Public()
+  @Mutation(() => LogoutResponse, {
+    name: 'resetPassword',
+    description: 'Reset password using reset token',
+  })
+  async resetPassword(
+    @Args('input') input: ResetPasswordInput,
+  ) {
+    return this.authService.resetPassword(input);
+  }
+
+  /**
+   * Verify email address
+   */
+  @Public()
+  @Mutation(() => LogoutResponse, {
+    name: 'verifyEmail',
+    description: 'Verify email address using token',
+  })
+  async verifyEmail(
+    @Args('input') input: VerifyEmailInput,
+  ) {
+    return this.authService.verifyEmail(input);
+  }
+
+  /**
+   * Resend verification email
+   */
+  @Public()
+  @Mutation(() => LogoutResponse, {
+    name: 'resendVerificationEmail',
+    description: 'Resend email verification link',
+  })
+  async resendVerificationEmail(
+    @Args('input') input: ResendVerificationInput,
+  ) {
+    return this.authService.resendVerificationEmail(input);
   }
 }

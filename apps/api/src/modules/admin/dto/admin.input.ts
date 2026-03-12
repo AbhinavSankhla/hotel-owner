@@ -1,6 +1,6 @@
 import { InputType, Field, Float, Int, ID } from '@nestjs/graphql';
 import { GraphQLJSON } from 'graphql-scalars';
-import { BookingModel } from '../../hotel/entities/hotel.entity';
+import { BookingModel, HotelTemplate } from '../../hotel/entities/hotel.entity';
 
 @InputType()
 export class UpdateHotelInput {
@@ -72,6 +72,9 @@ export class UpdateHotelInput {
 
   @Field({ nullable: true })
   stripeAccountId?: string;
+
+  @Field(() => HotelTemplate, { nullable: true })
+  template?: HotelTemplate;
 }
 
 @InputType()

@@ -57,6 +57,7 @@ model Hotel {
   
   // Theme customization
   themeConfig      Json?   // { primaryColor, fontFamily, etc. }
+  template         HotelTemplate @default(STARTER)
   
   // Status
   isActive         Boolean @default(true)
@@ -531,6 +532,13 @@ enum SettlementStatus {
   DISPUTED
 }
 
+enum HotelTemplate {
+  STARTER         // Default original layout
+  MODERN_MINIMAL  // Clean, whitespace-heavy, single-column hero
+  LUXURY_RESORT   // Full-bleed images, elegant typography
+  HERITAGE_BOUTIQUE // Warm tones, editorial layout, story-driven
+}
+
 enum MediaType {
   IMAGE
   VIDEO
@@ -605,4 +613,54 @@ model PushSubscription {
   updatedAt DateTime @updatedAt
   
   @@index([userId])
+}
+
+// ============================================================================
+// AUDIT LOG
+// ============================================================================
+
+/// Audit log entry — records all mutations for compliance
+model AuditLog {
+  id          String   @id @default(uuid())
+  
+  operation   String   // GraphQL mutation name
+  userId      String?
+  userEmail   String?
+  userRole    String?
+  hotelId     String?
+  
+  ip          String?
+  duration    Int?     // milliseconds
+  success     Boolean  @default(true)
+  errorMessage String?
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([userId])
+  @@index([hotelId])
+  @@index([operation])
+  @@index([createdAt])
+}
+
+// ============================================================================
+// IN-APP NOTIFICATION
+// ============================================================================
+
+/// In-app notification for bell icon / inbox
+model Notification {
+  id        String   @id @default(uuid())
+  
+  userId    String
+  
+  type      String   // e.g. "BOOKING_CONFIRMED", "REVIEW_SUBMITTED"
+  title     String
+  body      String?
+  link      String?  // deep link path
+  
+  isRead    Boolean  @default(false)
+  
+  createdAt DateTime @default(now())
+  
+  @@index([userId, isRead])
+  @@index([createdAt])
 }

@@ -7,9 +7,9 @@
  * - Offline fallback page when network is unavailable
  */
 
-const CACHE_NAME = 'bluestay-v1';
-const STATIC_CACHE = 'bluestay-static-v1';
-const API_CACHE = 'bluestay-api-v1';
+const CACHE_NAME = 'bluestay-v2';
+const STATIC_CACHE = 'bluestay-static-v2';
+const API_CACHE = 'bluestay-api-v2';
 
 // Static assets to pre-cache during installation
 const PRECACHE_URLS = [

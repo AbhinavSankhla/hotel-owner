@@ -1,5 +1,6 @@
 import { Resolver, Query, Mutation, Args, ID, Int } from '@nestjs/graphql';
 import { ObjectType, Field, Float, InputType } from '@nestjs/graphql';
+import { IsOptional } from 'class-validator';
 import { PlatformAdminService } from './platform-admin.service';
 import { OnboardHotelInput } from './dto/onboard-hotel.input';
 import { Hotel } from '../hotel/entities/hotel.entity';
@@ -324,33 +325,42 @@ class PlatformDeleteResult {
 @InputType()
 class PlatformHotelsFilter {
   @Field({ nullable: true })
+  @IsOptional()
   search?: string;
 
   @Field({ nullable: true })
+  @IsOptional()
   isActive?: boolean;
 
   @Field({ nullable: true })
+  @IsOptional()
   city?: string;
 
   @Field(() => Int, { nullable: true })
+  @IsOptional()
   page?: number;
 
   @Field(() => Int, { nullable: true })
+  @IsOptional()
   limit?: number;
 }
 
 @InputType()
 class CommissionsFilter {
   @Field({ nullable: true })
+  @IsOptional()
   hotelId?: string;
 
   @Field({ nullable: true })
+  @IsOptional()
   status?: string;
 
   @Field(() => Int, { nullable: true })
+  @IsOptional()
   page?: number;
 
   @Field(() => Int, { nullable: true })
+  @IsOptional()
   limit?: number;
 }
 
@@ -438,32 +448,7 @@ export class PlatformAdminResolver {
     return this.platformService.updateHotelCommission(hotelId, commissionRate);
   }
 
-  // Commissions
-  @Query(() => CommissionsList, {
-    name: 'platformCommissions',
-    description: 'List commissions with filters',
-  })
-  async getCommissions(
-    @Args('filters', { type: () => CommissionsFilter, nullable: true })
-    filters?: CommissionsFilter,
-  ) {
-    const result = await this.platformService.getCommissions(filters || undefined);
-    return {
-      ...result,
-      commissions: result.commissions.map((c: any) => ({
-        ...c,
-        hotelName: c.hotel?.name,
-        bookingInfo: c.booking
-          ? {
-              bookingNumber: c.booking.bookingNumber,
-              totalAmount: c.booking.totalAmount,
-              status: c.booking.status,
-              guestName: c.booking.guest?.name,
-            }
-          : null,
-      })),
-    };
-  }
+  // Commissions (handled by CommissionResolver - see commission.resolver.ts)
 
   @Mutation(() => CommissionEntry, {
     name: 'platformSettleCommission',

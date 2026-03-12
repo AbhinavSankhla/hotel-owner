@@ -212,9 +212,9 @@ export default function PlatformDashboard() {
                   bookingNumber: string;
                   status: string;
                   totalAmount: number;
-                  checkIn: string;
+                  checkInDate: string;
                   hotel?: { name: string };
-                  guest?: { name: string };
+                  guestName?: string;
                   createdAt: string;
                 }) => (
                   <div
@@ -226,7 +226,7 @@ export default function PlatformDashboard() {
                         {booking.bookingNumber}
                       </div>
                       <div className="text-xs text-gray-500">
-                        {booking.hotel?.name} &middot; {booking.guest?.name}
+                        {booking.hotel?.name} &middot; {booking.guestName}
                       </div>
                       <div className="text-xs text-gray-400 mt-0.5">
                         {format(new Date(booking.createdAt), 'dd MMM yyyy')}

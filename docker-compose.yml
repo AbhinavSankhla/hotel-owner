@@ -103,6 +103,22 @@ services:
     command: npm run dev:web
 
   # ============================================
+  # MAIL CATCHER (Dev only — catches all outgoing email)
+  # Web UI: http://localhost:8025
+  # ============================================
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: bluestay-mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # Web UI
+    environment:
+      MP_MAX_MESSAGES: 500
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+
+  # ============================================
   # DATABASE ADMIN (Optional)
   # ============================================
   adminer:

@@ -10,7 +10,8 @@ import { setContext } from '@apollo/client/link/context';
 import { ApolloProvider } from '@apollo/client/react';
 import { useMemo } from 'react';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/graphql';
+// Use same-origin proxy to avoid CORS/cross-origin issues (e.g. in Codespaces)
+const API_URL = '/api/graphql';
 
 export function ApolloWrapper({ children }: { children: React.ReactNode }) {
   const client = useMemo(() => {

@@ -8,9 +8,8 @@ import type { NextRequest } from "next/server";
  * - bluestay.in → Aggregator view (all hotels)
  * - radhikaresort.in → Hotel tenant view (single hotel)
  * 
- * The middleware extracts the hotel ID from the domain and passes it
- * to the application via headers, allowing us to serve different content
- * from the same codebase.
+ * Domain→hotel mappings are fetched from the API and cached in-memory
+ * with a 5-minute TTL to minimize latency.
  */
 
 // Aggregator domains that show all hotels
@@ -21,34 +20,23 @@ const AGGREGATOR_DOMAINS = [
   "127.0.0.1",
 ];
 
-// Known hotel domains mapped to their hotel IDs
-// In production, this will be fetched from Redis cache
-const HOTEL_DOMAIN_MAP: Record<string, string> = {
-  "radhikaresort.in": "radhika-resort",
-  "www.radhikaresort.in": "radhika-resort",
-  // Add more hotel domains here as they onboard
-};
+// In-memory cache for domain→hotelId mappings
+const domainCache = new Map<string, { hotelId: string | null; expiresAt: number }>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 /**
  * Check if the hostname is an aggregator domain
  */
 function isAggregatorDomain(hostname: string): boolean {
-  // Remove port number if present
   const host = hostname.split(":")[0];
   return AGGREGATOR_DOMAINS.includes(host);
 }
 
 /**
- * Get hotel ID from domain
- * Returns null if it's an aggregator domain
+ * Get hotel ID from domain, using in-memory cache → API fallback
  */
-function getHotelIdFromDomain(hostname: string): string | null {
+async function getHotelIdFromDomain(hostname: string): Promise<string | null> {
   const host = hostname.split(":")[0];
-  
-  // Check direct domain mapping
-  if (HOTEL_DOMAIN_MAP[host]) {
-    return HOTEL_DOMAIN_MAP[host];
-  }
   
   // Check for subdomain pattern (e.g., radhika.bluestay.in)
   const parts = host.split(".");
@@ -59,11 +47,34 @@ function getHotelIdFromDomain(hostname: string): string | null {
       return subdomain;
     }
   }
-  
+
+  // Check in-memory cache
+  const cached = domainCache.get(host);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.hotelId;
+  }
+
+  // Fetch from API
+  try {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+    const res = await fetch(`${apiUrl}/api/domain-resolve?domain=${encodeURIComponent(host)}`, {
+      signal: AbortSignal.timeout(2000),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const hotelId = data.hotelId || null;
+      domainCache.set(host, { hotelId, expiresAt: Date.now() + CACHE_TTL });
+      return hotelId;
+    }
+  } catch {
+    // API unavailable — fall through
+  }
+
+  domainCache.set(host, { hotelId: null, expiresAt: Date.now() + CACHE_TTL });
   return null;
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const hostname = request.headers.get("host") || "localhost:3000";
   const url = request.nextUrl.clone();
   
@@ -81,37 +92,39 @@ export function middleware(request: NextRequest) {
   
   // Determine if this is aggregator or hotel tenant
   if (isAggregatorDomain(hostname)) {
-    // Aggregator mode - show all hotels
     requestHeaders.set("x-tenant-type", "aggregator");
     requestHeaders.set("x-tenant-id", "bluestay");
-    
-    // Rewrite to aggregator routes
-    // Routes starting with (aggregator) are for the main BlueStay site
-    if (!url.pathname.startsWith("/platform-admin")) {
-      // Continue to aggregator pages
-    }
   } else {
-    // Hotel tenant mode - show single hotel
-    const hotelId = getHotelIdFromDomain(hostname);
+    const hotelId = await getHotelIdFromDomain(hostname);
     
     if (hotelId) {
       requestHeaders.set("x-tenant-type", "hotel");
       requestHeaders.set("x-tenant-id", hotelId);
       requestHeaders.set("x-hotel-domain", hostname);
     } else {
-      // Unknown domain - redirect to aggregator or show error
-      // For now, treat as aggregator
       requestHeaders.set("x-tenant-type", "aggregator");
       requestHeaders.set("x-tenant-id", "bluestay");
     }
   }
   
-  // Return response with modified headers
-  return NextResponse.next({
+  const response = NextResponse.next({
     request: {
       headers: requestHeaders,
     },
   });
+
+  // ── Security Headers ──────────────────────────────────────
+  response.headers.set('X-Content-Type-Options', 'nosniff');
+  response.headers.set('X-Frame-Options', 'SAMEORIGIN');
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  response.headers.set(
+    'Permissions-Policy',
+    'camera=(), microphone=(), geolocation=(self), payment=(self)'
+  );
+  response.headers.set('X-DNS-Prefetch-Control', 'on');
+  // Strict-Transport-Security set by Nginx in production
+
+  return response;
 }
 
 /**

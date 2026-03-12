@@ -26,7 +26,7 @@ interface AuthState {
 }
 
 interface AuthContextType extends AuthState {
-  login: (email: string, password: string) => Promise<{ success: boolean; message?: string }>;
+  login: (email: string, password: string) => Promise<{ success: boolean; message?: string; user?: User }>;
   register: (data: RegisterData) => Promise<{ success: boolean; message?: string }>;
   logout: () => Promise<void>;
   refreshAuth: () => Promise<void>;
@@ -41,7 +41,8 @@ interface RegisterData {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/graphql';
+// Use same-origin proxy to avoid CORS/cross-origin issues (e.g. in Codespaces)
+const API_URL = '/api/graphql';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();

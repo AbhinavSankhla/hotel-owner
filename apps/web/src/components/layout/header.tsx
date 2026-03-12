@@ -16,6 +16,8 @@ import {
   LogOut,
   LayoutDashboard,
   Loader2,
+  Shield,
+  Hotel,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -118,7 +120,7 @@ export function Header() {
               </div>
               <div className="flex items-center gap-4">
                 <Link
-                  href="/for-hotels"
+                  href="/onboard"
                   className={cn(
                     "flex items-center gap-1.5 hover:text-brand-600 transition-colors",
                     isScrolled ? "text-gray-600" : "text-gray-700"
@@ -205,7 +207,30 @@ export function Header() {
                           <div className="px-4 py-3 border-b border-gray-100">
                             <p className="text-sm font-medium text-gray-900">{user.name}</p>
                             <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                            <p className="text-xs text-gray-400 mt-0.5">
+                              {user.role === 'PLATFORM_ADMIN' ? 'Platform Admin' : user.role === 'HOTEL_ADMIN' ? 'Hotel Admin' : 'Guest'}
+                            </p>
                           </div>
+                          {user.role === 'PLATFORM_ADMIN' && (
+                            <Link
+                              href="/platform-admin"
+                              className="flex items-center gap-3 px-4 py-2.5 text-sm text-indigo-700 hover:bg-indigo-50 transition-colors font-medium"
+                              onClick={() => setShowUserMenu(false)}
+                            >
+                              <Shield size={16} />
+                              Platform Admin
+                            </Link>
+                          )}
+                          {user.role === 'HOTEL_ADMIN' && (
+                            <Link
+                              href="/admin"
+                              className="flex items-center gap-3 px-4 py-2.5 text-sm text-brand-700 hover:bg-brand-50 transition-colors font-medium"
+                              onClick={() => setShowUserMenu(false)}
+                            >
+                              <Hotel size={16} />
+                              Hotel Admin
+                            </Link>
+                          )}
                           <Link
                             href="/dashboard"
                             className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
@@ -362,7 +387,7 @@ export function Header() {
 
                 <div className="pt-4 border-t border-gray-100 mt-4">
                   <MobileNavLink
-                    href="/for-hotels"
+                    href="/onboard"
                     icon={<Building2 size={20} />}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
@@ -391,17 +416,43 @@ export function Header() {
                       </div>
                     </div>
                     <div className="flex gap-3">
-                      <Button
-                        variant="outline"
-                        className="flex-1"
-                        onClick={() => {
-                          setIsMobileMenuOpen(false);
-                          router.push('/dashboard');
-                        }}
-                      >
-                        <LayoutDashboard size={16} className="mr-2" />
-                        Dashboard
-                      </Button>
+                      {user.role === 'PLATFORM_ADMIN' ? (
+                        <Button
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() => {
+                            setIsMobileMenuOpen(false);
+                            router.push('/platform-admin');
+                          }}
+                        >
+                          <Shield size={16} className="mr-2" />
+                          Platform Admin
+                        </Button>
+                      ) : user.role === 'HOTEL_ADMIN' ? (
+                        <Button
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() => {
+                            setIsMobileMenuOpen(false);
+                            router.push('/admin');
+                          }}
+                        >
+                          <Hotel size={16} className="mr-2" />
+                          Hotel Admin
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() => {
+                            setIsMobileMenuOpen(false);
+                            router.push('/dashboard');
+                          }}
+                        >
+                          <LayoutDashboard size={16} className="mr-2" />
+                          Dashboard
+                        </Button>
+                      )}
                       <Button
                         variant="outline"
                         className="flex-1 text-red-600 border-red-200 hover:bg-red-50"

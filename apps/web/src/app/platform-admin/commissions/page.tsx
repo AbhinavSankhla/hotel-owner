@@ -29,7 +29,6 @@ import {
 interface CommissionEntry {
   id: string;
   hotelId: string;
-  hotelName?: string;
   bookingId: string;
   bookingAmount: number;
   commissionRate: number;
@@ -37,7 +36,12 @@ interface CommissionEntry {
   status: string;
   settledAt?: string;
   createdAt: string;
-  bookingInfo?: {
+  hotel?: {
+    id: string;
+    name: string;
+    slug?: string;
+  };
+  booking?: {
     bookingNumber?: string;
     totalAmount?: number;
     status?: string;
@@ -54,11 +58,9 @@ export default function PlatformCommissionsPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, loading, error, refetch } = useQuery<any>(PLATFORM_COMMISSIONS, {
     variables: {
-      filters: {
-        ...(statusFilter && { status: statusFilter }),
-        page,
-        limit,
-      },
+      ...(statusFilter && { status: statusFilter }),
+      page,
+      limit,
     },
   });
 
@@ -75,9 +77,7 @@ export default function PlatformCommissionsPage() {
 
   const commissions: CommissionEntry[] = data?.platformCommissions?.commissions || [];
   const total = data?.platformCommissions?.total || 0;
-  const totalCommissionAmount = data?.platformCommissions?.totalCommissionAmount || 0;
-  const totalBookingAmount = data?.platformCommissions?.totalBookingAmount || 0;
-  const hasMore = data?.platformCommissions?.hasMore || false;
+  const hasMore = page < (data?.platformCommissions?.totalPages || 1);
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
@@ -101,27 +101,17 @@ export default function PlatformCommissionsPage() {
   return (
     <div className="space-y-6">
       {/* Summary cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-sm text-gray-500">Total Commission</div>
-            <div className="text-2xl font-bold text-gray-900 mt-1">
-              ₹{totalCommissionAmount.toLocaleString('en-IN')}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-sm text-gray-500">Total Booking Value</div>
-            <div className="text-2xl font-bold text-gray-900 mt-1">
-              ₹{totalBookingAmount.toLocaleString('en-IN')}
-            </div>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="text-sm text-gray-500">Commission Records</div>
             <div className="text-2xl font-bold text-gray-900 mt-1">{total}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-sm text-gray-500">Current Page</div>
+            <div className="text-2xl font-bold text-gray-900 mt-1">{page} of {data?.platformCommissions?.totalPages || 1}</div>
           </CardContent>
         </Card>
       </div>
@@ -234,14 +224,14 @@ export default function PlatformCommissionsPage() {
                       )}
                     </td>
                     <td className="px-4 py-3 font-medium text-gray-900">
-                      {c.hotelName || 'Unknown'}
+                      {c.hotel?.name || 'Unknown'}
                     </td>
                     <td className="px-4 py-3">
                       <div className="text-gray-900">
-                        {c.bookingInfo?.bookingNumber || c.bookingId.slice(0, 8)}
+                        {c.booking?.bookingNumber || c.bookingId.slice(0, 8)}
                       </div>
-                      {c.bookingInfo?.guestName && (
-                        <div className="text-xs text-gray-400">{c.bookingInfo.guestName}</div>
+                      {c.booking?.guestName && (
+                        <div className="text-xs text-gray-400">{c.booking.guestName}</div>
                       )}
                     </td>
                     <td className="px-4 py-3 text-right">

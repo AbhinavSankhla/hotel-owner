@@ -76,7 +76,7 @@ export function Footer() {
           <div>
             <h4 className="text-white font-semibold mb-4">For Hotels</h4>
             <ul className="space-y-3">
-              <FooterLink href="/for-hotels">List Your Property</FooterLink>
+              <FooterLink href="/onboard">List Your Property</FooterLink>
               <FooterLink href="/partner-login">Partner Login</FooterLink>
               <FooterLink href="/partner-support">Partner Support</FooterLink>
               <FooterLink href="/success-stories">Success Stories</FooterLink>

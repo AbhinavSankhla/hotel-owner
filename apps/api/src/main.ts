@@ -95,15 +95,52 @@ async function bootstrap() {
     exclude: ['graphql', 'health'], // Exclude GraphQL and health check
   });
 
-  // Enable CORS for frontend domains
+  // Enable CORS for frontend domains with dynamic hotel domain support
+  const allowedOrigins = [
+    'http://localhost:3000',
+    'https://bluestay.in',
+    'https://www.bluestay.in',
+    // Load additional origins from env (e.g. Codespace forwarded URLs)
+    ...(process.env.CORS_ORIGINS?.split(',').map(s => s.trim()).filter(Boolean) || []),
+  ];
+
   app.enableCors({
-    origin: [
-      'http://localhost:3000',           // Local dev
-      'https://bluestay.in',             // Production aggregator
-      'https://www.bluestay.in',
-      /\.bluestay\.in$/,                 // Subdomains
-      // Hotel custom domains are added dynamically or via wildcard
-    ],
+    origin: async (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+      // Allow requests with no origin (mobile apps, curl, server-to-server)
+      if (!origin) return callback(null, true);
+
+      // Allow known static origins
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+
+      // Allow all *.bluestay.in subdomains
+      if (/\.bluestay\.in$/.test(new URL(origin).hostname)) return callback(null, true);
+
+      // Allow GitHub Codespaces forwarded URLs
+      if (/\.app\.github\.dev$/.test(new URL(origin).hostname)) return callback(null, true);
+
+      // Check hotel custom domains from database (cached in Redis)
+      try {
+        const { PrismaClient } = await import('@prisma/client');
+        const hostname = new URL(origin).hostname;
+        const redis = app.get('RedisService');
+        const cacheKey = `cors:domain:${hostname}`;
+        let allowed = await redis.get(cacheKey);
+
+        if (allowed === null) {
+          const prisma = app.get(PrismaClient) || app.get('PrismaService');
+          const domain = await prisma.hotelDomain.findFirst({
+            where: { domain: hostname },
+          });
+          allowed = domain ? 'true' : 'false';
+          await redis.set(cacheKey, allowed, 300); // Cache for 5 min
+        }
+
+        return callback(null, allowed === 'true');
+      } catch {
+        // If lookup fails, deny by default in production, allow in dev
+        return callback(null, process.env.NODE_ENV !== 'production');
+      }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'x-hotel-id', 'x-tenant-type'],

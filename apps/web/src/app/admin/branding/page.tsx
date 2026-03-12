@@ -21,7 +21,11 @@ import {
   Type,
   Layout,
   Eye,
+  LayoutTemplate,
+  Check,
 } from 'lucide-react';
+import { TEMPLATE_CATALOG, type TemplateMeta } from '@/components/tenant/templates/registry';
+import type { HotelTemplateName } from '@/lib/tenant/tenant-context';
 
 interface ThemeConfig {
   primaryColor: string;
@@ -64,6 +68,7 @@ export default function AdminBrandingPage() {
   const hotelId = user?.hotelId;
   const [saved, setSaved] = useState(false);
   const [theme, setTheme] = useState<ThemeConfig>(DEFAULT_THEME);
+  const [selectedTemplate, setSelectedTemplate] = useState<HotelTemplateName>('STARTER');
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: hotelData, loading } = useQuery<any>(GET_HOTEL_BY_ID, {
@@ -82,6 +87,9 @@ export default function AdminBrandingPage() {
     if (hotelData?.hotel?.themeConfig) {
       setTheme({ ...DEFAULT_THEME, ...hotelData.hotel.themeConfig });
     }
+    if (hotelData?.hotel?.template) {
+      setSelectedTemplate(hotelData.hotel.template);
+    }
   }, [hotelData]);
 
   const handleSave = async () => {
@@ -90,6 +98,7 @@ export default function AdminBrandingPage() {
         input: {
           hotelId,
           themeConfig: theme,
+          template: selectedTemplate,
         },
       },
     });
@@ -141,6 +150,48 @@ export default function AdminBrandingPage() {
           </Button>
         </div>
       </div>
+
+      {/* ======= TEMPLATE SELECTOR ======= */}
+      <Card className="border-0 shadow-sm">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-base flex items-center gap-2">
+            <LayoutTemplate className="w-4 h-4 text-brand-600" />
+            Website Template
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-gray-500 mb-4">
+            Choose a design template for your hotel website. Each template has a distinct layout and visual identity.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {TEMPLATE_CATALOG.map((tpl: TemplateMeta) => {
+              const isSelected = selectedTemplate === tpl.id;
+              return (
+                <button
+                  key={tpl.id}
+                  onClick={() => setSelectedTemplate(tpl.id)}
+                  className={`relative text-left p-4 rounded-xl border-2 transition-all duration-200 ${
+                    isSelected
+                      ? 'border-brand-500 bg-brand-50 ring-2 ring-brand-200'
+                      : 'border-gray-200 hover:border-gray-300 bg-white'
+                  }`}
+                >
+                  {isSelected && (
+                    <div className="absolute top-3 right-3 w-5 h-5 bg-brand-600 rounded-full flex items-center justify-center">
+                      <Check className="w-3 h-3 text-white" />
+                    </div>
+                  )}
+                  {/* Gradient preview swatch */}
+                  <div className={`h-20 rounded-lg mb-3 bg-gradient-to-br ${tpl.preview}`} />
+                  <h3 className="font-semibold text-gray-900 text-sm mb-1">{tpl.name}</h3>
+                  <p className="text-xs text-gray-500 leading-relaxed mb-2">{tpl.description}</p>
+                  <span className="text-xs text-gray-400">Font: {tpl.fontHint}</span>
+                </button>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Live Preview */}
       <Card className="border-0 shadow-sm overflow-hidden">

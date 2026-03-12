@@ -16,14 +16,22 @@ import { Eye, EyeOff, LogIn, Loader2, AlertCircle, Smartphone, Mail } from 'luci
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/graphql';
+const API_URL = '/api/graphql';
 
 type LoginMode = 'email' | 'otp';
+
+function getRoleRedirect(role?: string): string {
+  switch (role) {
+    case 'PLATFORM_ADMIN': return '/platform-admin';
+    case 'HOTEL_ADMIN': return '/admin';
+    default: return '/dashboard';
+  }
+}
 
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get('redirect') || '/';
+  const redirectParam = searchParams.get('redirect');
   const { login, isLoading: authLoading } = useAuth();
 
   const [mode, setMode] = useState<LoginMode>('email');
@@ -110,7 +118,7 @@ export default function LoginPage() {
             if (result?.success && result?.accessToken) {
               localStorage.setItem('accessToken', result.accessToken);
               localStorage.setItem('refreshToken', result.refreshToken);
-              window.location.href = redirectTo;
+              window.location.href = redirectParam || getRoleRedirect(result.user?.role);
             } else {
               setError(result?.message || 'Google login failed');
               setIsSubmitting(false);
@@ -140,7 +148,8 @@ export default function LoginPage() {
     try {
       const result = await login(email, password);
       if (result.success) {
-        router.push(redirectTo);
+        const dest = redirectParam || getRoleRedirect(result.user?.role);
+        router.push(dest);
       } else {
         setError(result.message || 'Invalid email or password');
       }
@@ -246,7 +255,7 @@ export default function LoginPage() {
         localStorage.setItem('accessToken', result.accessToken);
         localStorage.setItem('refreshToken', result.refreshToken);
         // Force page reload to update auth context
-        window.location.href = redirectTo;
+        window.location.href = redirectParam || getRoleRedirect(result.user?.role);
       } else {
         setError(result?.message || 'Invalid OTP');
       }
@@ -501,7 +510,7 @@ export default function LoginPage() {
             <p className="mt-6 text-center text-sm text-gray-600">
               Don&apos;t have an account?{' '}
               <Link
-                href={`/auth/register${redirectTo ? `?redirect=${encodeURIComponent(redirectTo)}` : ''}`}
+                href={`/auth/register${redirectParam ? `?redirect=${encodeURIComponent(redirectParam)}` : ''}`}
                 className="font-medium text-brand-600 hover:text-brand-700"
               >
                 Sign up for free

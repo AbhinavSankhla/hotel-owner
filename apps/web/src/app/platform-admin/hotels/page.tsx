@@ -6,6 +6,7 @@
  */
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useQuery, useMutation } from '@apollo/client/react';
 import {
   PLATFORM_HOTELS,
@@ -31,6 +32,8 @@ import {
   Globe,
   X,
   Building2,
+  ExternalLink,
+  Eye,
 } from 'lucide-react';
 
 interface PlatformHotel {
@@ -335,6 +338,14 @@ export default function PlatformHotelsPage() {
                       <Award size={14} className="mr-1" />
                       {hotel.isFeatured ? 'Unfeature' : 'Feature'}
                     </Button>
+                    <Link
+                      href={`/hotel?hotel=${hotel.slug}`}
+                      target="_blank"
+                    >
+                      <Button type="button" size="sm" variant="outline">
+                        <Eye size={14} className="mr-1" /> View Site
+                      </Button>
+                    </Link>
                   </div>
                 </div>
               </div>

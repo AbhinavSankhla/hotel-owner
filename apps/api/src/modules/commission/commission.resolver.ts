@@ -9,7 +9,7 @@ import {
   CommissionRecord,
   SettleResult,
 } from './entities/commission.entity';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { GqlAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Resolver()
 export class CommissionResolver {
@@ -23,7 +23,7 @@ export class CommissionResolver {
     name: 'hotelCommissions',
     description: 'Get commission records for a hotel',
   })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(GqlAuthGuard)
   async getHotelCommissions(
     @Args('hotelId', { type: () => ID }) hotelId: string,
     @Args('status', { nullable: true }) status?: string,
@@ -45,7 +45,7 @@ export class CommissionResolver {
     name: 'hotelCommissionSummary',
     description: 'Get commission summary for a hotel',
   })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(GqlAuthGuard)
   async getHotelCommissionSummary(
     @Args('hotelId', { type: () => ID }) hotelId: string,
   ) {
@@ -60,7 +60,7 @@ export class CommissionResolver {
     name: 'platformCommissions',
     description: 'Get all commissions across the platform',
   })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(GqlAuthGuard)
   async getPlatformCommissions(
     @Args('hotelId', { type: () => ID, nullable: true }) hotelId?: string,
     @Args('status', { nullable: true }) status?: string,
@@ -83,7 +83,7 @@ export class CommissionResolver {
     name: 'platformCommissionSummary',
     description: 'Get platform-wide commission summary',
   })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(GqlAuthGuard)
   async getPlatformCommissionSummary() {
     return this.commissionService.getPlatformCommissionSummary();
   }
@@ -92,7 +92,7 @@ export class CommissionResolver {
     name: 'commissionTrends',
     description: 'Get monthly commission trends',
   })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(GqlAuthGuard)
   async getCommissionTrends(
     @Args('hotelId', { type: () => ID, nullable: true }) hotelId?: string,
     @Args('months', { type: () => Int, nullable: true, defaultValue: 12 }) months?: number,
@@ -108,7 +108,7 @@ export class CommissionResolver {
     name: 'settleCommissions',
     description: 'Settle pending commissions for a hotel',
   })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(GqlAuthGuard)
   async settleCommissions(
     @Args('hotelId', { type: () => ID }) hotelId: string,
     @Args('commissionIds', { type: () => [ID], nullable: true }) commissionIds?: string[],
@@ -120,7 +120,7 @@ export class CommissionResolver {
     name: 'disputeCommission',
     description: 'Mark a commission as disputed',
   })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(GqlAuthGuard)
   async disputeCommission(
     @Args('commissionId', { type: () => ID }) commissionId: string,
     @Args('reason') reason: string,
@@ -132,7 +132,7 @@ export class CommissionResolver {
     name: 'resolveDispute',
     description: 'Resolve a disputed commission',
   })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(GqlAuthGuard)
   async resolveDispute(
     @Args('commissionId', { type: () => ID }) commissionId: string,
     @Args('resolution') resolution: 'SETTLE' | 'WAIVE',
@@ -144,7 +144,7 @@ export class CommissionResolver {
     name: 'updateHotelCommissionRate',
     description: 'Update commission rate for a hotel',
   })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(GqlAuthGuard)
   async updateHotelCommissionRate(
     @Args('hotelId', { type: () => ID }) hotelId: string,
     @Args('rate', { type: () => Float }) rate: number,

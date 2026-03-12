@@ -161,6 +161,13 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
+   * Set expiry on a key (seconds)
+   */
+  async expire(key: string, seconds: number): Promise<void> {
+    await this.client.expire(key, seconds);
+  }
+
+  /**
    * Get hotel data from cache or fetch from DB
    * Common pattern for caching
    */

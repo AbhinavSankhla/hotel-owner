@@ -228,6 +228,36 @@ export class NotificationService implements OnModuleInit {
   }
 
   // ============================================
+  // Auth Email Methods
+  // ============================================
+
+  /**
+   * Send password reset email
+   */
+  async sendPasswordResetEmail(email: string, name: string, token: string) {
+    const resetUrl = `${process.env.WEB_URL || 'http://localhost:3000'}/auth/reset-password?token=${encodeURIComponent(token)}`;
+
+    await this.sendEmail({
+      to: email,
+      subject: 'Reset Your Password - BlueStay',
+      html: this.passwordResetTemplate({ name, resetUrl }),
+    });
+  }
+
+  /**
+   * Send email verification link
+   */
+  async sendEmailVerification(email: string, name: string, token: string) {
+    const verifyUrl = `${process.env.WEB_URL || 'http://localhost:3000'}/auth/verify-email?token=${encodeURIComponent(token)}`;
+
+    await this.sendEmail({
+      to: email,
+      subject: 'Verify Your Email - BlueStay',
+      html: this.emailVerificationTemplate({ name, verifyUrl }),
+    });
+  }
+
+  // ============================================
   // Email Templates
   // ============================================
 
@@ -385,6 +415,54 @@ export class NotificationService implements OnModuleInit {
         <li>Set up your SEO metadata</li>
       </ol>
       <a href="${process.env.WEB_URL || 'http://localhost:3000'}/admin" style="display: inline-block; background: #2563eb; color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; margin-top: 12px;">Go to Dashboard</a>
+    </div>
+  </div>
+</body>
+</html>`;
+  }
+
+  private passwordResetTemplate(data: { name: string; resetUrl: string }): string {
+    return `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 0; background: #f3f4f6;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background: #2563eb; border-radius: 12px 12px 0 0; padding: 32px; text-align: center;">
+      <h1 style="color: white; margin: 0; font-size: 24px;">Reset Your Password</h1>
+    </div>
+    <div style="background: white; padding: 32px; border-radius: 0 0 12px 12px;">
+      <p>Hi ${data.name},</p>
+      <p style="color: #6b7280;">We received a request to reset your password. Click the button below to set a new password:</p>
+      <div style="text-align: center; margin: 24px 0;">
+        <a href="${data.resetUrl}" style="display: inline-block; background: #2563eb; color: white; padding: 14px 40px; border-radius: 8px; text-decoration: none; font-weight: 600;">Reset Password</a>
+      </div>
+      <p style="color: #6b7280; font-size: 14px;">This link will expire in 1 hour. If you didn't request a password reset, you can safely ignore this email.</p>
+      <p style="color: #9ca3af; font-size: 12px; text-align: center; margin-top: 24px;">BlueStay</p>
+    </div>
+  </div>
+</body>
+</html>`;
+  }
+
+  private emailVerificationTemplate(data: { name: string; verifyUrl: string }): string {
+    return `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 0; background: #f3f4f6;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background: #059669; border-radius: 12px 12px 0 0; padding: 32px; text-align: center;">
+      <h1 style="color: white; margin: 0; font-size: 24px;">Verify Your Email</h1>
+    </div>
+    <div style="background: white; padding: 32px; border-radius: 0 0 12px 12px;">
+      <p>Hi ${data.name},</p>
+      <p style="color: #6b7280;">Thanks for signing up! Please verify your email address by clicking the button below:</p>
+      <div style="text-align: center; margin: 24px 0;">
+        <a href="${data.verifyUrl}" style="display: inline-block; background: #059669; color: white; padding: 14px 40px; border-radius: 8px; text-decoration: none; font-weight: 600;">Verify Email</a>
+      </div>
+      <p style="color: #6b7280; font-size: 14px;">This link will expire in 24 hours.</p>
+      <p style="color: #9ca3af; font-size: 12px; text-align: center; margin-top: 24px;">BlueStay</p>
     </div>
   </div>
 </body>

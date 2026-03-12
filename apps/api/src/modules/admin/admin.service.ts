@@ -613,4 +613,90 @@ export class AdminService {
 
     return hotel;
   }
+
+  // ============================================
+  // Domain Management
+  // ============================================
+
+  async getHotelDomains(hotelId: string) {
+    return this.prisma.hotelDomain.findMany({
+      where: { hotelId },
+      orderBy: { isPrimary: 'desc' },
+    });
+  }
+
+  async addHotelDomain(hotelId: string, domain: string) {
+    const hotel = await this.prisma.hotel.findUnique({ where: { id: hotelId } });
+    if (!hotel) throw new NotFoundException(`Hotel ${hotelId} not found`);
+
+    const normalized = domain.toLowerCase().trim();
+
+    // Check if domain already exists
+    const existing = await this.prisma.hotelDomain.findUnique({ where: { domain: normalized } });
+    if (existing) {
+      throw new ForbiddenException(`Domain "${normalized}" is already in use`);
+    }
+
+    // If this is the first domain, make it primary
+    const domainCount = await this.prisma.hotelDomain.count({ where: { hotelId } });
+
+    const created = await this.prisma.hotelDomain.create({
+      data: {
+        hotelId,
+        domain: normalized,
+        isPrimary: domainCount === 0,
+      },
+    });
+
+    // Invalidate domain cache
+    await this.redis.del(`domain:${normalized}`);
+
+    return created;
+  }
+
+  async removeHotelDomain(hotelId: string, domainId: string) {
+    const domain = await this.prisma.hotelDomain.findFirst({
+      where: { id: domainId, hotelId },
+    });
+    if (!domain) throw new NotFoundException('Domain not found');
+
+    await this.prisma.hotelDomain.delete({ where: { id: domainId } });
+
+    // If it was primary, promote another domain
+    if (domain.isPrimary) {
+      const next = await this.prisma.hotelDomain.findFirst({ where: { hotelId } });
+      if (next) {
+        await this.prisma.hotelDomain.update({
+          where: { id: next.id },
+          data: { isPrimary: true },
+        });
+      }
+    }
+
+    // Invalidate domain cache
+    await this.redis.del(`domain:${domain.domain}`);
+
+    return { success: true, message: 'Domain removed' };
+  }
+
+  async setPrimaryDomain(hotelId: string, domainId: string) {
+    const domain = await this.prisma.hotelDomain.findFirst({
+      where: { id: domainId, hotelId },
+    });
+    if (!domain) throw new NotFoundException('Domain not found');
+
+    // Unset current primary
+    await this.prisma.hotelDomain.updateMany({
+      where: { hotelId, isPrimary: true },
+      data: { isPrimary: false },
+    });
+
+    // Set new primary
+    const updated = await this.prisma.hotelDomain.update({
+      where: { id: domainId },
+      data: { isPrimary: true },
+    });
+
+    return updated;
+  }
 }

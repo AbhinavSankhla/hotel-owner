@@ -141,6 +141,8 @@ export const UPDATE_HOTEL = gql`
       hourlyMaxHours
       latitude
       longitude
+      template
+      themeConfig
     }
   }
 `;

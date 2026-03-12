@@ -26,6 +26,8 @@ interface RoomTypeInfo {
   isActive: boolean;
 }
 
+export type HotelTemplateName = 'STARTER' | 'MODERN_MINIMAL' | 'LUXURY_RESORT' | 'HERITAGE_BOUTIQUE';
+
 export interface TenantHotel {
   id: string;
   name: string;
@@ -39,7 +41,6 @@ export interface TenantHotel {
   phone?: string;
   email?: string;
   whatsapp?: string;
-  website?: string;
   latitude?: number;
   longitude?: number;
   starRating: number;
@@ -49,7 +50,6 @@ export interface TenantHotel {
   logoUrl?: string;
   galleryImages?: string[];
   startingPrice?: number;
-  startingHourlyPrice?: number;
   bookingModel: 'DAILY' | 'HOURLY' | 'BOTH';
   checkInTime?: string;
   checkOutTime?: string;
@@ -58,6 +58,7 @@ export interface TenantHotel {
   amenities?: string[];
   policies?: string[];
   themeConfig?: ThemeConfig;
+  template?: HotelTemplateName;
   isFeatured?: boolean;
   isVerified?: boolean;
   roomTypes?: RoomTypeInfo[];

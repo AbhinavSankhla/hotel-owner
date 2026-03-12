@@ -19,6 +19,7 @@ import {
   Settings,
   CreditCard,
   Star,
+  Bell,
   Loader2 
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -38,6 +39,11 @@ const sidebarLinks = [
     label: 'My Reviews',
     href: '/dashboard/reviews',
     icon: Star,
+  },
+  {
+    label: 'Notifications',
+    href: '/dashboard/notifications',
+    icon: Bell,
   },
   {
     label: 'Profile',

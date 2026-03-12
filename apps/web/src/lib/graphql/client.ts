@@ -7,7 +7,10 @@ import { HttpLink } from '@apollo/client';
 import { ApolloClient, InMemoryCache } from '@apollo/client';
 
 // API URL configuration
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/graphql';
+// Server-side: use direct backend URL; Client-side: use same-origin proxy
+const API_URL = typeof window === 'undefined'
+  ? (process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/graphql')
+  : '/api/graphql';
 
 // Cache configuration
 const cache = new InMemoryCache({

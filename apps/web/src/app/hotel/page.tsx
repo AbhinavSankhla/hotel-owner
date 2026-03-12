@@ -4,9 +4,12 @@
  * Hotel Tenant Homepage
  * The main landing page for a hotel's own website.
  * e.g., radhikaresort.in/ or localhost:3000/hotel
+ *
+ * Dynamically renders the selected template (STARTER, MODERN_MINIMAL,
+ * LUXURY_RESORT, HERITAGE_BOUTIQUE) based on the hotel's `template` field.
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { format, addDays } from 'date-fns';
@@ -31,6 +34,9 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTenant } from '@/lib/tenant/tenant-context';
+import type { TemplateComponentSet } from '@/components/tenant/templates/types';
+import { loadTemplate } from '@/components/tenant/templates/registry';
+import { sanitizeText, sanitizeColor, sanitizeImageUrl, sanitizeJsonLd, sanitizeTemplateName } from '@/lib/security/sanitize';
 
 const AMENITY_ICONS: Record<string, React.ReactNode> = {
   wifi: <Wifi className="w-5 h-5" />,
@@ -70,6 +76,19 @@ export default function TenantHomePage() {
   const [checkOut, setCheckOut] = useState(format(addDays(new Date(), 1), 'yyyy-MM-dd'));
   const [guests, setGuests] = useState(2);
 
+  // Dynamic template loading
+  const [templateSet, setTemplateSet] = useState<TemplateComponentSet | null>(null);
+
+  useEffect(() => {
+    if (!hotel) return;
+    const tplName = sanitizeTemplateName(hotel.template) as import('@/lib/tenant/tenant-context').HotelTemplateName;
+    if (tplName !== 'STARTER') {
+      loadTemplate(tplName).then(setTemplateSet);
+    } else {
+      setTemplateSet(null); // Use inline STARTER layout
+    }
+  }, [hotel?.template, hotel]);
+
   if (loading) {
     return (
       <div className="min-h-screen">
@@ -98,6 +117,68 @@ export default function TenantHomePage() {
   }
 
   const activeRooms = hotel.roomTypes?.filter((r) => r.isActive) || [];
+
+  // ─── TEMPLATE RENDERING ──────────────────────────────────
+  // If a non-STARTER template is loaded, render its component set instead of the inline layout.
+  if (templateSet) {
+    const { HeroSection, RoomsSection, AmenitiesSection, WhyBookSection, LocationSection, CTASection } = templateSet;
+
+    // JSON-LD structured data (shared across all templates)
+    const jsonLd = {
+      '@context': 'https://schema.org',
+      '@type': 'Hotel',
+      name: sanitizeText(hotel.name),
+      description: sanitizeText(hotel.description),
+      address: {
+        '@type': 'PostalAddress',
+        streetAddress: sanitizeText(hotel.address),
+        addressLocality: sanitizeText(hotel.city),
+        addressRegion: sanitizeText(hotel.state),
+        postalCode: sanitizeText(hotel.pincode),
+        addressCountry: 'IN',
+      },
+      starRating: { '@type': 'Rating', ratingValue: hotel.starRating },
+      ...(hotel.averageRating && {
+        aggregateRating: {
+          '@type': 'AggregateRating',
+          ratingValue: hotel.averageRating,
+          reviewCount: hotel.reviewCount || 0,
+          bestRating: 5,
+        },
+      }),
+      ...(hotel.heroImageUrl && { image: sanitizeImageUrl(hotel.heroImageUrl) }),
+      ...(hotel.phone && { telephone: sanitizeText(hotel.phone) }),
+      ...(hotel.email && { email: sanitizeText(hotel.email) }),
+      checkinTime: hotel.checkInTime || '14:00',
+      checkoutTime: hotel.checkOutTime || '12:00',
+    };
+
+    return (
+      <div>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(sanitizeJsonLd(jsonLd)) }}
+        />
+        <HeroSection
+          hotel={hotel}
+          theme={theme}
+          checkIn={checkIn}
+          checkOut={checkOut}
+          guests={guests}
+          onCheckInChange={setCheckIn}
+          onCheckOutChange={setCheckOut}
+          onGuestsChange={setGuests}
+        />
+        <RoomsSection hotel={hotel} theme={theme} />
+        <AmenitiesSection hotel={hotel} theme={theme} />
+        <WhyBookSection hotel={hotel} theme={theme} />
+        <LocationSection hotel={hotel} theme={theme} />
+        <CTASection hotel={hotel} theme={theme} />
+      </div>
+    );
+  }
+
+  // ─── STARTER (DEFAULT) TEMPLATE ──────────────────────────
 
   // JSON-LD structured data
   const jsonLd = {
@@ -133,7 +214,7 @@ export default function TenantHomePage() {
     <div>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(sanitizeJsonLd(jsonLd)) }}
       />
       {/* =================== HERO SECTION =================== */}
       <section className="relative h-[70vh] min-h-[500px] flex items-end">

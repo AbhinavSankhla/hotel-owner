@@ -7,16 +7,18 @@ import {
 } from '@nestjs/common';
 import { GqlExecutionContext } from '@nestjs/graphql';
 import { Observable, tap } from 'rxjs';
+import { PrismaService } from '../../modules/prisma/prisma.service';
 
 /**
  * Audit Log Interceptor
  * 
- * Logs all GraphQL mutations with user info, operation name, and timing.
- * In production, these would be stored in a database or external service.
+ * Logs all GraphQL mutations to the database and console.
  */
 @Injectable()
 export class AuditLogInterceptor implements NestInterceptor {
   private readonly logger = new Logger('AuditLog');
+
+  constructor(private readonly prisma: PrismaService) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const ctx = GqlExecutionContext.create(context);
@@ -30,40 +32,40 @@ export class AuditLogInterceptor implements NestInterceptor {
     const req = ctx.getContext()?.req;
     const user = req?.user;
     const operationName = info?.fieldName || 'unknown';
-    const args = ctx.getArgs();
     const startTime = Date.now();
 
     return next.handle().pipe(
       tap({
         next: () => {
           const duration = Date.now() - startTime;
-          this.logger.log(
-            JSON.stringify({
-              type: 'MUTATION',
-              operation: operationName,
-              userId: user?.id || 'anonymous',
-              userEmail: user?.email || 'anonymous',
-              userRole: user?.role || 'unknown',
-              hotelId: user?.hotelId || null,
-              duration: `${duration}ms`,
-              ip: req?.ip || req?.connection?.remoteAddress,
-              timestamp: new Date().toISOString(),
-            }),
-          );
+          const entry = {
+            operation: operationName,
+            userId: user?.id || null,
+            userEmail: user?.email || null,
+            userRole: user?.role || null,
+            hotelId: user?.hotelId || null,
+            ip: req?.ip || req?.connection?.remoteAddress || null,
+            duration,
+            success: true,
+          };
+          this.logger.log(JSON.stringify({ ...entry, timestamp: new Date().toISOString() }));
+          this.prisma.auditLog.create({ data: entry }).catch(() => {});
         },
         error: (error) => {
           const duration = Date.now() - startTime;
-          this.logger.warn(
-            JSON.stringify({
-              type: 'MUTATION_ERROR',
-              operation: operationName,
-              userId: user?.id || 'anonymous',
-              error: error?.message,
-              duration: `${duration}ms`,
-              ip: req?.ip || req?.connection?.remoteAddress,
-              timestamp: new Date().toISOString(),
-            }),
-          );
+          const entry = {
+            operation: operationName,
+            userId: user?.id || null,
+            userEmail: user?.email || null,
+            userRole: user?.role || null,
+            hotelId: user?.hotelId || null,
+            ip: req?.ip || req?.connection?.remoteAddress || null,
+            duration,
+            success: false,
+            errorMessage: error?.message ? error.message.slice(0, 500) : null,
+          };
+          this.logger.warn(JSON.stringify({ ...entry, timestamp: new Date().toISOString() }));
+          this.prisma.auditLog.create({ data: entry }).catch(() => {});
         },
       }),
     );

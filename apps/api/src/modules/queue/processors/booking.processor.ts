@@ -76,7 +76,11 @@ export class BookingProcessor implements OnModuleInit, OnModuleDestroy {
 
     const booking = await this.prisma.booking.findUnique({
       where: { id: bookingId },
-      include: { guest: { select: { email: true, name: true } }, hotel: { select: { name: true } } },
+      include: {
+        guest: { select: { email: true, name: true } },
+        hotel: { select: { name: true } },
+        roomType: { select: { totalRooms: true } },
+      },
     });
 
     if (!booking) return;
@@ -87,14 +91,49 @@ export class BookingProcessor implements OnModuleInit, OnModuleDestroy {
       return;
     }
 
-    await this.prisma.booking.update({
-      where: { id: bookingId },
-      data: {
-        status: 'CANCELLED',
-        paymentStatus: 'FAILED',
-        cancellationReason: 'Payment timeout - auto cancelled',
-        cancelledAt: new Date(),
-      },
+    await this.prisma.$transaction(async (tx) => {
+      // Cancel the booking
+      await tx.booking.update({
+        where: { id: bookingId },
+        data: {
+          status: 'CANCELLED',
+          paymentStatus: 'FAILED',
+          cancellationReason: 'Payment timeout - auto cancelled',
+          cancelledAt: new Date(),
+        },
+      });
+
+      // Release inventory for daily bookings
+      if (booking.bookingType === 'DAILY' && booking.checkOutDate) {
+        const checkIn = new Date(booking.checkInDate);
+        const checkOut = new Date(booking.checkOutDate);
+        const oneDay = 24 * 60 * 60 * 1000;
+        for (let d = checkIn; d < checkOut; d = new Date(d.getTime() + oneDay)) {
+          await tx.roomInventory.updateMany({
+            where: {
+              roomTypeId: booking.roomTypeId,
+              date: d,
+            },
+            data: {
+              availableCount: { increment: booking.numRooms },
+            },
+          });
+        }
+      } else if (booking.bookingType === 'HOURLY') {
+        // Release hourly slot
+        if (booking.checkInTime) {
+          await tx.hourlySlot.updateMany({
+            where: {
+              roomTypeId: booking.roomTypeId,
+              date: booking.checkInDate,
+              slotStart: booking.checkInTime,
+            },
+            data: {
+              availableCount: { increment: booking.numRooms },
+            },
+          });
+        }
+      }
     });
 
     // Send cancellation email
@@ -198,22 +237,54 @@ export class BookingProcessor implements OnModuleInit, OnModuleDestroy {
   private async handleCleanupExpired(job: Job<BookingJobData>) {
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
 
-    const expiredBookings = await this.prisma.booking.updateMany({
+    // Find expired bookings first so we can release their inventory
+    const expiredBookings = await this.prisma.booking.findMany({
       where: {
         paymentStatus: 'PENDING',
         status: 'PENDING',
         createdAt: { lt: oneHourAgo },
       },
-      data: {
-        status: 'CANCELLED',
-        paymentStatus: 'FAILED',
-        cancellationReason: 'Expired - payment not completed',
-        cancelledAt: new Date(),
+      select: {
+        id: true,
+        roomTypeId: true,
+        numRooms: true,
+        bookingType: true,
+        checkInDate: true,
+        checkOutDate: true,
+        checkInTime: true,
       },
     });
 
-    if (expiredBookings.count > 0) {
-      this.logger.log(`Cleaned up ${expiredBookings.count} expired bookings`);
+    if (expiredBookings.length > 0) {
+      await this.prisma.$transaction(async (tx) => {
+        // Cancel all expired bookings
+        await tx.booking.updateMany({
+          where: { id: { in: expiredBookings.map((b) => b.id) } },
+          data: {
+            status: 'CANCELLED',
+            paymentStatus: 'FAILED',
+            cancellationReason: 'Expired - payment not completed',
+            cancelledAt: new Date(),
+          },
+        });
+
+        // Release inventory for each expired booking
+        for (const booking of expiredBookings) {
+          if (booking.bookingType === 'DAILY' && booking.checkOutDate) {
+            const checkIn = new Date(booking.checkInDate);
+            const checkOut = new Date(booking.checkOutDate);
+            const oneDay = 24 * 60 * 60 * 1000;
+            for (let d = checkIn; d < checkOut; d = new Date(d.getTime() + oneDay)) {
+              await tx.roomInventory.updateMany({
+                where: { roomTypeId: booking.roomTypeId, date: d },
+                data: { availableCount: { increment: booking.numRooms } },
+              });
+            }
+          }
+        }
+      });
+
+      this.logger.log(`Cleaned up ${expiredBookings.length} expired bookings and released inventory`);
     }
   }
 }

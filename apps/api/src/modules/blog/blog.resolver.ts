@@ -3,7 +3,7 @@ import { UseGuards } from '@nestjs/common';
 import { BlogService } from './blog.service';
 import { BlogPost, PaginatedBlogPosts, PostStatus } from './entities/blog.entity';
 import { CreateBlogPostInput, UpdateBlogPostInput } from './dto/blog.input';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { GqlAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { GqlCurrentUser } from '../auth/decorators/current-user.decorator';
 
 @Resolver(() => BlogPost)
@@ -71,7 +71,7 @@ export class BlogResolver {
     name: 'adminBlogPosts',
     description: 'Get all blog posts for admin (including drafts)',
   })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(GqlAuthGuard)
   async getAdminPosts(
     @Args('hotelId', { type: () => ID, nullable: true }) hotelId?: string,
     @Args('status', { nullable: true }) status?: string,
@@ -85,7 +85,7 @@ export class BlogResolver {
     name: 'adminBlogPost',
     description: 'Get a blog post by ID for admin',
   })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(GqlAuthGuard)
   async getAdminPost(
     @Args('id', { type: () => ID }) id: string,
   ) {
@@ -98,7 +98,7 @@ export class BlogResolver {
     name: 'createBlogPost',
     description: 'Create a new blog post',
   })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(GqlAuthGuard)
   async createPost(
     @Args('input') input: CreateBlogPostInput,
     @GqlCurrentUser() user: any,
@@ -110,7 +110,7 @@ export class BlogResolver {
     name: 'updateBlogPost',
     description: 'Update a blog post',
   })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(GqlAuthGuard)
   async updatePost(
     @Args('input') input: UpdateBlogPostInput,
     @GqlCurrentUser() user: any,
@@ -122,7 +122,7 @@ export class BlogResolver {
     name: 'publishBlogPost',
     description: 'Publish a blog post',
   })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(GqlAuthGuard)
   async publishPost(
     @Args('id', { type: () => ID }) id: string,
   ) {
@@ -133,7 +133,7 @@ export class BlogResolver {
     name: 'archiveBlogPost',
     description: 'Archive a blog post',
   })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(GqlAuthGuard)
   async archivePost(
     @Args('id', { type: () => ID }) id: string,
   ) {
@@ -144,7 +144,7 @@ export class BlogResolver {
     name: 'deleteBlogPost',
     description: 'Delete a blog post permanently',
   })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(GqlAuthGuard)
   async deletePost(
     @Args('id', { type: () => ID }) id: string,
   ) {

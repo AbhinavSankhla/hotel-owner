@@ -14,7 +14,12 @@ import {
   RequestOTPInput, 
   VerifyOTPInput,
   ChangePasswordInput,
+  RequestPasswordResetInput,
+  ResetPasswordInput,
+  VerifyEmailInput,
+  ResendVerificationInput,
 } from './dto/auth.input';
+import { NotificationService } from '../notification/notification.service';
 import { UserRole } from '../user/entities/user.entity';
 import { GoogleAuthService } from './strategies/google.service';
 import * as bcrypt from 'bcryptjs';
@@ -34,12 +39,17 @@ export class AuthService {
   private readonly SALT_ROUNDS = 12;
   private readonly OTP_EXPIRY = 300; // 5 minutes
   private readonly REFRESH_TOKEN_EXPIRY = 7 * 24 * 60 * 60; // 7 days
+  private readonly PASSWORD_RESET_EXPIRY = 3600; // 1 hour
+  private readonly EMAIL_VERIFY_EXPIRY = 86400; // 24 hours
+  private readonly MAX_LOGIN_ATTEMPTS = 5;
+  private readonly LOCKOUT_DURATION = 900; // 15 minutes
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly redis: RedisService,
     private readonly jwtService: JwtService,
     private readonly googleAuth: GoogleAuthService,
+    private readonly notifications: NotificationService,
   ) {}
 
   /**
@@ -89,6 +99,9 @@ export class AuthService {
 
     this.logger.log(`New user registered: ${user.email}`);
 
+    // Send verification email (fire and forget)
+    this.sendVerificationEmail(user.id).catch(() => {});
+
     return {
       success: true,
       message: 'Registration successful',
@@ -102,12 +115,21 @@ export class AuthService {
    */
   async login(input: LoginInput) {
     const { email, password } = input;
+    const lockKey = `login-lockout:${email.toLowerCase()}`;
+    const attemptsKey = `login-attempts:${email.toLowerCase()}`;
+
+    // Check lockout
+    const locked = await this.redis.get(lockKey);
+    if (locked) {
+      throw new UnauthorizedException('Account is temporarily locked due to too many failed attempts. Try again in 15 minutes.');
+    }
 
     const user = await this.prisma.user.findUnique({
       where: { email: email.toLowerCase() },
     });
 
     if (!user || !user.password) {
+      await this.incrementLoginAttempts(attemptsKey, lockKey);
       throw new UnauthorizedException('Invalid email or password');
     }
 
@@ -118,8 +140,12 @@ export class AuthService {
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
+      await this.incrementLoginAttempts(attemptsKey, lockKey);
       throw new UnauthorizedException('Invalid email or password');
     }
+
+    // Reset attempts on successful login
+    await this.redis.del(attemptsKey);
 
     // Update last login
     await this.prisma.user.update({
@@ -378,6 +404,102 @@ export class AuthService {
   }
 
   /**
+   * Request password reset - sends token via email
+   */
+  async requestPasswordReset(input: RequestPasswordResetInput) {
+    const user = await this.prisma.user.findUnique({
+      where: { email: input.email.toLowerCase() },
+    });
+
+    // Always return success to prevent email enumeration
+    if (!user || !user.isActive) {
+      return { success: true, message: 'If this email is registered, a reset link has been sent.' };
+    }
+
+    const token = randomBytes(32).toString('hex');
+    await this.redis.set(`pwd-reset:${token}`, user.id, this.PASSWORD_RESET_EXPIRY);
+
+    await this.notifications.sendPasswordResetEmail(user.email!, user.name, token);
+
+    return { success: true, message: 'If this email is registered, a reset link has been sent.' };
+  }
+
+  /**
+   * Reset password using token
+   */
+  async resetPassword(input: ResetPasswordInput) {
+    const userId = await this.redis.get(`pwd-reset:${input.token}`);
+    if (!userId) {
+      throw new BadRequestException('Invalid or expired reset token');
+    }
+
+    const hashedPassword = await bcrypt.hash(input.newPassword, this.SALT_ROUNDS);
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { password: hashedPassword },
+    });
+
+    // Invalidate the token and all refresh tokens
+    await this.redis.del(`pwd-reset:${input.token}`);
+    await this.redis.del(`refresh:${userId}`);
+
+    return { success: true, message: 'Password reset successfully. Please login with your new password.' };
+  }
+
+  /**
+   * Send email verification link after registration
+   */
+  async sendVerificationEmail(userId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user?.email || user.emailVerified) return;
+
+    const token = randomBytes(32).toString('hex');
+    await this.redis.set(`email-verify:${token}`, user.id, this.EMAIL_VERIFY_EXPIRY);
+
+    await this.notifications.sendEmailVerification(user.email, user.name, token);
+  }
+
+  /**
+   * Verify email using token
+   */
+  async verifyEmail(input: VerifyEmailInput) {
+    const userId = await this.redis.get(`email-verify:${input.token}`);
+    if (!userId) {
+      throw new BadRequestException('Invalid or expired verification token');
+    }
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { emailVerified: true },
+    });
+
+    await this.redis.del(`email-verify:${input.token}`);
+
+    return { success: true, message: 'Email verified successfully.' };
+  }
+
+  /**
+   * Resend email verification
+   */
+  async resendVerificationEmail(input: ResendVerificationInput) {
+    const user = await this.prisma.user.findUnique({
+      where: { email: input.email.toLowerCase() },
+    });
+
+    if (!user || user.emailVerified) {
+      return { success: true, message: 'If this email is registered and unverified, a verification link has been sent.' };
+    }
+
+    const token = randomBytes(32).toString('hex');
+    await this.redis.set(`email-verify:${token}`, user.id, this.EMAIL_VERIFY_EXPIRY);
+
+    await this.notifications.sendEmailVerification(user.email!, user.name, token);
+
+    return { success: true, message: 'If this email is registered and unverified, a verification link has been sent.' };
+  }
+
+  /**
    * Validate user from JWT payload
    */
   async validateUser(payload: JwtPayload) {
@@ -395,6 +517,17 @@ export class AuthService {
   // ============================================
   // Private helper methods
   // ============================================
+
+  private async incrementLoginAttempts(attemptsKey: string, lockKey: string) {
+    const attempts = await this.redis.incr(attemptsKey);
+    if (attempts === 1) {
+      await this.redis.expire(attemptsKey, this.LOCKOUT_DURATION);
+    }
+    if (attempts >= this.MAX_LOGIN_ATTEMPTS) {
+      await this.redis.set(lockKey, '1', this.LOCKOUT_DURATION);
+      await this.redis.del(attemptsKey);
+    }
+  }
 
   private async generateTokens(user: any) {
     const payload: JwtPayload = {

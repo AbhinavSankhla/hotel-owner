@@ -353,16 +353,6 @@ type CommissionTrend {
   totalCommission: Float!
 }
 
-type CommissionsList {
-  commissions: [CommissionEntry!]!
-  hasMore: Boolean!
-  limit: Int!
-  page: Int!
-  total: Int!
-  totalBookingAmount: Float!
-  totalCommissionAmount: Float!
-}
-
 type ConfirmPaymentResult {
   bookingId: String
   bookingNumber: String
@@ -522,6 +512,7 @@ type Hotel {
   startingPrice: Float
   state: String!
   stripeAccountId: String
+  template: HotelTemplate!
   themeConfig: JSON
   updatedAt: DateTime!
   whatsapp: String
@@ -542,6 +533,14 @@ type HotelDomain {
   id: ID!
   isPrimary: Boolean!
   sslStatus: String!
+}
+
+"""Hotel website template style"""
+enum HotelTemplate {
+  STARTER
+  MODERN_MINIMAL
+  LUXURY_RESORT
+  HERITAGE_BOUTIQUE
 }
 
 input HotelFiltersInput {
@@ -579,6 +578,14 @@ enum HotelSortBy {
   RATING
 }
 
+"""Hotel website template style"""
+enum HotelTemplate {
+  HERITAGE_BOUTIQUE
+  LUXURY_RESORT
+  MODERN_MINIMAL
+  STARTER
+}
+
 type HourlyAvailabilityResult {
   date: DateTime!
   hotelId: String!
@@ -609,6 +616,25 @@ type HourlySlotInfo {
   isClosed: Boolean!
   price: Float!
   startTime: String!
+}
+
+type InboxActionResult {
+  success: Boolean!
+}
+
+type InboxNotification {
+  body: String
+  createdAt: DateTime!
+  id: ID!
+  isRead: Boolean!
+  link: String
+  title: String!
+  type: String!
+}
+
+type InboxPage {
+  items: [InboxNotification!]!
+  unreadCount: Int!
 }
 
 type InitiatePaymentResult {
@@ -673,8 +699,14 @@ type MonthlyDataPoint {
 }
 
 type Mutation {
+  """Add a custom domain to a hotel"""
+  addHotelDomain(domain: String!, hotelId: ID!): HotelDomain!
+
   """Apply pricing suggestions to room inventory"""
   applyPriceSuggestions(input: ApplyPriceSuggestionsInput!): ApplySuggestionsResult!
+
+  """Approve and publish a guest review"""
+  approveReview(reviewId: ID!): Review!
 
   """Archive a blog post"""
   archiveBlogPost(id: ID!): BlogPost!
@@ -712,6 +744,9 @@ type Mutation {
   """Delete a blog post permanently"""
   deleteBlogPost(id: ID!): Boolean!
 
+  """Permanently delete account and anonymize all personal data (GDPR)"""
+  deleteMyAccount: DeactivateResponse!
+
   """Deactivate a room type (soft delete)"""
   deleteRoomType(id: ID!): DeleteResult!
 
@@ -732,6 +767,12 @@ type Mutation {
 
   """Logout and revoke refresh token"""
   logout: LogoutResponse!
+
+  """Mark all notifications as read"""
+  markAllNotificationsRead: InboxActionResult!
+
+  """Mark a single notification as read"""
+  markNotificationRead(notificationId: ID!): InboxActionResult!
 
   """Modify booking dates and details"""
   modifyBooking(input: ModifyBookingInput!): Booking!
@@ -772,14 +813,32 @@ type Mutation {
   """Register a new user"""
   register(input: RegisterInput!): AuthResponse!
 
+  """Reject / unpublish a guest review"""
+  rejectReview(reviewId: ID!): Review!
+
+  """Remove a custom domain from a hotel"""
+  removeHotelDomain(domainId: ID!, hotelId: ID!): DeleteResult!
+
   """Hotel admin replies to a guest review"""
   replyToReview(input: HotelReplyInput!): Review!
 
   """Request OTP for phone login"""
   requestOTP(input: RequestOTPInput!): OTPResponse!
 
+  """Request a password reset link via email"""
+  requestPasswordReset(input: RequestPasswordResetInput!): LogoutResponse!
+
+  """Resend email verification link"""
+  resendVerificationEmail(input: ResendVerificationInput!): LogoutResponse!
+
+  """Reset password using reset token"""
+  resetPassword(input: ResetPasswordInput!): LogoutResponse!
+
   """Resolve a disputed commission"""
   resolveDispute(commissionId: ID!, resolution: String!): CommissionRecord!
+
+  """Set a domain as the primary domain for the hotel"""
+  setPrimaryDomain(domainId: ID!, hotelId: ID!): HotelDomain!
 
   """Settle pending commissions for a hotel"""
   settleCommissions(commissionIds: [ID!], hotelId: ID!): SettleResult!
@@ -810,6 +869,9 @@ type Mutation {
 
   """Create or update SEO meta for a page"""
   upsertSeoMeta(input: UpsertSeoMetaInput!): SeoMetaType!
+
+  """Verify email address using token"""
+  verifyEmail(input: VerifyEmailInput!): LogoutResponse!
 
   """Verify OTP and login/register"""
   verifyOTP(input: VerifyOTPInput!): AuthResponse!
@@ -1046,6 +1108,7 @@ type PlatformHotel {
   startingPrice: Float
   state: String!
   stripeAccountId: String
+  template: HotelTemplate!
   themeConfig: JSON
   updatedAt: DateTime!
   whatsapp: String
@@ -1213,6 +1276,9 @@ type Query {
   """Get commission records for a hotel"""
   hotelCommissions(endDate: DateTime, hotelId: ID!, limit: Int = 20, page: Int = 1, startDate: DateTime, status: String): PaginatedCommissions!
 
+  """Get all domains for a hotel"""
+  hotelDomains(hotelId: ID!): [HotelDomain!]!
+
   """Get review stats for a hotel"""
   hotelReviewStats(hotelId: ID!): ReviewStats!
 
@@ -1230,6 +1296,9 @@ type Query {
 
   """Get all reviews submitted by the logged-in guest"""
   myGuestReviews: [Review!]!
+
+  """Get in-app notifications for the current user"""
+  myNotifications(limit: Int = 20, offset: Int = 0): InboxPage!
 
   """Get current user's reviews"""
   myReviews(limit: Int = 10, offset: Int = 0): [Review!]!
@@ -1320,6 +1389,22 @@ input RegisterInput {
 """Request OTP for phone login"""
 input RequestOTPInput {
   phone: String!
+}
+
+"""Reset password request"""
+input RequestPasswordResetInput {
+  email: String!
+}
+
+"""Resend verification email"""
+input ResendVerificationInput {
+  email: String!
+}
+
+"""Reset password with token"""
+input ResetPasswordInput {
+  newPassword: String!
+  token: String!
 }
 
 type RevenueAnalytics {
@@ -1598,6 +1683,7 @@ input UpdateHotelInput {
   starRating: Int
   state: String
   stripeAccountId: String
+  template: HotelTemplate
   themeConfig: JSON
   whatsapp: String
 }
@@ -1663,6 +1749,11 @@ enum UserRole {
   HOTEL_ADMIN
   HOTEL_STAFF
   PLATFORM_ADMIN
+}
+
+"""Verify email address"""
+input VerifyEmailInput {
+  token: String!
 }
 
 """Verify OTP"""

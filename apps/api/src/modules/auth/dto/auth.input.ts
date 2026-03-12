@@ -107,6 +107,20 @@ export class ResetPasswordInput {
   newPassword: string;
 }
 
+@InputType({ description: 'Verify email address' })
+export class VerifyEmailInput {
+  @Field()
+  @IsString()
+  token: string;
+}
+
+@InputType({ description: 'Resend verification email' })
+export class ResendVerificationInput {
+  @Field()
+  @IsEmail()
+  email: string;
+}
+
 @InputType({ description: 'Change password for logged in user' })
 export class ChangePasswordInput {
   @Field()

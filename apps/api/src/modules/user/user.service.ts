@@ -1,11 +1,15 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { RedisService } from '../redis/redis.service';
 import { UpdateProfileInput } from './dto/update-user.input';
 import { UserRole } from './entities/user.entity';
 
 @Injectable()
 export class UserService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly redis: RedisService,
+  ) {}
 
   /**
    * Get user by ID
@@ -199,5 +203,57 @@ export class UserService {
     });
 
     return { success: true, message: 'Account deactivated' };
+  }
+
+  /**
+   * GDPR-compliant hard delete: anonymize PII, revoke tokens, keep booking records
+   */
+  async deleteAccount(userId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found');
+
+    const anonName = 'Deleted User';
+    const anonEmail = `deleted-${userId.slice(0, 8)}@removed.bluestay.in`;
+
+    await this.prisma.$transaction([
+      // Anonymize user record
+      this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          name: anonName,
+          email: anonEmail,
+          phone: null,
+          password: null,
+          avatarUrl: null,
+          isActive: false,
+          emailVerified: false,
+          phoneVerified: false,
+        },
+      }),
+      // Anonymize bookings guest info (keep financial records for tax)
+      this.prisma.booking.updateMany({
+        where: { guestId: userId },
+        data: {
+          guestName: anonName,
+          guestEmail: anonEmail,
+          guestPhone: 'REDACTED',
+          specialRequests: null,
+        },
+      }),
+      // Remove review content but keep ratings for aggregate stats
+      this.prisma.review.updateMany({
+        where: { guestId: userId },
+        data: {
+          comment: null,
+          title: null,
+          photos: [],
+        },
+      }),
+    ]);
+
+    // Revoke refresh tokens
+    await this.redis.del(`refresh:${userId}`);
+
+    return { success: true, message: 'Account and personal data have been permanently deleted.' };
   }
 }
