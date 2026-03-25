@@ -35,6 +35,7 @@ export function HotelMap({
 
     // Dynamically import Leaflet to avoid SSR issues
     let mapInstance: any = null;
+    let isMounted = true;
 
     const initMap = async () => {
       const L = (await import('leaflet')).default;
@@ -50,7 +51,13 @@ export function HotelMap({
       // Wait a bit for CSS to load
       await new Promise((r) => setTimeout(r, 100));
 
-      if (!mapRef.current) return;
+      if (!isMounted || !mapRef.current) return;
+
+      if ((mapRef.current as any)._leaflet_id) {
+        // Prevent "Map container is already initialized" error
+        // caused by React 18 strict mode double-invocations
+        return;
+      }
 
       // Clear any existing map
       mapRef.current.innerHTML = '';
@@ -99,6 +106,7 @@ export function HotelMap({
     initMap();
 
     return () => {
+      isMounted = false;
       if (mapInstance) {
         mapInstance.remove();
       }

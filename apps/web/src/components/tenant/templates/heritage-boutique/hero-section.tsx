@@ -39,11 +39,11 @@ export function HeritageBoutiqueHero({
 
           {hotel.tagline && (
             <div className="relative mb-20 px-8 w-full">
-              <span className="absolute -top-8 -left-4 text-6xl text-stone-300">{"""}</span>
+              <span className="absolute -top-8 -left-4 text-6xl text-stone-300">&quot;</span>
               <p className="text-2xl md:text-4xl text-stone-600 italic tracking-wide leading-relaxed max-w-3xl mx-auto break-words">
                 {sanitizeText(hotel.tagline)}
               </p>
-              <span className="absolute -bottom-16 -right-4 text-6xl text-stone-300">{"""}</span>
+              <span className="absolute -bottom-16 -right-4 text-6xl text-stone-300">&quot;</span>
             </div>
           )}
 

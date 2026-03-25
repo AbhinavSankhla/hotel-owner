@@ -8,9 +8,25 @@
  */
 
 import { useSearchParams } from 'next/navigation';
-import { TenantProvider } from '@/lib/tenant/tenant-context';
+import { TenantProvider, useTenant } from '@/lib/tenant/tenant-context';
 import { TenantHeader } from '@/components/tenant/tenant-header';
 import { TenantFooter } from '@/components/tenant/tenant-footer';
+
+function ThemeWrapper({ children }: { children: React.ReactNode }) {
+  const { hotel } = useTenant();
+  
+  const themeClass = hotel?.template 
+    ? `theme-${hotel.template.toLowerCase().replace(/_/g, '-')}`
+    : 'theme-modern-minimal';
+
+  return (
+    <div className={`min-h-screen ${themeClass}`}>
+      <TenantHeader />
+      <main className="min-h-screen">{children}</main>
+      <TenantFooter />
+    </div>
+  );
+}
 
 export default function TenantLayout({
   children,
@@ -22,9 +38,9 @@ export default function TenantLayout({
 
   return (
     <TenantProvider slug={slug}>
-      <TenantHeader />
-      <main className="min-h-screen pt-16">{children}</main>
-      <TenantFooter />
+      <ThemeWrapper>
+        {children}
+      </ThemeWrapper>
     </TenantProvider>
   );
 }

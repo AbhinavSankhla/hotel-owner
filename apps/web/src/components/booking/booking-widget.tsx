@@ -20,6 +20,7 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { CREATE_DAILY_BOOKING, CREATE_HOURLY_BOOKING } from '@/lib/graphql/mutations/bookings';
+import { useAuth } from '@/lib/auth/auth-context';
 
 interface BookingWidgetProps {
   hotelId: string;
@@ -71,6 +72,9 @@ export function BookingWidget({
   const [startTime, setStartTime] = useState<string>('14:00');
   const [hours, setHours] = useState<number>(minStayHours);
   
+  // Auth context
+  const { user } = useAuth();
+
   // Guest count
   const [guests, setGuests] = useState(2);
   const [extraGuests, setExtraGuests] = useState(0);
@@ -130,8 +134,13 @@ export function BookingWidget({
               roomTypeId: selectedRoom.id,
               checkInDate,
               checkOutDate,
-              guestCount: guests,
-              extraGuestCount: extraGuests,
+              numGuests: guests,
+              numExtraGuests: extraGuests,
+              guestInfo: {
+                name: user?.name || 'Guest User',
+                email: user?.email || 'guest@example.com',
+                phone: user?.phone || '0000000000',
+              }
             }
           }
         });
@@ -147,9 +156,15 @@ export function BookingWidget({
             input: {
               hotelId,
               roomTypeId: selectedRoom.id,
-              startDateTime: `${bookingDate}T${startTime}:00`,
-              duration: hours,
-              guestCount: guests,
+              date: bookingDate,
+              checkInTime: startTime,
+              numHours: hours,
+              numGuests: guests,
+              guestInfo: {
+                name: user?.name || 'Guest User',
+                email: user?.email || 'guest@example.com',
+                phone: user?.phone || '0000000000',
+              }
             }
           }
         });
