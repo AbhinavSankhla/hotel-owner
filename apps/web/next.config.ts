@@ -20,6 +20,10 @@ const nextConfig: NextConfig = {
     // Allow images from CDN and hotel domains
     remotePatterns: [
       {
+        protocol: "http",
+        hostname: "localhost",
+      },
+      {
         protocol: "https",
         hostname: "**.bluestay.in",
       },
@@ -77,6 +81,15 @@ const nextConfig: NextConfig = {
             value: "strict-origin-when-cross-origin",
           },
         ],
+      },
+    ];
+  },
+
+  async rewrites() {
+    return [
+      {
+        source: "/graphql",
+        destination: "http://localhost:4000/graphql",
       },
     ];
   },

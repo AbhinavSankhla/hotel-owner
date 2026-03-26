@@ -21,6 +21,7 @@ import {
 } from './dto/create-booking.input';
 import { BookingType, BookingSource, BookingStatus, PaymentStatus } from './entities/booking.entity';
 import { Prisma } from '@prisma/client';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { addDays, differenceInDays, format, addHours, parseISO } from 'date-fns';
 import { randomBytes } from 'crypto';
 
@@ -47,6 +48,81 @@ export class BookingService {
     const date = format(new Date(), 'yyyyMMdd');
     const random = randomBytes(3).toString('hex').toUpperCase();
     return `BK-${date}-${random}`;
+  }
+
+  /**
+   * Ensure booking references a valid guest user record.
+   */
+  private async resolveBookingGuestId(
+    guestId: string | undefined,
+    guestInfo: { name: string; email: string; phone: string },
+  ): Promise<string> {
+    if (guestId) {
+      const existingGuest = await this.prisma.user.findUnique({
+        where: { id: guestId },
+        select: { id: true },
+      });
+
+      if (existingGuest) {
+        return existingGuest.id;
+      }
+    }
+
+    const email = guestInfo.email.trim().toLowerCase();
+    const phone = guestInfo.phone.trim() || null;
+    const name = guestInfo.name.trim() || 'Guest';
+
+    const existingByEmail = await this.prisma.user.findUnique({
+      where: { email },
+      select: { id: true, name: true, phone: true },
+    });
+
+    if (existingByEmail) {
+      const shouldUpdateName = !existingByEmail.name && !!name;
+      const shouldUpdatePhone = !existingByEmail.phone && !!phone;
+
+      if (shouldUpdateName || shouldUpdatePhone) {
+        await this.prisma.user.update({
+          where: { id: existingByEmail.id },
+          data: {
+            ...(shouldUpdateName ? { name } : {}),
+            ...(shouldUpdatePhone ? { phone } : {}),
+          },
+        });
+      }
+
+      return existingByEmail.id;
+    }
+
+    try {
+      const createdGuest = await this.prisma.user.create({
+        data: {
+          name,
+          email,
+          phone,
+        },
+        select: { id: true },
+      });
+
+      return createdGuest.id;
+    } catch (error) {
+      // Handle a race where another request created the same email concurrently.
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        const guest = await this.prisma.user.findUnique({
+          where: { email },
+          select: { id: true },
+        });
+
+        if (guest) {
+          return guest.id;
+        }
+      }
+
+      throw error;
+    }
   }
 
   /**
@@ -158,14 +234,16 @@ export class BookingService {
         hotelPayout = totalAmount - commissionAmount;
       }
 
+      const resolvedGuestId = await this.resolveBookingGuestId(guestId, guestInfo);
+
       // Create booking and update inventory in a transaction
-      const booking = await this.prisma.$transaction(async (tx) => {
+      const booking = await this.prisma.$transaction(async (tx: any) => {
         // Create the booking
         const newBooking = await tx.booking.create({
           data: {
             bookingNumber: this.generateBookingNumber(),
             hotelId,
-            guestId: guestId || 'guest-placeholder', // Will be updated after user creation
+            guestId: resolvedGuestId,
             roomTypeId,
             bookingType: BookingType.DAILY,
             checkInDate: checkIn,
@@ -375,14 +453,16 @@ export class BookingService {
         hotelPayout = totalAmount - commissionAmount;
       }
 
+      const resolvedGuestId = await this.resolveBookingGuestId(guestId, guestInfo);
+
       // Create booking and update slots
-      const booking = await this.prisma.$transaction(async (tx) => {
+      const booking = await this.prisma.$transaction(async (tx: any) => {
         // Create the booking
         const newBooking = await tx.booking.create({
           data: {
             bookingNumber: this.generateBookingNumber(),
             hotelId,
-            guestId: guestId || 'guest-placeholder',
+            guestId: resolvedGuestId,
             roomTypeId,
             bookingType: BookingType.HOURLY,
             checkInDate: bookingDate,
@@ -544,7 +624,7 @@ export class BookingService {
     const limit = pagination?.limit ?? 20;
     const skip = (page - 1) * limit;
 
-    const where: Prisma.BookingWhereInput = {};
+    const where: any = {};
 
     if (filters?.hotelId) {
       where.hotelId = filters.hotelId;
@@ -633,7 +713,7 @@ export class BookingService {
     }
 
     // Update booking and restore inventory
-    const updatedBooking = await this.prisma.$transaction(async (tx) => {
+    const updatedBooking = await this.prisma.$transaction(async (tx: any) => {
       const cancelled = await tx.booking.update({
         where: { id: bookingId },
         data: {
@@ -807,7 +887,7 @@ export class BookingService {
       const dateStr = format(date, 'yyyy-MM-dd');
 
       const inv = roomType.inventory.find(
-        (inv) => format(new Date(inv.date), 'yyyy-MM-dd') === dateStr
+        (inv: any) => format(new Date(inv.date), 'yyyy-MM-dd') === dateStr
       );
 
       const available = inv?.availableCount ?? roomType.totalRooms;
