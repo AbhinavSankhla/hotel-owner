@@ -125,8 +125,25 @@ export function BookingWidget({
   const handleBooking = async () => {
     if (!selectedRoom) return;
     
+    // Default guest info for demo/guest mode
+    const guestInfo = {
+      name: user?.name || 'Guest User',
+      email: user?.email || 'guest@example.com',
+      phone: user?.phone || '9999999999',
+    };
+    
     try {
       if (bookingType === 'DAILY') {
+        console.log('Creating daily booking with:', {
+          hotelId,
+          roomTypeId: selectedRoom.id,
+          checkInDate,
+          checkOutDate,
+          numGuests: guests,
+          numExtraGuests: extraGuests,
+          guestInfo
+        });
+
         const result = await createDailyBooking({
           variables: {
             input: {
@@ -136,11 +153,7 @@ export function BookingWidget({
               checkOutDate,
               numGuests: guests,
               numExtraGuests: extraGuests,
-              guestInfo: {
-                name: user?.name || 'Guest User',
-                email: user?.email || 'guest@example.com',
-                phone: user?.phone || '0000000000',
-              }
+              guestInfo
             }
           }
         });
@@ -151,6 +164,16 @@ export function BookingWidget({
           window.location.href = `/booking/${bookingData.createDailyBooking.id}/payment`;
         }
       } else {
+        console.log('Creating hourly booking with:', {
+          hotelId,
+          roomTypeId: selectedRoom.id,
+          date: bookingDate,
+          checkInTime: startTime,
+          numHours: hours,
+          numGuests: guests,
+          guestInfo
+        });
+
         const result = await createHourlyBooking({
           variables: {
             input: {
@@ -160,11 +183,7 @@ export function BookingWidget({
               checkInTime: startTime,
               numHours: hours,
               numGuests: guests,
-              guestInfo: {
-                name: user?.name || 'Guest User',
-                email: user?.email || 'guest@example.com',
-                phone: user?.phone || '0000000000',
-              }
+              guestInfo
             }
           }
         });

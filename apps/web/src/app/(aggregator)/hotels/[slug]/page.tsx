@@ -9,9 +9,8 @@ import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import { getClient } from '@/lib/graphql/client';
 import { GET_HOTEL_BY_SLUG } from '@/lib/graphql/queries/hotels';
-import { RoomCard } from '@/components/rooms/room-card';
+import { RoomList } from '@/components/rooms/room-list';
 import { ReviewSection } from '@/components/reviews/review-section';
-import { BookingWidget } from '@/components/booking/booking-widget';
 import { StarRating } from '@/components/ui/star-rating';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -294,49 +293,20 @@ export default async function HotelPage({ params }: HotelPageProps) {
                 {/* Rooms */}
                 <div id="rooms">
                   <h2 className="text-2xl font-semibold text-gray-900 mb-6">Available Rooms</h2>
-                  <div className="space-y-4">
-                    {hotel.roomTypes?.map((room) => (
-                      <RoomCard 
-                        key={room.id} 
-                        room={room}
-                        hotelSlug={slug}
-                        bookingModel={hotel.bookingModel}
-                      />
-                    ))}
-                    {(!hotel.roomTypes || hotel.roomTypes.length === 0) && (
-                      <div className="text-center py-12 bg-gray-50 rounded-xl">
-                        <p className="text-gray-500">No rooms available at the moment.</p>
-                      </div>
-                    )}
-                  </div>
+                  <RoomList rooms={hotel.roomTypes || []} hotel={hotel} />
                 </div>
                 
                 {/* Reviews */}
                 <div id="reviews">
-                  <ReviewSection
-                    hotelId={hotel.id}
-                    averageRating={hotel.averageRating}
-                    reviewCount={hotel.reviewCount}
-                    reviews={hotel.reviews || []}
-                  />
+                  <Suspense fallback={<div>Loading reviews...</div>}>
+                    <ReviewSection hotelId={hotel.id} reviews={hotel.reviews || []} />
+                  </Suspense>
                 </div>
               </div>
               
-              {/* Sidebar - Booking Widget */}
+              {/* Sidebar */}
               <div className="lg:col-span-1">
-                <div className="sticky top-24">
-                  <BookingWidget 
-                    hotelId={hotel.id}
-                    hotelName={hotel.name}
-                    hotelSlug={slug}
-                    bookingModel={hotel.bookingModel}
-                    minStayNights={hotel.minStayNights}
-                    minStayHours={hotel.minStayHours}
-                    checkInTime={hotel.checkInTime}
-                    checkOutTime={hotel.checkOutTime}
-                    selectedRoom={hotel.roomTypes?.[0] || null}
-                  />
-                </div>
+                {/* This space can be used for other widgets or ads in the future */}
               </div>
             </div>
           </div>

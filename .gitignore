@@ -49,3 +49,7 @@ prisma/generated
 nginx/certs/*.crt
 nginx/certs/*.key
 nginx/certs/*.pem
+
+# Standalone exports
+radhika-resort/
+hotel-booking-standalone*

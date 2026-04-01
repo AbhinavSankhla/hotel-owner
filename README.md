@@ -2,27 +2,16 @@
 
 A full-stack, production-grade hotel reservation system built as a multi-tenant SaaS platform. Hotels get their own white-label booking websites while guests discover and book through a central aggregator (like Booking.com / OYO).
 
-> **[Full Project Guide →](GUIDE.md)** — Detailed installation, configuration, usage, admin credentials, deployment, and more.
-
 ---
 
-## 🚀 Quick Start (Local Development)
+## Quick Start (Local Development)
 
 ### Prerequisites
-1. **Node.js 20+** - [Download here](https://nodejs.org/)
-2. **Docker Desktop** - [Download here](https://www.docker.com/products/docker-desktop/)
+- **Node.js 20+** — [Download here](https://nodejs.org/)
+- **Docker & Docker Compose** — [Download here](https://www.docker.com/products/docker-desktop/)
 
-### Automated Setup (Recommended)
-```powershell
-# Run the setup script (installs dependencies, starts services, seeds database)
-.\setup.ps1
-
-# Start both servers (opens in new windows)
-.\start.ps1
-```
-
-### Manual Setup
-```powershell
+### Setup
+```bash
 # 1. Install dependencies
 npm install
 
@@ -48,7 +37,7 @@ npm run dev:web   # → http://localhost:3000
 
 **Login:** `admin@bluestay.in` / `password123`
 
-> **Detailed setup guide:** See [SETUP.md](SETUP.md) for troubleshooting and more options.
+
 
 ---
 
@@ -216,16 +205,6 @@ docker compose exec api npx prisma db push
 docker compose exec api npx prisma db seed
 # Web: http://localhost:3000 | API: http://localhost:4000/graphql | Swagger: http://localhost:4000/api/docs
 ```
-
-### Production
-
-```bash
-cp .env.production.example .env.production
-# Edit with real values (passwords, API keys, domains)
-docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
-```
-
-> See **[GUIDE.md → Section 18](GUIDE.md#18-production-deployment)** for full deployment instructions.
 
 ---
 

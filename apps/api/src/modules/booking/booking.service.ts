@@ -22,7 +22,7 @@ import {
 import { BookingType, BookingSource, BookingStatus, PaymentStatus } from './entities/booking.entity';
 import { Prisma } from '@prisma/client';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
-import { addDays, differenceInDays, format, addHours, parseISO } from 'date-fns';
+import { addDays, differenceInDays, format, addHours, parseISO, startOfDay, isBefore } from 'date-fns';
 import { randomBytes } from 'crypto';
 
 @Injectable()
@@ -145,13 +145,16 @@ export class BookingService {
     // Validate dates
     const checkIn = new Date(checkInDate);
     const checkOut = new Date(checkOutDate);
-    const nights = differenceInDays(checkOut, checkIn);
+    
+    // Ensure accurate day difference calculation
+    const nights = differenceInDays(startOfDay(checkOut), startOfDay(checkIn));
 
     if (nights < 1) {
       throw new BadRequestException('Check-out date must be after check-in date');
     }
 
-    if (checkIn < new Date()) {
+    // Allow same-day bookings by checking against start of today
+    if (isBefore(startOfDay(checkIn), startOfDay(new Date()))) {
       throw new BadRequestException('Check-in date cannot be in the past');
     }
 
@@ -374,7 +377,8 @@ export class BookingService {
 
     const bookingDate = new Date(date);
     
-    if (bookingDate < new Date()) {
+    // Allow same-day bookings
+    if (isBefore(startOfDay(bookingDate), startOfDay(new Date()))) {
       throw new BadRequestException('Booking date cannot be in the past');
     }
 
