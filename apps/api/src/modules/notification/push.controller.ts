@@ -1,7 +1,7 @@
 import { Controller, Post, Delete, Get, Body, Req, Logger } from '@nestjs/common';
 import { PushNotificationService } from './push.service';
 
-@Controller('api/push')
+@Controller('push')
 export class PushController {
   private readonly logger = new Logger(PushController.name);
 

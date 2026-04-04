@@ -37,30 +37,6 @@ export const TENANT_HOTEL_FRAGMENT = gql`
   }
 `;
 
-export const GET_HOTEL_BY_DOMAIN = gql`
-  query GetHotelByDomain($domain: String!) {
-    hotelByDomain(domain: $domain) {
-      ...TenantHotel
-      roomTypes {
-        id
-        name
-        slug
-        description
-        basePriceDaily
-        basePriceHourly
-        maxGuests
-        maxExtraGuests
-        extraGuestCharge
-        totalRooms
-        amenities
-        images
-        isActive
-      }
-    }
-  }
-  ${TENANT_HOTEL_FRAGMENT}
-`;
-
 export const GET_HOTEL_BY_SLUG_TENANT = gql`
   query GetHotelBySlugTenant($slug: String!) {
     hotelBySlug(slug: $slug) {

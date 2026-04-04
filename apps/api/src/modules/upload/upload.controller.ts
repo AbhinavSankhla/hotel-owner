@@ -26,7 +26,7 @@ const multerOptions = {
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
 };
 
-@Controller('api/upload')
+@Controller('upload')
 export class UploadController {
   private readonly logger = new Logger(UploadController.name);
 

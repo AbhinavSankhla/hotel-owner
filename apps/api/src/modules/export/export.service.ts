@@ -346,9 +346,9 @@ footer { background: #111827; color: #9ca3af; padding: 32px 0; text-align: cente
       `- A hotel-scoped API key\n` +
       `- The hotel's own HOTEL_ID\n\n` +
       `## What Not to Share\n` +
-      `- Platform database URL\n` +
+      `- Database URL and credentials\n` +
       `- Redis credentials\n` +
-      `- Platform admin JWT secrets\n\n` +
+      `- JWT secrets\n\n` +
       `## Setup\n` +
       `1. Copy .env.example to .env.local\n` +
       `2. Fill NEXT_PUBLIC_API_URL, NEXT_PUBLIC_HOTEL_ID, API_KEY\n` +

@@ -13,7 +13,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
  *   - Authorization: Bearer <token> header
  *   - ?token=<jwt> query param (for direct browser download links)
  */
-@Controller('api/invoices')
+@Controller('invoices')
 export class InvoiceController {
   constructor(private readonly invoiceService: InvoiceService) {}
 

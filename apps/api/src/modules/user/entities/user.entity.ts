@@ -11,6 +11,18 @@ registerEnumType(UserRole, {
   description: 'User role type',
 });
 
+@ObjectType({ description: 'Staff permission flags' })
+export class StaffPermission {
+  @Field(() => ID) id: string;
+  @Field() canManageBookings: boolean;
+  @Field() canManageRooms: boolean;
+  @Field() canManagePricing: boolean;
+  @Field() canManageReviews: boolean;
+  @Field() canManageContent: boolean;
+  @Field() canViewAnalytics: boolean;
+  @Field() canManageStaff: boolean;
+}
+
 @ObjectType({ description: 'User entity' })
 export class User {
   @Field(() => ID)
@@ -54,18 +66,6 @@ export class User {
 
   @Field(() => StaffPermission, { nullable: true })
   staffPermission?: StaffPermission;
-}
-
-@ObjectType({ description: 'Staff permission flags' })
-export class StaffPermission {
-  @Field(() => ID) id: string;
-  @Field() canManageBookings: boolean;
-  @Field() canManageRooms: boolean;
-  @Field() canManagePricing: boolean;
-  @Field() canManageReviews: boolean;
-  @Field() canManageContent: boolean;
-  @Field() canViewAnalytics: boolean;
-  @Field() canManageStaff: boolean;
 }
 
 @ObjectType({ description: 'Auth response with tokens' })

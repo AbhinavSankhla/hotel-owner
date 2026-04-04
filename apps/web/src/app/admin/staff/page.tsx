@@ -135,7 +135,7 @@ export default function StaffPage() {
   const [permissions, setPermissions] = useState<StaffPermission>(DEFAULT_PERMISSIONS);
   const [error, setError] = useState('');
 
-  const { data, loading, refetch } = useQuery(GET_HOTEL_STAFF, {
+  const { data, loading, refetch } = useQuery<{ hotelStaff: StaffMember[] }>(GET_HOTEL_STAFF, {
     variables: { hotelId },
     skip: !hotelId,
   });

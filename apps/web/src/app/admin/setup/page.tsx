@@ -64,7 +64,7 @@ export default function SetupPage() {
   const router = useRouter();
   const hotelId = user?.hotelId;
 
-  const { data, loading, refetch } = useQuery(GET_SETUP_STATUS, {
+  const { data, loading, refetch } = useQuery<{ setupStatus: { hotelId: string; setupCompleted: boolean; steps: { basicInfo: boolean; contactInfo: boolean; rooms: boolean; gallery: boolean; policies: boolean } } }>(GET_SETUP_STATUS, {
     variables: { hotelId },
     skip: !hotelId,
   });
