@@ -6,7 +6,6 @@ import {
   OccupancyAnalytics,
   BookingAnalytics,
   GuestAnalytics,
-  PlatformRevenueOverview,
 } from './entities/analytics.entity';
 import { GqlAuthGuard } from '../auth/guards/jwt-auth.guard';
 
@@ -64,20 +63,5 @@ export class AnalyticsResolver {
     @Args('period', { nullable: true, defaultValue: '30d' }) period?: string,
   ) {
     return this.analyticsService.getGuestAnalytics(hotelId, period);
-  }
-
-  // ============================================
-  // Platform Analytics
-  // ============================================
-
-  @Query(() => PlatformRevenueOverview, {
-    name: 'platformRevenueOverview',
-    description: 'Get platform-wide revenue overview (platform admin only)',
-  })
-  @UseGuards(GqlAuthGuard)
-  async getPlatformRevenueOverview(
-    @Args('period', { nullable: true, defaultValue: '30d' }) period?: string,
-  ) {
-    return this.analyticsService.getPlatformRevenueOverview(period);
   }
 }

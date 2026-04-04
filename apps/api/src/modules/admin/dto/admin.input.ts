@@ -1,6 +1,6 @@
 import { InputType, Field, Float, Int, ID } from '@nestjs/graphql';
 import { GraphQLJSON } from 'graphql-scalars';
-import { IsNotEmpty, IsOptional, IsString, IsNumber, IsEnum, IsEmail } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsNumber, IsEnum, IsEmail, IsBoolean, MinLength } from 'class-validator';
 import { BookingModel, HotelTemplate } from '../../hotel/entities/hotel.entity';
 
 @InputType()
@@ -302,4 +302,112 @@ export class UpdateHotelContentInput {
 
   @Field(() => GraphQLJSON, { nullable: true, description: 'Theme config: { primaryColor, fontFamily, etc. }' })
   themeConfig?: any;
+}
+
+// ============================================
+// Staff Management
+// ============================================
+
+@InputType()
+export class StaffPermissionsInput {
+  @Field({ nullable: true, defaultValue: true })
+  @IsOptional()
+  @IsBoolean()
+  canManageBookings?: boolean;
+
+  @Field({ nullable: true, defaultValue: false })
+  @IsOptional()
+  @IsBoolean()
+  canManageRooms?: boolean;
+
+  @Field({ nullable: true, defaultValue: false })
+  @IsOptional()
+  @IsBoolean()
+  canManagePricing?: boolean;
+
+  @Field({ nullable: true, defaultValue: true })
+  @IsOptional()
+  @IsBoolean()
+  canManageReviews?: boolean;
+
+  @Field({ nullable: true, defaultValue: false })
+  @IsOptional()
+  @IsBoolean()
+  canManageContent?: boolean;
+
+  @Field({ nullable: true, defaultValue: false })
+  @IsOptional()
+  @IsBoolean()
+  canViewAnalytics?: boolean;
+
+  @Field({ nullable: true, defaultValue: false })
+  @IsOptional()
+  @IsBoolean()
+  canManageStaff?: boolean;
+}
+
+@InputType()
+export class CreateStaffInput {
+  @Field(() => ID)
+  @IsNotEmpty()
+  hotelId: string;
+
+  @Field()
+  @IsNotEmpty()
+  @IsString()
+  name: string;
+
+  @Field()
+  @IsNotEmpty()
+  @IsEmail()
+  email: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  phone?: string;
+
+  @Field()
+  @IsNotEmpty()
+  @MinLength(8)
+  password: string;
+
+  @Field(() => StaffPermissionsInput, { nullable: true })
+  @IsOptional()
+  permissions?: StaffPermissionsInput;
+}
+
+@InputType()
+export class UpdateStaffInput {
+  @Field(() => ID)
+  @IsNotEmpty()
+  hotelId: string;
+
+  @Field(() => ID)
+  @IsNotEmpty()
+  staffId: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  name?: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsEmail()
+  email?: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  phone?: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
+
+  @Field(() => StaffPermissionsInput, { nullable: true })
+  @IsOptional()
+  permissions?: StaffPermissionsInput;
 }

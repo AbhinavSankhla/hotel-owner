@@ -136,7 +136,6 @@ export class AdminService {
       where: { id: hotelId },
       data,
       include: {
-        domains: true,
         roomTypes: { where: { isActive: true }, orderBy: { sortOrder: 'asc' } },
       },
     });
@@ -614,4 +613,126 @@ export class AdminService {
     return hotel;
   }
 
+  // ============================================
+  // Staff Management
+  // ============================================
+
+  async getStaffMembers(hotelId: string) {
+    return this.prisma.user.findMany({
+      where: {
+        hotelId,
+        role: { in: ['HOTEL_ADMIN', 'HOTEL_STAFF'] },
+      },
+      include: { staffPermission: true },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async createStaffMember(
+    hotelId: string,
+    data: { name: string; email: string; phone?: string; password: string; permissions?: any },
+  ) {
+    const existing = await this.prisma.user.findFirst({
+      where: { OR: [{ email: data.email }, ...(data.phone ? [{ phone: data.phone }] : [])] },
+    });
+    if (existing) {
+      throw new ForbiddenException('A user with this email or phone already exists');
+    }
+
+    const bcrypt = await import('bcryptjs');
+    const hashedPassword = await bcrypt.hash(data.password, 12);
+
+    return this.prisma.user.create({
+      data: {
+        name: data.name,
+        email: data.email,
+        phone: data.phone || null,
+        password: hashedPassword,
+        role: 'HOTEL_STAFF',
+        hotelId,
+        emailVerified: true,
+        staffPermission: {
+          create: data.permissions || {},
+        },
+      },
+      include: { staffPermission: true },
+    });
+  }
+
+  async updateStaffMember(
+    hotelId: string,
+    staffId: string,
+    data: { name?: string; email?: string; phone?: string; isActive?: boolean; permissions?: any },
+  ) {
+    const staff = await this.prisma.user.findFirst({
+      where: { id: staffId, hotelId, role: 'HOTEL_STAFF' },
+    });
+    if (!staff) throw new NotFoundException('Staff member not found');
+
+    const { permissions, ...userData } = data;
+
+    const updated = await this.prisma.user.update({
+      where: { id: staffId },
+      data: {
+        ...Object.fromEntries(Object.entries(userData).filter(([, v]) => v !== undefined)),
+        ...(permissions
+          ? {
+              staffPermission: {
+                upsert: {
+                  create: permissions,
+                  update: permissions,
+                },
+              },
+            }
+          : {}),
+      },
+      include: { staffPermission: true },
+    });
+
+    return updated;
+  }
+
+  async deleteStaffMember(hotelId: string, staffId: string) {
+    const staff = await this.prisma.user.findFirst({
+      where: { id: staffId, hotelId, role: 'HOTEL_STAFF' },
+    });
+    if (!staff) throw new NotFoundException('Staff member not found');
+
+    await this.prisma.user.delete({ where: { id: staffId } });
+    return { success: true, message: 'Staff member deleted' };
+  }
+
+  // ============================================
+  // Setup Wizard
+  // ============================================
+
+  async getSetupStatus(hotelId: string) {
+    const hotel = await this.prisma.hotel.findUnique({
+      where: { id: hotelId },
+      include: {
+        roomTypes: { select: { id: true } },
+        media: { select: { id: true } },
+      },
+    });
+    if (!hotel) throw new NotFoundException('Hotel not found');
+
+    return {
+      hotelId: hotel.id,
+      setupCompleted: hotel.setupCompleted,
+      steps: {
+        basicInfo: Boolean(hotel.name && hotel.address && hotel.city),
+        contactInfo: Boolean(hotel.email || hotel.phone),
+        rooms: hotel.roomTypes.length > 0,
+        gallery: hotel.media.length > 0,
+        policies: Boolean(hotel.checkInTime && hotel.checkOutTime),
+      },
+    };
+  }
+
+  async completeSetup(hotelId: string) {
+    return this.prisma.hotel.update({
+      where: { id: hotelId },
+      data: { setupCompleted: true },
+    });
+  }
 }

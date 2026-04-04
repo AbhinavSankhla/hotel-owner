@@ -20,8 +20,6 @@ export class DailyRevenue {
 @ObjectType()
 export class RevenueAnalytics {
   @Field(() => Float) totalRevenue: number;
-  @Field(() => Float) totalCommission: number;
-  @Field(() => Float) hotelPayout: number;
   @Field(() => Int) bookingCount: number;
   @Field(() => Float) previousRevenue: number;
   @Field(() => Int) previousBookingCount: number;

@@ -53,7 +53,6 @@ async function main() {
       checkOutTime: '12:00',
       hourlyMinHours: 3,
       hourlyMaxHours: 12,
-      commissionRate: 0,
       isActive: true,
       themeConfig: {
         primaryColor: '#1e40af',
@@ -83,7 +82,6 @@ async function main() {
       bookingModel: BookingModel.DAILY,
       checkInTime: '15:00',
       checkOutTime: '11:00',
-      commissionRate: 0,
       isActive: true,
     },
   });
@@ -108,7 +106,6 @@ async function main() {
       bookingModel: BookingModel.DAILY,
       checkInTime: '14:00',
       checkOutTime: '12:00',
-      commissionRate: 0,
       isActive: true,
     },
   });

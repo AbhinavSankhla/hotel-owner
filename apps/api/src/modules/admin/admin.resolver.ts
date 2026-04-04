@@ -5,11 +5,12 @@ import { AdminService } from './admin.service';
 import { Hotel } from '../hotel/entities/hotel.entity';
 import { RoomType, RoomInventory } from '../room/entities/room-type.entity';
 import { Booking } from '../booking/entities/booking.entity';
-import { UpdateHotelInput, CreateRoomTypeInput, UpdateRoomTypeInput, BulkInventoryUpdateInput, SingleDateInventoryInput, UpsertSeoMetaInput, UpdateHotelContentInput } from './dto/admin.input';
+import { UpdateHotelInput, CreateRoomTypeInput, UpdateRoomTypeInput, BulkInventoryUpdateInput, SingleDateInventoryInput, UpsertSeoMetaInput, UpdateHotelContentInput, CreateStaffInput, UpdateStaffInput } from './dto/admin.input';
 import { GraphQLJSON } from 'graphql-scalars';
 import { GqlAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard, Roles } from '../../common/guards/roles.guard';
 import { TenantGuard } from '../../common/guards/tenant.guard';
+import { User } from '../user/entities/user.entity';
 
 // Dashboard stats response type
 @ObjectType()
@@ -347,6 +348,97 @@ export class AdminResolver {
     const { hotelId, ...data } = input;
     return this.adminService.updateHotelContent(hotelId, data);
   }
+
+  // ============================================
+  // Staff Management
+  // ============================================
+
+  @Query(() => [User], {
+    name: 'hotelStaff',
+    description: 'List all staff members for the hotel',
+  })
+  async getHotelStaff(
+    @Args('hotelId', { type: () => ID }) hotelId: string,
+  ) {
+    return this.adminService.getStaffMembers(hotelId);
+  }
+
+  @Mutation(() => User, {
+    name: 'createStaffMember',
+    description: 'Create a new staff member for the hotel',
+  })
+  @Roles('HOTEL_ADMIN')
+  async createStaffMember(@Args('input') input: CreateStaffInput) {
+    const { hotelId, permissions, ...data } = input;
+    return this.adminService.createStaffMember(hotelId, { ...data, permissions });
+  }
+
+  @Mutation(() => User, {
+    name: 'updateStaffMember',
+    description: 'Update a staff member',
+  })
+  @Roles('HOTEL_ADMIN')
+  async updateStaffMember(@Args('input') input: UpdateStaffInput) {
+    const { hotelId, staffId, ...data } = input;
+    return this.adminService.updateStaffMember(hotelId, staffId, data);
+  }
+
+  @Mutation(() => DeleteResult, {
+    name: 'deleteStaffMember',
+    description: 'Remove a staff member',
+  })
+  @Roles('HOTEL_ADMIN')
+  async deleteStaffMember(
+    @Args('hotelId', { type: () => ID }) hotelId: string,
+    @Args('staffId', { type: () => ID }) staffId: string,
+  ) {
+    return this.adminService.deleteStaffMember(hotelId, staffId);
+  }
+
+  // ============================================
+  // Setup Wizard
+  // ============================================
+
+  @Query(() => SetupStatus, {
+    name: 'setupStatus',
+    description: 'Get setup wizard status for the hotel',
+  })
+  async getSetupStatus(
+    @Args('hotelId', { type: () => ID }) hotelId: string,
+  ) {
+    return this.adminService.getSetupStatus(hotelId);
+  }
+
+  @Mutation(() => Hotel, {
+    name: 'completeSetup',
+    description: 'Mark hotel setup as complete',
+  })
+  @Roles('HOTEL_ADMIN')
+  async completeSetup(
+    @Args('hotelId', { type: () => ID }) hotelId: string,
+  ) {
+    return this.adminService.completeSetup(hotelId);
+  }
+}
+
+// ============================================
+// Setup Wizard Types
+// ============================================
+
+@ObjectType()
+class SetupSteps {
+  @Field() basicInfo: boolean;
+  @Field() contactInfo: boolean;
+  @Field() rooms: boolean;
+  @Field() gallery: boolean;
+  @Field() policies: boolean;
+}
+
+@ObjectType()
+class SetupStatus {
+  @Field(() => ID) hotelId: string;
+  @Field() setupCompleted: boolean;
+  @Field(() => SetupSteps) steps: SetupSteps;
 }
 
 // ============================================

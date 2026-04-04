@@ -37,7 +37,7 @@ export class AnalyticsService {
     const [currentRevenue, previousRevenue, revenueBySource, dailyRevenue] =
       await Promise.all([
         this.prisma.booking.aggregate({
-          _sum: { totalAmount: true, commissionAmount: true, hotelPayout: true },
+          _sum: { totalAmount: true },
           _count: true,
           where: {
             hotelId,
@@ -70,15 +70,13 @@ export class AnalyticsService {
       ]);
 
     const result = {
-      totalRevenue: currentRevenue._sum.totalAmount || 0,
-      totalCommission: currentRevenue._sum.commissionAmount || 0,
-      hotelPayout: currentRevenue._sum.hotelPayout || 0,
+      totalRevenue: currentRevenue._sum?.totalAmount || 0,
       bookingCount: currentRevenue._count,
-      previousRevenue: previousRevenue._sum.totalAmount || 0,
+      previousRevenue: previousRevenue._sum?.totalAmount || 0,
       previousBookingCount: previousRevenue._count,
       revenueGrowth: this.calculateGrowth(
-        currentRevenue._sum.totalAmount || 0,
-        previousRevenue._sum.totalAmount || 0,
+        currentRevenue._sum?.totalAmount || 0,
+        previousRevenue._sum?.totalAmount || 0,
       ),
       revenueBySource: revenueBySource.map((s) => ({
         source: s.source,
@@ -384,73 +382,6 @@ export class AnalyticsService {
   }
 
   // ============================================
-  // Platform-Wide Analytics
-  // ============================================
-
-  /**
-   * Platform revenue overview
-   */
-  async getPlatformRevenueOverview(period: string = '30d') {
-    const cacheKey = `analytics:platform:revenue:${period}`;
-    const cached = await this.redis.get(cacheKey);
-    if (cached) return JSON.parse(cached);
-
-    const startDate = this.getStartDate(period);
-
-    const [revenue, commissions, topHotels, dailyRevenue] = await Promise.all([
-      this.prisma.booking.aggregate({
-        _sum: { totalAmount: true, commissionAmount: true },
-        _count: true,
-        where: {
-          createdAt: { gte: startDate },
-          status: { notIn: ['CANCELLED'] },
-          paymentStatus: { in: ['PAID', 'PARTIALLY_REFUNDED'] },
-        },
-      }),
-      this.prisma.commission.aggregate({
-        _sum: { commissionAmount: true },
-        where: { createdAt: { gte: startDate } },
-      }),
-      this.prisma.booking.groupBy({
-        by: ['hotelId'],
-        _sum: { totalAmount: true },
-        _count: true,
-        where: {
-          createdAt: { gte: startDate },
-          status: { notIn: ['CANCELLED'] },
-        },
-        orderBy: { _sum: { totalAmount: 'desc' } },
-        take: 10,
-      }),
-      this.getDailyRevenue(undefined, startDate),
-    ]);
-
-    // Enrich hotel names
-    const hotelIds = topHotels.map((h) => h.hotelId);
-    const hotels = await this.prisma.hotel.findMany({
-      where: { id: { in: hotelIds } },
-      select: { id: true, name: true, city: true },
-    });
-    const hotelMap = new Map(hotels.map((h) => [h.id, h]));
-
-    const result = {
-      totalRevenue: revenue._sum.totalAmount || 0,
-      totalCommission: commissions._sum.commissionAmount || 0,
-      bookingCount: revenue._count,
-      topHotels: topHotels.map((h) => ({
-        hotelId: h.hotelId,
-        name: hotelMap.get(h.hotelId)?.name || 'Unknown',
-        city: hotelMap.get(h.hotelId)?.city || '',
-        revenue: h._sum.totalAmount || 0,
-        bookings: h._count,
-      })),
-      dailyRevenue,
-    };
-
-    await this.redis.set(cacheKey, JSON.stringify(result), this.CACHE_TTL);
-    return result;
-  }
-
   // ============================================
   // Helper Methods
   // ============================================
