@@ -1,5 +1,5 @@
 /**
- * BlueStay API - Root Application Module
+ * Hotel Manager API - Root Application Module
  * 
  * Configures all modules, GraphQL, and global providers.
  */
@@ -32,7 +32,6 @@ import { SmartPricingModule } from './modules/pricing/smart-pricing.module';
 import { UploadModule } from './modules/upload/upload.module';
 import { QueueModule } from './modules/queue/queue.module';
 import { BlogModule } from './modules/blog/blog.module';
-import { CommissionModule } from './modules/commission/commission.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { ExportModule } from './modules/export/export.module';
 import { ApiKeyModule } from './modules/api-key/api-key.module';
@@ -75,9 +74,9 @@ import { HealthController } from './health.controller';
           req,
           res,
           // Tenant context from middleware
-          tenantType: req.headers['x-tenant-type'] || 'aggregator',
-          tenantId: req.headers['x-tenant-id'] || 'bluestay',
-          hotelId: req.headers['x-hotel-id'] || null,
+          tenantType: req.headers['x-tenant-type'] || 'hotel',
+          tenantId: req.headers['x-tenant-id'] || process.env.HOTEL_ID || 'default',
+          hotelId: req.headers['x-hotel-id'] || process.env.HOTEL_ID || null,
         }),
         
         // Format errors for client
@@ -135,7 +134,6 @@ import { HealthController } from './health.controller';
     UploadModule,
     QueueModule,
     BlogModule,
-    CommissionModule,
     AnalyticsModule,
     ExportModule,
     ApiKeyModule,

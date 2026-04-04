@@ -119,7 +119,7 @@ export default function WalkInBookingPage() {
     try {
       const guestInfo = {
         name: guestName,
-        email: guestEmail || `walkin-${Date.now()}@bluestay.in`,
+        email: guestEmail || `walkin-${Date.now()}@hotel.local`,
         phone: guestPhone,
       };
 

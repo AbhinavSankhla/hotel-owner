@@ -82,10 +82,10 @@ export class CreateDailyBookingInput {
   @IsString()
   specialRequests?: string;
 
-  @Field(() => BookingSource, { defaultValue: BookingSource.BLUESTAY })
+  @Field(() => BookingSource, { defaultValue: BookingSource.DIRECT })
   @IsOptional()
   @IsEnum(BookingSource)
-  source?: BookingSource = BookingSource.BLUESTAY;
+  source?: BookingSource = BookingSource.DIRECT;
 
   @Field({ nullable: true })
   @IsOptional()
@@ -142,10 +142,10 @@ export class CreateHourlyBookingInput {
   @IsString()
   specialRequests?: string;
 
-  @Field(() => BookingSource, { defaultValue: BookingSource.BLUESTAY })
+  @Field(() => BookingSource, { defaultValue: BookingSource.DIRECT })
   @IsOptional()
   @IsEnum(BookingSource)
-  source?: BookingSource = BookingSource.BLUESTAY;
+  source?: BookingSource = BookingSource.DIRECT;
 }
 
 @InputType({ description: 'Filters for listing bookings' })

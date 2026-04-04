@@ -12,28 +12,26 @@ import { CTASection } from "./sections/cta-section";
  * Homepage Metadata for SEO
  */
 export const metadata: Metadata = {
-  title: "BlueStay - Book Hotels Across India | Best Prices Guaranteed",
+  title: "Book Your Stay — Best Rates Direct",
   description:
-    "Discover and book the best hotels across India at the lowest prices. Compare rooms, read reviews, and book directly with hotels. Free cancellation on most bookings.",
+    "Browse rooms, check availability, and book your stay at the best prices. Direct booking with the hotel.",
   keywords: [
-    "hotels in india",
-    "book hotels",
-    "best hotel prices",
+    "hotel",
+    "book rooms",
+    "direct booking",
     "hotel booking",
-    "resorts",
-    "budget hotels",
-    "luxury hotels",
+    "accommodation",
   ],
   openGraph: {
-    title: "BlueStay - Book Hotels Across India | Best Prices Guaranteed",
+    title: "Book Your Stay — Best Rates Direct",
     description:
-      "Discover and book the best hotels across India at the lowest prices. Compare rooms, read reviews, and book directly with hotels.",
+      "Browse rooms, check availability, and book your stay at the best prices.",
     images: [
       {
         url: "/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "BlueStay - Book Hotels Across India",
+        alt: "Book Your Stay",
       },
     ],
   },
@@ -42,7 +40,7 @@ export const metadata: Metadata = {
 /**
  * Homepage Component
  * 
- * BlueStay Aggregator main landing page featuring:
+ * Main landing page featuring:
  * - Hero section with search widget
  * - Featured hotels carousel
  * - Popular destinations grid
@@ -65,7 +63,7 @@ export default function HomePage() {
         {/* Popular Destinations */}
         <PopularDestinations />
         
-        {/* Why Choose BlueStay */}
+        {/* Why Choose Us */}
         <WhyChooseUs />
         
         {/* Guest Testimonials */}

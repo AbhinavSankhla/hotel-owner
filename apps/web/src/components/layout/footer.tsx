@@ -35,7 +35,7 @@ export function Footer() {
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center">
                 <span className="text-white font-bold text-lg">B</span>
               </div>
-              <span className="text-xl font-bold text-white">BlueStay</span>
+              <span className="text-xl font-bold text-white">Hotel Manager</span>
             </Link>
 
             <p className="text-gray-400 text-sm mb-6 max-w-xs">
@@ -89,11 +89,11 @@ export function Footer() {
             <ul className="space-y-3">
               <li>
                 <a
-                  href="mailto:support@bluestay.in"
+                  href={`mailto:${process.env.NEXT_PUBLIC_APP_EMAIL || 'support@hotel.local'}`}
                   className="flex items-center gap-2 text-sm hover:text-white transition-colors"
                 >
                   <Mail size={16} className="shrink-0" />
-                  <span>support@bluestay.in</span>
+                  <span>{process.env.NEXT_PUBLIC_APP_EMAIL || 'support@hotel.local'}</span>
                 </a>
               </li>
               <li>
@@ -154,7 +154,7 @@ export function Footer() {
         <div className="container-app py-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm">
             <p className="text-gray-400">
-              © {currentYear} BlueStay. All rights reserved.
+              © {currentYear} Hotel Manager. All rights reserved.
             </p>
             <div className="flex items-center gap-6">
               <Link

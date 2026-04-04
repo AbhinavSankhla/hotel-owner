@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Login Page - BlueStay
+ * Login Page - Hotel Manager
  * User authentication with email/password + phone OTP
  */
 
@@ -22,7 +22,6 @@ type LoginMode = 'email' | 'otp';
 
 function getRoleRedirect(role?: string): string {
   switch (role) {
-    case 'PLATFORM_ADMIN': return '/platform-admin';
     case 'HOTEL_ADMIN': return '/admin';
     default: return '/dashboard';
   }
@@ -524,7 +523,7 @@ export default function LoginPage() {
             <div className="text-sm text-blue-700 space-y-1">
               <p><strong>Guest:</strong> guest@example.com / password123</p>
               <p><strong>Hotel Admin:</strong> admin@radhikaresort.in / password123</p>
-              <p><strong>Platform Admin:</strong> admin@bluestay.in / password123</p>
+              <p><strong>Platform Admin:</strong> admin@hotel.local / password123</p>
             </div>
           </div>
         </div>

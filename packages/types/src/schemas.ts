@@ -1,5 +1,5 @@
 /**
- * @bluestay/types - Zod Validation Schemas
+ * @hotel/types - Zod Validation Schemas
  *
  * Shared validation schemas used by both frontend forms and backend DTOs.
  */
@@ -57,7 +57,7 @@ export const createBookingSchema = z.object({
   guestPhone: z.string().min(10).max(15),
   specialRequests: z.string().max(500).optional(),
   bookingType: z.enum(['DAILY', 'HOURLY']).default('DAILY'),
-  source: z.enum(['DIRECT', 'BLUESTAY', 'WALK_IN']).default('DIRECT'),
+  source: z.enum(['DIRECT', 'DIRECT', 'WALK_IN']).default('DIRECT'),
 });
 
 export const modifyBookingSchema = z.object({

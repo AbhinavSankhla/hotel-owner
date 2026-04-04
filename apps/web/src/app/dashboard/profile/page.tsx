@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Profile Page - BlueStay Dashboard
+ * Profile Page - Hotel Manager Dashboard
  * User profile management — wired to real GraphQL API
  */
 

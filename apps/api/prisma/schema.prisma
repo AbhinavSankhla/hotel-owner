@@ -1,5 +1,5 @@
-// BlueStay Prisma Schema
-// Multi-tenant hotel booking platform
+// Hotel Manager — Standalone Hotel Management System
+// Single-tenant hotel booking platform
 
 generator client {
   provider = "prisma-client-js"
@@ -14,7 +14,7 @@ datasource db {
 // HOTEL & DOMAIN
 // ============================================================================
 
-/// Hotel entity - represents a partner hotel
+/// Hotel entity — the single hotel this instance manages
 model Hotel {
   id          String   @id @default(uuid())
   name        String
@@ -47,27 +47,18 @@ model Hotel {
   hourlyMinHours   Int      @default(3)
   hourlyMaxHours   Int      @default(12)
   
-  // Commission
-  commissionRate   Float    @default(0.10) // 10% default
-  commissionType   CommissionType @default(PERCENTAGE)
-  
-  // Payment gateway accounts
-  razorpayAccountId String?
-  stripeAccountId   String?
-  
   // Theme customization
   themeConfig      Json?   // { primaryColor, fontFamily, etc. }
   template         HotelTemplate @default(STARTER)
   
   // Status
   isActive         Boolean @default(true)
-  isFeatured       Boolean @default(false)
+  setupCompleted   Boolean @default(false)
   
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
   
   // Relations
-  domains     HotelDomain[]
   roomTypes   RoomType[]
   rooms       Room[]
   bookings    Booking[]
@@ -75,28 +66,10 @@ model Hotel {
   reviews     Review[]
   media       Media[]
   seoMeta     SEOMeta[]
-  commissions Commission[]
   apiKeys     ApiKey[]
-  subscription Subscription?
   
   @@index([city])
-  @@index([isActive, isFeatured])
-}
-
-/// Domain mapping for multi-tenant routing
-model HotelDomain {
-  id        String   @id @default(uuid())
-  hotelId   String
-  hotel     Hotel    @relation(fields: [hotelId], references: [id], onDelete: Cascade)
-  
-  domain    String   @unique // e.g., "radhikaresort.in"
-  isPrimary Boolean  @default(false)
-  sslStatus SSLStatus @default(PENDING)
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  @@index([domain])
+  @@index([isActive])
 }
 
 // ============================================================================
@@ -255,10 +228,6 @@ model Booking {
   discountAmount  Float @default(0)
   totalAmount     Float
   
-  // Commission (for BlueStay bookings)
-  commissionAmount Float @default(0)
-  hotelPayout      Float @default(0)
-  
   // Source & status
   source          BookingSource @default(DIRECT)
   status          BookingStatus @default(PENDING)
@@ -280,7 +249,6 @@ model Booking {
   // Relations
   payments        Payment[]
   review          Review?
-  commission      Commission?
   
   @@index([hotelId, status])
   @@index([guestId])
@@ -330,7 +298,7 @@ model User {
   avatarUrl     String?
   
   role          UserRole @default(GUEST)
-  hotelId       String?  // null for guests and platform admins
+  hotelId       String?  // null for guests
   hotel         Hotel?   @relation(fields: [hotelId], references: [id])
   
   isActive      Boolean  @default(true)
@@ -345,6 +313,7 @@ model User {
   // Relations
   bookings      Booking[]
   reviews       Review[]
+  staffPermission StaffPermission?
   
   @@index([email])
   @@index([phone])
@@ -383,27 +352,25 @@ model Review {
 }
 
 // ============================================================================
-// COMMISSION & PAYMENTS TO HOTELS
+// STAFF PERMISSIONS
 // ============================================================================
 
-/// Commission ledger for BlueStay bookings
-model Commission {
-  id              String   @id @default(uuid())
-  hotelId         String
-  hotel           Hotel    @relation(fields: [hotelId], references: [id])
-  bookingId       String   @unique
-  booking         Booking  @relation(fields: [bookingId], references: [id])
+/// Granular permissions for hotel staff members
+model StaffPermission {
+  id                  String   @id @default(uuid())
+  userId              String   @unique
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
-  bookingAmount   Float    // Total booking amount
-  commissionRate  Float    // Rate at time of booking
-  commissionAmount Float
+  canManageBookings   Boolean  @default(true)
+  canManageRooms      Boolean  @default(false)
+  canManagePricing    Boolean  @default(false)
+  canManageReviews    Boolean  @default(true)
+  canManageContent    Boolean  @default(false)
+  canViewAnalytics    Boolean  @default(false)
+  canManageStaff      Boolean  @default(false)
   
-  status          SettlementStatus @default(PENDING)
-  settledAt       DateTime?
-  
-  createdAt       DateTime @default(now())
-  
-  @@index([hotelId, status])
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 }
 
 // ============================================================================
@@ -466,17 +433,6 @@ enum BookingType {
   HOURLY
 }
 
-enum CommissionType {
-  PERCENTAGE
-  FLAT
-}
-
-enum SSLStatus {
-  PENDING
-  ACTIVE
-  FAILED
-}
-
 enum RoomStatus {
   AVAILABLE
   MAINTENANCE
@@ -484,8 +440,7 @@ enum RoomStatus {
 }
 
 enum BookingSource {
-  DIRECT      // Booked on hotel's own domain
-  BLUESTAY    // Booked via bluestay.in
+  DIRECT      // Booked online via hotel website
   WALK_IN     // Walk-in booking added by staff
 }
 
@@ -508,7 +463,6 @@ enum PaymentStatus {
 
 enum PaymentGateway {
   RAZORPAY
-  STRIPE
   CASH
   DEMO
 }
@@ -525,13 +479,6 @@ enum UserRole {
   GUEST
   HOTEL_ADMIN
   HOTEL_STAFF
-  PLATFORM_ADMIN
-}
-
-enum SettlementStatus {
-  PENDING
-  SETTLED
-  DISPUTED
 }
 
 enum HotelTemplate {
@@ -716,48 +663,15 @@ enum ApiKeyPermission {
 }
 
 // ============================================================================
-// SUBSCRIPTION & BILLING
+// BACKUP LOG
 // ============================================================================
 
-/// Hotel subscription for self-hosted / custom domain plans
-model Subscription {
+/// Database backup history
+model BackupLog {
   id          String   @id @default(uuid())
-  hotelId     String   @unique
-  hotel       Hotel    @relation(fields: [hotelId], references: [id], onDelete: Cascade)
-  
-  plan        SubscriptionPlan @default(FREE)
-  status      SubscriptionStatus @default(ACTIVE)
-  
-  // Billing period
-  currentPeriodStart DateTime @default(now())
-  currentPeriodEnd   DateTime
-  
-  // Payment info
-  amount      Float    @default(0) // Annual amount in INR
-  currency    String   @default("INR")
-  
-  // Features unlocked
-  customDomainEnabled  Boolean @default(false)
-  apiAccessEnabled     Boolean @default(false)
-  selfHostingEnabled   Boolean @default(false)
-  maxApiKeys           Int     @default(0)
-  
-  cancelledAt DateTime?
-  
+  filename    String
+  sizeBytes   Int
+  triggeredBy String   // userId
+  status      String   // "completed", "failed"
   createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-enum SubscriptionPlan {
-  FREE        // Hosted on bluestay.in, commission-based
-  STARTER     // Custom domain, basic templates, 1 API key
-  PROFESSIONAL // API access, self-hosting, 5 API keys
-  ENTERPRISE  // Unlimited API keys, priority support
-}
-
-enum SubscriptionStatus {
-  ACTIVE
-  PAST_DUE
-  CANCELLED
-  EXPIRED
 }

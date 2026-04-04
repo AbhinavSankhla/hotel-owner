@@ -1,8 +1,8 @@
 {
-  "name": "bluestay",
+  "name": "hotel-manager",
   "version": "1.0.0",
   "private": true,
-  "description": "BlueStay - Multi-tenant hotel booking platform",
+  "description": "Standalone hotel management and booking platform",
   "workspaces": [
     "apps/*",
     "packages/*"

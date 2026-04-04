@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Admin Branding & Theme Page - BlueStay
+ * Admin Branding & Theme Page - Hotel Manager
  * Customize hotel white-label appearance: colors, fonts, header style
  */
 
@@ -55,7 +55,7 @@ const FONT_OPTIONS = [
 ];
 
 const PRESET_THEMES = [
-  { name: 'BlueStay Default', primary: '#2563eb', secondary: '#1e40af', accent: '#f59e0b' },
+  { name: 'Hotel Manager Default', primary: '#2563eb', secondary: '#1e40af', accent: '#f59e0b' },
   { name: 'Emerald Resort', primary: '#059669', secondary: '#047857', accent: '#fbbf24' },
   { name: 'Royal Purple', primary: '#7c3aed', secondary: '#6d28d9', accent: '#f97316' },
   { name: 'Crimson Luxury', primary: '#dc2626', secondary: '#b91c1c', accent: '#eab308' },
@@ -279,7 +279,7 @@ export default function AdminBrandingPage() {
                 </div>
               </>
             ) : (
-              /* STARTER — default BlueStay classic layout */
+              /* STARTER — default Hotel Manager classic layout */
               <>
                 <div
                   className="px-6 py-4 flex items-center justify-between"

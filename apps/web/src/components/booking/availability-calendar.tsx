@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Availability Calendar - BlueStay
+ * Availability Calendar - Hotel Manager
  * 
  * Visual month calendar showing room availability and pricing per night.
  * Used in the hotel detail / rooms page so guests can visually pick dates.

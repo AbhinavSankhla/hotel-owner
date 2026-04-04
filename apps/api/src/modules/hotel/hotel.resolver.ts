@@ -39,20 +39,6 @@ export class HotelResolver {
   }
 
   /**
-   * Get hotel by domain (for multi-tenant sites)
-   */
-  @Query(() => Hotel, { 
-    name: 'hotelByDomain', 
-    description: 'Get hotel by domain for white-label sites',
-    nullable: true 
-  })
-  async getHotelByDomain(
-    @Args('domain') domain: string,
-  ) {
-    return this.hotelService.findByDomain(domain);
-  }
-
-  /**
    * Get featured hotels for homepage
    */
   @Query(() => [Hotel], { name: 'featuredHotels', description: 'Get featured hotels' })

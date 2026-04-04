@@ -1,5 +1,5 @@
 {
-  "name": "@bluestay/config",
+  "name": "@hotel/config",
   "version": "0.1.0",
   "private": true,
   "main": "./src/index.ts",

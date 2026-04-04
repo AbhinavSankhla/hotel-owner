@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Notifications Inbox Page — BlueStay
+ * Notifications Inbox Page — Hotel Manager
  * Displays in-app notifications with mark-as-read and mark-all-read.
  */
 

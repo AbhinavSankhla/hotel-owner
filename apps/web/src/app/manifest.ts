@@ -1,5 +1,5 @@
 /**
- * Web App Manifest - BlueStay PWA
+ * Web App Manifest - Hotel PWA
  * Next.js metadata file API for manifest.json
  */
 
@@ -7,9 +7,9 @@ import { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'BlueStay - Hotel Booking',
-    short_name: 'BlueStay',
-    description: 'Book hotels across India. Compare prices, read reviews, and get instant confirmation.',
+    name: process.env.NEXT_PUBLIC_APP_NAME || 'My Hotel',
+    short_name: process.env.NEXT_PUBLIC_APP_NAME || 'Hotel',
+    description: 'Book rooms, check availability, and manage your stay.',
     start_url: '/',
     display: 'standalone',
     background_color: '#ffffff',

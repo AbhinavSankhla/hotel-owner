@@ -26,7 +26,7 @@ export class NotificationService implements OnModuleInit {
   private fromAddress: string;
 
   constructor(private readonly prisma: PrismaService) {
-    this.fromAddress = process.env.SMTP_FROM || 'BlueStay <noreply@bluestay.in>';
+    this.fromAddress = process.env.SMTP_FROM || `${process.env.APP_NAME || 'Hotel'} <noreply@localhost>`;
   }
 
   onModuleInit() {
@@ -219,7 +219,7 @@ export class NotificationService implements OnModuleInit {
 
     await this.sendEmail({
       to: hotel.email,
-      subject: `Your hotel ${hotel.name} is now live on BlueStay!`,
+      subject: `Your hotel ${hotel.name} is now live on Hotel Manager!`,
       html: this.hotelActivatedTemplate({
         hotelName: hotel.name,
         hotelSlug: hotel.slug,
@@ -239,7 +239,7 @@ export class NotificationService implements OnModuleInit {
 
     await this.sendEmail({
       to: email,
-      subject: 'Reset Your Password - BlueStay',
+      subject: 'Reset Your Password - Hotel Manager',
       html: this.passwordResetTemplate({ name, resetUrl }),
     });
   }
@@ -252,7 +252,7 @@ export class NotificationService implements OnModuleInit {
 
     await this.sendEmail({
       to: email,
-      subject: 'Verify Your Email - BlueStay',
+      subject: 'Verify Your Email - Hotel Manager',
       html: this.emailVerificationTemplate({ name, verifyUrl }),
     });
   }
@@ -306,7 +306,7 @@ export class NotificationService implements OnModuleInit {
       </div>
 
       <p style="color: #9ca3af; font-size: 12px; text-align: center; margin-top: 24px;">
-        This is an automated email from BlueStay. Please do not reply.
+        This is an automated email. Please do not reply.
       </p>
     </div>
   </div>
@@ -334,7 +334,7 @@ export class NotificationService implements OnModuleInit {
       <p>Hi ${data.guestName},</p>
       <p style="color: #6b7280;">Your booking at <strong>${data.hotelName}</strong> (₹${data.totalAmount.toLocaleString('en-IN')}) has been cancelled.</p>
       <p style="color: #6b7280;">If you paid online, a refund will be processed within 5-7 business days.</p>
-      <p style="color: #9ca3af; font-size: 12px; text-align: center; margin-top: 24px;">BlueStay</p>
+      <p style="color: #9ca3af; font-size: 12px; text-align: center; margin-top: 24px;">Hotel Manager</p>
     </div>
   </div>
 </body>
@@ -358,7 +358,7 @@ export class NotificationService implements OnModuleInit {
       <p style="color: #6b7280; margin: 0 0 20px;">Hi ${data.guestName}, we hope you enjoyed your stay at <strong>${data.hotelName}</strong>.</p>
       <p style="color: #6b7280;">Your feedback helps other travelers and the hotel improve. Share your experience!</p>
       <a href="${process.env.WEB_URL || 'http://localhost:3000'}/dashboard/bookings" style="display: inline-block; background: #2563eb; color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; margin-top: 20px;">Write a Review</a>
-      <p style="color: #9ca3af; font-size: 12px; margin-top: 24px;">BlueStay</p>
+      <p style="color: #9ca3af; font-size: 12px; margin-top: 24px;">Hotel Manager</p>
     </div>
   </div>
 </body>
@@ -406,7 +406,7 @@ export class NotificationService implements OnModuleInit {
       <h1 style="color: white; margin: 0; font-size: 24px;">🎉 You're Live!</h1>
     </div>
     <div style="background: white; padding: 32px; border-radius: 0 0 12px 12px;">
-      <p>Congratulations! <strong>${data.hotelName}</strong> is now active on BlueStay.</p>
+      <p>Congratulations! <strong>${data.hotelName}</strong> is now active on Hotel Manager.</p>
       <p style="color: #6b7280;">Your hotel is now visible to thousands of travelers. Here's what to do next:</p>
       <ol style="color: #374151; line-height: 1.8;">
         <li>Add your room types and pricing</li>
@@ -438,7 +438,7 @@ export class NotificationService implements OnModuleInit {
         <a href="${data.resetUrl}" style="display: inline-block; background: #2563eb; color: white; padding: 14px 40px; border-radius: 8px; text-decoration: none; font-weight: 600;">Reset Password</a>
       </div>
       <p style="color: #6b7280; font-size: 14px;">This link will expire in 1 hour. If you didn't request a password reset, you can safely ignore this email.</p>
-      <p style="color: #9ca3af; font-size: 12px; text-align: center; margin-top: 24px;">BlueStay</p>
+      <p style="color: #9ca3af; font-size: 12px; text-align: center; margin-top: 24px;">Hotel Manager</p>
     </div>
   </div>
 </body>
@@ -462,7 +462,7 @@ export class NotificationService implements OnModuleInit {
         <a href="${data.verifyUrl}" style="display: inline-block; background: #059669; color: white; padding: 14px 40px; border-radius: 8px; text-decoration: none; font-weight: 600;">Verify Email</a>
       </div>
       <p style="color: #6b7280; font-size: 14px;">This link will expire in 24 hours.</p>
-      <p style="color: #9ca3af; font-size: 12px; text-align: center; margin-top: 24px;">BlueStay</p>
+      <p style="color: #9ca3af; font-size: 12px; text-align: center; margin-top: 24px;">Hotel Manager</p>
     </div>
   </div>
 </body>

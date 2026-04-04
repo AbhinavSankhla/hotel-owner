@@ -1,5 +1,5 @@
 /**
- * @bluestay/types - Shared TypeScript types and Zod schemas
+ * @hotel/types - Shared TypeScript types and Zod schemas
  *
  * Used across both apps/api and apps/web for type-safe,
  * validated data throughout the platform.
@@ -34,7 +34,6 @@ export type BookingStatus = (typeof BookingStatus)[keyof typeof BookingStatus];
 
 export const BookingSource = {
   DIRECT: 'DIRECT',
-  BLUESTAY: 'BLUESTAY',
   WALK_IN: 'WALK_IN',
 } as const;
 export type BookingSource = (typeof BookingSource)[keyof typeof BookingSource];
@@ -60,19 +59,8 @@ export const UserRole = {
   GUEST: 'GUEST',
   HOTEL_ADMIN: 'HOTEL_ADMIN',
   HOTEL_STAFF: 'HOTEL_STAFF',
-  PLATFORM_ADMIN: 'PLATFORM_ADMIN',
 } as const;
-export type UserRole = (typeof UserRole)[keyof typeof UserRole];
-
-export const SettlementStatus = {
-  PENDING: 'PENDING',
-  SETTLED: 'SETTLED',
-  DISPUTED: 'DISPUTED',
-} as const;
-export type SettlementStatus = (typeof SettlementStatus)[keyof typeof SettlementStatus];
-
-// ============================================
-// Core Interfaces
+export type UserRole = (typeof UserRole)[keyof typeof UserRole];\n\n// ============================================\n// Core Interfaces
 // ============================================
 
 export interface Hotel {

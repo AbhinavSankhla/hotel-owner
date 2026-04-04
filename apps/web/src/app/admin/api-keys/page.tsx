@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Admin API Keys Management - BlueStay
+ * Admin API Keys Management - Hotel Manager
  * Generate, view, revoke, and manage API keys for external integrations
  */
 
@@ -35,7 +35,7 @@ import {
   XCircle,
 } from 'lucide-react';
 
-const AGGREGATOR_HOSTS = new Set(['bluestay.in', 'www.bluestay.in']);
+const AGGREGATOR_HOSTS = new Set(['hotel.local', 'www.hotel.local']);
 
 const ALL_PERMISSIONS = [
   { value: 'READ_HOTEL', label: 'Read Hotel', description: 'Hotel info, theme, branding' },
@@ -114,7 +114,7 @@ export default function ApiKeysPage() {
     if (!canCreateOrRotateKey) {
       setStatusMessage({
         type: 'error',
-        text: 'API key creation is managed by BlueStay team. Contact support for custom website access.',
+        text: 'API key creation is managed by Hotel Manager team. Contact support for custom website access.',
       });
       setTimeout(() => setStatusMessage(null), 5000);
       return;
@@ -182,7 +182,7 @@ export default function ApiKeysPage() {
     if (!canCreateOrRotateKey) {
       setStatusMessage({
         type: 'error',
-        text: 'API key rotation is managed by BlueStay team. Contact support for custom website access.',
+        text: 'API key rotation is managed by Hotel Manager team. Contact support for custom website access.',
       });
       setTimeout(() => setStatusMessage(null), 5000);
       return;
@@ -247,7 +247,7 @@ export default function ApiKeysPage() {
         <Card className="border-amber-300 bg-amber-50">
           <CardContent className="pt-6">
             <p className="text-sm text-amber-900">
-              API key creation is disabled on aggregator admin. For custom website/API access, contact BlueStay team.
+              API key creation is disabled on aggregator admin. For custom website/API access, contact Hotel Manager team.
             </p>
           </CardContent>
         </Card>

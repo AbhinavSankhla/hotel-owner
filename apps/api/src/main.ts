@@ -1,8 +1,7 @@
 /**
- * BlueStay API - Main Entry Point
+ * Hotel Manager API — Main Entry Point
  * 
- * NestJS backend serving both the aggregator (bluestay.in) 
- * and white-label hotel sites via GraphQL API.
+ * NestJS backend for standalone hotel management.
  */
 
 import { NestFactory } from '@nestjs/core';
@@ -32,10 +31,9 @@ async function bootstrap() {
 
   // Swagger API Documentation
   const swaggerConfig = new DocumentBuilder()
-    .setTitle('BlueStay API')
+    .setTitle('Hotel Manager API')
     .setDescription(
-      'Multi-tenant hotel booking platform API. ' +
-      'Supports aggregator (bluestay.in) and white-label hotel frontends. ' +
+      'Standalone hotel management and booking platform API. ' +
       'Primary API is GraphQL at /graphql. REST endpoints are documented here.',
     )
     .setVersion('1.0')
@@ -46,10 +44,6 @@ async function bootstrap() {
     .addApiKey(
       { type: 'apiKey', name: 'x-hotel-id', in: 'header' },
       'HotelId',
-    )
-    .addApiKey(
-      { type: 'apiKey', name: 'x-tenant-type', in: 'header' },
-      'TenantType',
     )
     .addTag('Health', 'Health check endpoints')
     .addTag('Auth', 'Authentication & authorization')
@@ -69,7 +63,7 @@ async function bootstrap() {
       tagsSorter: 'alpha',
       operationsSorter: 'alpha',
     },
-    customSiteTitle: 'BlueStay API Docs',
+    customSiteTitle: 'Hotel Manager API Docs',
   });
 
   // Security headers via Helmet
@@ -95,66 +89,28 @@ async function bootstrap() {
     exclude: ['graphql', 'health'], // Exclude GraphQL and health check
   });
 
-  // Enable CORS for frontend domains with dynamic hotel domain support
+  // Enable CORS
   const allowedOrigins = [
     'http://localhost:3000',
-    'https://bluestay.in',
-    'https://www.bluestay.in',
-    // Load additional origins from env (e.g. Codespace forwarded URLs)
+    // Load additional origins from env
     ...(process.env.CORS_ORIGINS?.split(',').map(s => s.trim()).filter(Boolean) || []),
   ];
 
   app.enableCors({
-    origin: async (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
       // Allow requests with no origin (mobile apps, curl, server-to-server)
       if (!origin) return callback(null, true);
 
       // Allow known static origins
       if (allowedOrigins.includes(origin)) return callback(null, true);
 
-      // Allow all *.bluestay.in subdomains
-      if (/\.bluestay\.in$/.test(new URL(origin).hostname)) return callback(null, true);
-
       // Allow GitHub Codespaces forwarded URLs
-      if (/\.app\.github\.dev$/.test(new URL(origin).hostname)) return callback(null, true);
-
-      // Check hotel custom domains from database (cached in Redis)
       try {
-        const { PrismaClient } = await import('@prisma/client');
-        const hostname = new URL(origin).hostname;
-        const redis = app.get('RedisService');
-        const cacheKey = `cors:domain:${hostname}`;
-        let allowed = await redis.get(cacheKey);
+        if (/\.app\.github\.dev$/.test(new URL(origin).hostname)) return callback(null, true);
+      } catch {}
 
-        if (allowed === null) {
-          const prisma = app.get(PrismaClient) || app.get('PrismaService');
-          const domain = await prisma.hotelDomain.findFirst({
-            where: { domain: hostname },
-          });
-          allowed = domain ? 'true' : 'false';
-          await redis.set(cacheKey, allowed, 300); // Cache for 5 min
-        }
-
-        if (allowed === 'true') return callback(null, true);
-      } catch {
-        // If lookup fails, deny by default in production, allow in dev
-        if (process.env.NODE_ENV !== 'production') return callback(null, true);
-      }
-
-      // Check API key allowed origins (for self-hosted / external frontends)
-      try {
-        const prisma = app.get('PrismaService');
-        const apiKeyOrigin = await prisma.apiKey.findFirst({
-          where: {
-            allowedOrigins: { has: origin },
-            isActive: true,
-          },
-          select: { id: true },
-        });
-        if (apiKeyOrigin) return callback(null, true);
-      } catch {
-        // Non-critical: API key origin check failure
-      }
+      // In dev mode, allow all origins
+      if (process.env.NODE_ENV !== 'production') return callback(null, true);
 
       return callback(null, false);
     },
@@ -184,7 +140,7 @@ async function bootstrap() {
   const port = process.env.PORT || 4000;
   await app.listen(port);
   
-  console.log(`🚀 BlueStay API running on http://localhost:${port}`);
+  console.log(`🚀 Hotel Manager API running on http://localhost:${port}`);
   console.log(`📊 GraphQL Playground: http://localhost:${port}/graphql`);
   console.log(`📖 Swagger API Docs: http://localhost:${port}/api/docs`);
 }

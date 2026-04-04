@@ -2,7 +2,7 @@ import { Resolver, Query, Mutation, Args, ID } from '@nestjs/graphql';
 import { ObjectType, Field, Float, Int } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { AdminService } from './admin.service';
-import { Hotel, HotelDomain } from '../hotel/entities/hotel.entity';
+import { Hotel } from '../hotel/entities/hotel.entity';
 import { RoomType, RoomInventory } from '../room/entities/room-type.entity';
 import { Booking } from '../booking/entities/booking.entity';
 import { UpdateHotelInput, CreateRoomTypeInput, UpdateRoomTypeInput, BulkInventoryUpdateInput, SingleDateInventoryInput, UpsertSeoMetaInput, UpdateHotelContentInput } from './dto/admin.input';
@@ -180,7 +180,7 @@ class AdminAnalytics {
 
 @Resolver()
 @UseGuards(GqlAuthGuard, RolesGuard, TenantGuard)
-@Roles('HOTEL_ADMIN', 'HOTEL_STAFF', 'PLATFORM_ADMIN')
+@Roles('HOTEL_ADMIN', 'HOTEL_STAFF')
 export class AdminResolver {
   constructor(private readonly adminService: AdminService) {}
 
@@ -346,53 +346,6 @@ export class AdminResolver {
   async updateHotelContent(@Args('input') input: UpdateHotelContentInput) {
     const { hotelId, ...data } = input;
     return this.adminService.updateHotelContent(hotelId, data);
-  }
-
-  // ============================================
-  // Domain Management
-  // ============================================
-
-  @Query(() => [HotelDomain], {
-    name: 'hotelDomains',
-    description: 'Get all domains for a hotel',
-  })
-  async getHotelDomains(
-    @Args('hotelId', { type: () => ID }) hotelId: string,
-  ) {
-    return this.adminService.getHotelDomains(hotelId);
-  }
-
-  @Mutation(() => HotelDomain, {
-    name: 'addHotelDomain',
-    description: 'Add a custom domain to a hotel',
-  })
-  async addHotelDomain(
-    @Args('hotelId', { type: () => ID }) hotelId: string,
-    @Args('domain') domain: string,
-  ) {
-    return this.adminService.addHotelDomain(hotelId, domain);
-  }
-
-  @Mutation(() => DeleteResult, {
-    name: 'removeHotelDomain',
-    description: 'Remove a custom domain from a hotel',
-  })
-  async removeHotelDomain(
-    @Args('hotelId', { type: () => ID }) hotelId: string,
-    @Args('domainId', { type: () => ID }) domainId: string,
-  ) {
-    return this.adminService.removeHotelDomain(hotelId, domainId);
-  }
-
-  @Mutation(() => HotelDomain, {
-    name: 'setPrimaryDomain',
-    description: 'Set a domain as the primary domain for the hotel',
-  })
-  async setPrimaryDomain(
-    @Args('hotelId', { type: () => ID }) hotelId: string,
-    @Args('domainId', { type: () => ID }) domainId: string,
-  ) {
-    return this.adminService.setPrimaryDomain(hotelId, domainId);
   }
 }
 

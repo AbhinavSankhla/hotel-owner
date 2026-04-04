@@ -1,5 +1,5 @@
 /**
- * @bluestay/utils - Shared utility functions
+ * @hotel/utils - Shared utility functions
  *
  * Common utilities used across both API and web apps.
  */

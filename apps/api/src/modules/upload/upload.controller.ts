@@ -1,5 +1,5 @@
 /**
- * Upload Controller - BlueStay API
+ * Upload Controller - Hotel Manager API
  * REST endpoints for file uploads (GraphQL isn't ideal for multipart)
  */
 

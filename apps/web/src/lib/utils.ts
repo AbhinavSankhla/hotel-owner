@@ -1,5 +1,5 @@
 /**
- * Utility functions for BlueStay web application
+ * Utility functions for Hotel Manager web application
  */
 
 import { type ClassValue, clsx } from "clsx";
@@ -121,11 +121,11 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
 export const isServer = typeof window === "undefined";
 
 /**
- * Check if the current domain is the aggregator (bluestay.in)
+ * Check if the current domain is the aggregator (hotel.local)
  * vs a hotel white-label domain
  */
 export function isAggregatorDomain(hostname: string): boolean {
-  const aggregatorDomains = ["bluestay.in", "www.bluestay.in", "localhost:3000"];
+  const aggregatorDomains = ["hotel.local", "www.hotel.local", "localhost:3000"];
   return aggregatorDomains.some(
     (domain) => hostname === domain || hostname.endsWith(`.${domain}`)
   );
@@ -139,9 +139,9 @@ export function isAggregatorDomain(hostname: string): boolean {
  */
 export function extractSubdomain(hostname: string): string | null {
   // For custom domains like radhikaresort.in, we'll look up in DB
-  // For subdomains like radhika.bluestay.in, extract the subdomain
+  // For subdomains like radhika.hotel.local, extract the subdomain
   const parts = hostname.split(".");
-  if (parts.length >= 3 && parts[parts.length - 2] === "bluestay") {
+  if (parts.length >= 3 && parts[parts.length - 2] === "hotel") {
     return parts[0];
   }
   return null;

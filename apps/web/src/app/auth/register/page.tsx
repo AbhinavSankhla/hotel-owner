@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Register Page - BlueStay
+ * Register Page - Hotel Manager
  * New user registration with validation
  */
 

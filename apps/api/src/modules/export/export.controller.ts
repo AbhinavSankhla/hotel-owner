@@ -19,10 +19,6 @@ export class ExportController {
       throw new ForbiddenException('Authentication required');
     }
 
-    if (user.role === 'PLATFORM_ADMIN') {
-      return;
-    }
-
     if (!user.hotelId || user.hotelId !== hotelId) {
       throw new ForbiddenException('You can only export source code for your own hotel');
     }

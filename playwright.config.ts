@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Playwright E2E Test Configuration for BlueStay
+ * Playwright E2E Test Configuration for Hotel Manager
  * 
  * Runs against local dev servers:
  *   - Frontend (Next.js): http://localhost:3000

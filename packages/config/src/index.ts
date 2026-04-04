@@ -1,14 +1,14 @@
 /**
- * @bluestay/config - Shared configuration constants
+ * @hotel/config - Shared configuration constants
  */
 
 // ============================================
-// Platform Constants
+// App Constants (override via env vars)
 // ============================================
 
-export const PLATFORM_NAME = 'BlueStay';
-export const PLATFORM_DOMAIN = 'bluestay.in';
-export const PLATFORM_EMAIL = 'support@bluestay.in';
+export const APP_NAME = process.env.APP_NAME || process.env.NEXT_PUBLIC_APP_NAME || 'My Hotel';
+export const APP_URL = process.env.APP_URL || process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+export const APP_EMAIL = process.env.APP_EMAIL || 'noreply@localhost';
 
 // ============================================
 // Booking Limits
@@ -33,17 +33,6 @@ export const PAYMENT_CONFIG = {
   MIN_AMOUNT: 100, // ₹100 minimum
   RAZORPAY_KEY_PREFIX: 'rzp_',
   REFUND_WINDOW_HOURS: 48,
-} as const;
-
-// ============================================
-// Commission Configuration
-// ============================================
-
-export const COMMISSION_CONFIG = {
-  DEFAULT_RATE: 0.10, // 10%
-  MIN_RATE: 0,
-  MAX_RATE: 0.50, // 50%
-  DIRECT_BOOKING_RATE: 0, // No commission on direct bookings
 } as const;
 
 // ============================================
@@ -87,7 +76,7 @@ export const CACHE_TTL = {
   REVIEWS: 300, // 5 minutes
   ANALYTICS: 600, // 10 minutes
   SEARCH_RESULTS: 120, // 2 minutes
-  COMMISSION_SUMMARY: 300, // 5 minutes
+  COMMISSION_SUMMARY: 300, // 5 minutes (kept for analytics)
 } as const;
 
 // ============================================
@@ -106,7 +95,7 @@ export const RATE_LIMITS = {
 // ============================================
 
 export const SEO_DEFAULTS = {
-  TITLE_SUFFIX: ' | BlueStay',
+  TITLE_SUFFIX: ` | ${process.env.APP_NAME || process.env.NEXT_PUBLIC_APP_NAME || 'Hotel'}`,
   OG_IMAGE_WIDTH: 1200,
   OG_IMAGE_HEIGHT: 630,
   SITEMAP_REVALIDATE: 3600, // 1 hour

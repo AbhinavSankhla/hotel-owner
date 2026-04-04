@@ -109,7 +109,7 @@ export default function TenantHomePage() {
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Hotel Not Found</h1>
           <p className="text-gray-600 mb-6">The hotel you&apos;re looking for doesn&apos;t exist.</p>
           <Link href="/">
-            <Button>Go to BlueStay</Button>
+            <Button>Go to Hotel Manager</Button>
           </Link>
         </div>
       </div>

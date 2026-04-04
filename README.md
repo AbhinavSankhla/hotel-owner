@@ -1,6 +1,6 @@
-# BlueStay — Multi-Tenant Hotel Booking Platform
+# Hotel Manager — Standalone Hotel Booking Platform
 
-A full-stack, production-grade hotel reservation system built as a multi-tenant SaaS platform. Hotels get their own white-label booking websites while guests discover and book through a central aggregator (like Booking.com / OYO).
+A full-stack, production-grade hotel reservation system for independent hotels. Features a direct booking website, admin dashboard, daily + hourly bookings, Razorpay payments, and lightweight deployment (runs on a ₹300/month VPS).
 
 ---
 
@@ -15,8 +15,8 @@ A full-stack, production-grade hotel reservation system built as a multi-tenant 
 # 1. Install dependencies
 npm install
 
-# 2. Start database & cache
-docker compose up postgres redis -d
+# 2. Start database
+docker compose up postgres -d
 
 # 3. Setup database
 cd apps/api
@@ -35,7 +35,7 @@ npm run dev:web   # → http://localhost:3000
 - GraphQL: http://localhost:4000/graphql
 - Swagger: http://localhost:4000/api/docs
 
-**Login:** `admin@bluestay.in` / `password123`
+**Login:** `admin@hotel.local` / `password123`
 
 
 
@@ -67,14 +67,12 @@ npm run dev:web   # → http://localhost:3000
               └───────────┘  └─────────────┘         │
 ```
 
-### Multi-Tenant Model
+### Standalone Mode
 
-| Mode | URL | Description |
-|------|-----|-------------|
-| **Aggregator** | `bluestay.in` | Hotel search, comparison, and booking marketplace |
-| **White-label** | `radhikaresort.in` | Hotel-branded booking site on custom domain |
-| **Hotel Admin** | `*/admin` | Room, booking, pricing, and analytics management |
-| **Platform Admin** | `*/platform-admin` | Multi-hotel oversight, commissions, moderation |
+| Surface | URL | Description |
+|---------|-----|-------------|
+| **Guest Website** | `yourdomain.com` | Hotel-branded booking site for guests |
+| **Hotel Admin** | `yourdomain.com/admin` | Room, booking, pricing, and analytics management |
 
 ---
 
@@ -111,12 +109,10 @@ npm run dev:web   # → http://localhost:3000
 - Downloadable invoice PDF
 - GST calculation for Indian compliance
 
-### Payments & Commissions
+### Payments
 - Razorpay integration (UPI, cards, net banking, wallets)
 - Demo gateway for development (auto-approves)
 - Webhook verification for payment status
-- Configurable commission rates per hotel
-- Settlement tracking with dispute resolution
 
 ### Hotel Admin Dashboard (15 pages)
 - Revenue, occupancy, and booking analytics
@@ -126,15 +122,7 @@ npm run dev:web   # → http://localhost:3000
 - Gallery, SEO, blog, branding management
 - Walk-in booking form
 
-### Platform Admin (5 pages)
-- Multi-hotel management (activate, suspend, commission rates)
-- Commission settlement (single + bulk)
-- Platform-wide analytics and revenue dashboard
-- Content moderation
-
 ### Guest Experience
-- Hotel search with city, date, guest, price filters
-- Interactive map view (OpenStreetMap)
 - Hotel detail pages with gallery, rooms, reviews
 - Booking flow with secure payment
 - Web push notifications for booking updates
@@ -175,15 +163,14 @@ npm run dev:web   # → http://localhost:3000
 git clone https://github.com/vpbgkt/hotel-booking.git
 cd hotel-booking
 
-# Start database + cache
-docker compose up postgres redis -d
+# Start database
+docker compose up postgres -d
 
 # Install dependencies
 npm install
 
 # Configure environment
 cp apps/api/.env.example apps/api/.env
-cp apps/web/.env.example apps/web/.env.local
 
 # Database setup
 cd apps/api
@@ -212,9 +199,7 @@ docker compose exec api npx prisma db seed
 
 | Role | Email | Password | Access |
 |------|-------|----------|--------|
-| **Platform Admin** | `admin@bluestay.in` | `password123` | `/platform-admin` — manage all hotels |
-| **Hotel Admin** | `admin@radhikaresort.in` | `password123` | `/admin` — manage Radhika Resort |
-| **Hotel Staff** | `staff@radhikaresort.in` | `password123` | `/admin` — front desk operations |
+| **Hotel Admin** | `admin@hotel.local` | `password123` | `/admin` — manage hotel |
 | **Guest** | `guest@example.com` | `password123` | `/dashboard` — bookings & reviews |
 
 ### Sample Hotels (Seeded)
@@ -242,8 +227,7 @@ docker compose exec api npx prisma db seed
 
 ```
 Authorization: Bearer <jwt-token>     # For authenticated requests
-x-tenant-type: aggregator | hotel     # Tenant context
-x-hotel-id: <hotel-uuid>             # For white-label requests
+x-hotel-id: <hotel-uuid>             # Hotel context (set by middleware from env)
 ```
 
 ---

@@ -82,7 +82,7 @@ export class BookingResolver {
     description: 'List bookings with filters' 
   })
   @UseGuards(GqlAuthGuard, RolesGuard)
-  @Roles('HOTEL_ADMIN', 'HOTEL_STAFF', 'PLATFORM_ADMIN')
+  @Roles('HOTEL_ADMIN', 'HOTEL_STAFF')
   async listBookings(
     @Args('filters', { nullable: true }) filters?: BookingFiltersInput,
     @Args('pagination', { nullable: true }) pagination?: BookingPaginationInput,
@@ -113,7 +113,7 @@ export class BookingResolver {
     description: 'Update booking status' 
   })
   @UseGuards(GqlAuthGuard, RolesGuard)
-  @Roles('HOTEL_ADMIN', 'HOTEL_STAFF', 'PLATFORM_ADMIN')
+  @Roles('HOTEL_ADMIN', 'HOTEL_STAFF')
   async updateBookingStatus(
     @Args('input') input: UpdateBookingStatusInput,
     @GqlCurrentUser() user: any,

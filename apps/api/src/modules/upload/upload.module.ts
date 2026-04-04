@@ -1,5 +1,5 @@
 /**
- * Upload Module - BlueStay API
+ * Upload Module - Hotel Manager API
  * Handles file uploads with local storage (switchable to S3/R2)
  */
 

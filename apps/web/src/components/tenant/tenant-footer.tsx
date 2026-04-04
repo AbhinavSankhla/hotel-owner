@@ -114,7 +114,7 @@ export function TenantFooter() {
         {/* Bottom bar */}
         <div className="mt-10 pt-6 border-t border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500">
           <p>&copy; {year} {hotel.name}. All rights reserved.</p>
-          <p>Powered by <a href="https://bluestay.in" className="text-gray-400 hover:text-white transition-colors">BlueStay</a></p>
+          <p>Powered by <a href="https://hotel.local" className="text-gray-400 hover:text-white transition-colors">Hotel Manager</a></p>
         </div>
       </div>
     </footer>

@@ -213,7 +213,7 @@ export class UserService {
     if (!user) throw new NotFoundException('User not found');
 
     const anonName = 'Deleted User';
-    const anonEmail = `deleted-${userId.slice(0, 8)}@removed.bluestay.in`;
+    const anonEmail = `deleted-${userId.slice(0, 8)}@removed.hotel.local`;
 
     await this.prisma.$transaction([
       // Anonymize user record

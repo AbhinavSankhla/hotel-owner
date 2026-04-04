@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Error Boundary - BlueStay
+ * Error Boundary - Hotel Manager
  * Catches errors in route segments
  */
 

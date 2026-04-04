@@ -1,5 +1,5 @@
 /**
- * SMS Service - BlueStay API
+ * SMS Service - Hotel Manager API
  *
  * Sends SMS and WhatsApp messages via MSG91 (India).
  * Supports OTP delivery, booking confirmations, and notifications.
@@ -147,7 +147,7 @@ export class SmsService {
   }): Promise<boolean> {
     return this.sendSMS({
       to: params.phone,
-      message: `Dear ${params.guestName}, your booking ${params.bookingNumber} at ${params.hotelName} is confirmed. Check-in: ${params.checkInDate}. Total: ₹${params.totalAmount}. - BlueStay`,
+      message: `Dear ${params.guestName}, your booking ${params.bookingNumber} at ${params.hotelName} is confirmed. Check-in: ${params.checkInDate}. Total: ₹${params.totalAmount}. - Hotel Manager`,
       variables: {
         VAR1: params.guestName,
         VAR2: params.bookingNumber,
@@ -174,7 +174,7 @@ export class SmsService {
 
     return this.sendSMS({
       to: params.phone,
-      message: `Dear ${params.guestName}, your booking ${params.bookingNumber} at ${params.hotelName} has been cancelled.${refundMsg} - BlueStay`,
+      message: `Dear ${params.guestName}, your booking ${params.bookingNumber} at ${params.hotelName} has been cancelled.${refundMsg} - Hotel Manager`,
       variables: {
         VAR1: params.guestName,
         VAR2: params.bookingNumber,

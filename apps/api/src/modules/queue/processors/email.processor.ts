@@ -1,14 +1,23 @@
 /**
- * Email Processor - BlueStay API
+ * Email Processor — Hotel Manager API
  * 
  * BullMQ worker that processes email jobs.
- * Uses the notification service's email sender.
+ * Only starts when Redis is enabled.
  */
 
 import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { Worker, Job } from 'bullmq';
 import { EmailJobData } from '../queue.service';
 import * as nodemailer from 'nodemailer';
+
+// Conditionally import BullMQ
+let Worker: any, Job: any;
+try {
+  const bullmq = require('bullmq');
+  Worker = bullmq.Worker;
+  Job = bullmq.Job;
+} catch {
+  Worker = null;
+}
 
 const REDIS_CONNECTION = {
   host: process.env.REDIS_HOST || 'localhost',
@@ -20,10 +29,16 @@ const REDIS_CONNECTION = {
 @Injectable()
 export class EmailProcessor implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(EmailProcessor.name);
-  private worker: Worker<EmailJobData>;
+  private worker: any;
   private transporter: nodemailer.Transporter | null = null;
 
   async onModuleInit() {
+    // Skip worker creation if Redis is disabled
+    if (process.env.REDIS_ENABLED !== 'true' || !Worker) {
+      this.logger.warn('Email processor skipped (Redis disabled)');
+      return;
+    }
+
     // Set up email transporter
     const smtpHost = process.env.SMTP_HOST;
     if (smtpHost) {
@@ -38,9 +53,9 @@ export class EmailProcessor implements OnModuleInit, OnModuleDestroy {
       });
     }
 
-    this.worker = new Worker<EmailJobData>(
+    this.worker = new Worker(
       'email',
-      async (job: Job<EmailJobData>) => {
+      async (job: any) => {
         await this.processEmail(job);
       },
       {
@@ -53,11 +68,11 @@ export class EmailProcessor implements OnModuleInit, OnModuleDestroy {
       },
     );
 
-    this.worker.on('completed', (job) => {
+    this.worker.on('completed', (job: any) => {
       this.logger.debug(`Email sent: ${job.data.template} to ${job.data.to}`);
     });
 
-    this.worker.on('failed', (job, err) => {
+    this.worker.on('failed', (job: any, err: any) => {
       this.logger.error(`Email failed: ${job?.data.template} to ${job?.data.to}: ${err.message}`);
     });
 
@@ -70,14 +85,14 @@ export class EmailProcessor implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  private async processEmail(job: Job<EmailJobData>) {
+  private async processEmail(job: any) {
     const { to, subject, template, data } = job.data;
 
     const html = this.renderTemplate(template, data);
 
     if (this.transporter) {
       await this.transporter.sendMail({
-        from: process.env.SMTP_FROM || 'BlueStay <noreply@bluestay.in>',
+        from: process.env.SMTP_FROM || `${process.env.APP_NAME || 'Hotel'} <noreply@localhost>`,
         to,
         subject,
         html,
@@ -110,7 +125,7 @@ export class EmailProcessor implements OnModuleInit, OnModuleDestroy {
             <p>We look forward to hosting you!</p>
           </div>
           <div style="background: #f9fafb; padding: 16px; text-align: center; color: #6b7280; font-size: 12px;">
-            BlueStay — Hotel Booking Platform
+            Hotel Manager — Hotel Booking Platform
           </div>
         </div>
       `,
@@ -129,7 +144,7 @@ export class EmailProcessor implements OnModuleInit, OnModuleDestroy {
       'welcome': `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background: ${brandColor}; color: white; padding: 24px; text-align: center;">
-            <h1 style="margin: 0;">Welcome to BlueStay!</h1>
+            <h1 style="margin: 0;">Welcome to Hotel Manager!</h1>
           </div>
           <div style="padding: 24px;">
             <p>Hi ${data.name || 'there'},</p>

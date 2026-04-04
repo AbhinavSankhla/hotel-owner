@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
  * CTA Section
  * 
  * Call-to-action for hotel partners
- * Highlights benefits of listing on BlueStay
+ * Highlights benefits of listing on Hotel Manager
  */
 export function CTASection() {
   return (
@@ -34,7 +34,7 @@ export function CTASection() {
             </span>
             
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              List Your Property on BlueStay
+              List Your Property
             </h2>
             
             <p className="text-lg text-white/80 mb-8">
@@ -95,7 +95,7 @@ export function CTASection() {
           >
             <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 border border-white/20">
               <h3 className="text-xl font-semibold text-white mb-6">
-                Why Hotels Choose BlueStay
+                Why Hotels Choose Hotel Manager
               </h3>
 
               <div className="grid grid-cols-2 gap-6">

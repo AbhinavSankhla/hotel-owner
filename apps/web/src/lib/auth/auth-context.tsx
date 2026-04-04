@@ -13,7 +13,7 @@ interface User {
   email: string;
   name: string;
   phone?: string;
-  role: 'GUEST' | 'HOTEL_ADMIN' | 'HOTEL_STAFF' | 'PLATFORM_ADMIN';
+  role: 'GUEST' | 'HOTEL_ADMIN' | 'HOTEL_STAFF';
   avatarUrl?: string;
   hotelId?: string;
 }

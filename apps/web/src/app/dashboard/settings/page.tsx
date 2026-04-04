@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Settings Page - BlueStay Dashboard
+ * Settings Page - Hotel Manager Dashboard
  * Account & notification settings
  */
 

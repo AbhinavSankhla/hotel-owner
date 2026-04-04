@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Global Error Boundary - BlueStay
+ * Global Error Boundary - Hotel Manager
  * Catches unhandled errors in the root layout
  */
 

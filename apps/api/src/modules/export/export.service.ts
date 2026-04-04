@@ -314,7 +314,7 @@ footer { background: #111827; color: #9ca3af; padding: 32px 0; text-align: cente
 
     // .env.local
     const envLocal =
-      `# BlueStay API Configuration\n` +
+      `# Hotel Manager API Configuration\n` +
       `# Get your API key from the admin dashboard: /admin/api-keys\n` +
       `NEXT_PUBLIC_API_URL=${apiUrl}\n` +
       `NEXT_PUBLIC_HOTEL_ID=${hotelId}\n` +
@@ -325,9 +325,9 @@ footer { background: #111827; color: #9ca3af; padding: 32px 0; text-align: cente
     // .env.example
     const envExample =
       `# Public API base URL (no trailing slash)\n` +
-      `NEXT_PUBLIC_API_URL=https://api.bluestay.in\n` +
+      `NEXT_PUBLIC_API_URL=https://api.hotel.local\n` +
       `\n` +
-      `# Hotel ID for this website (provided by BlueStay)\n` +
+      `# Hotel ID for this website (configured in environment)\n` +
       `NEXT_PUBLIC_HOTEL_ID=hotel_xxxxxxxxx\n` +
       `\n` +
       `# Hotel-scoped API key (never commit real value)\n` +
@@ -340,7 +340,7 @@ footer { background: #111827; color: #9ca3af; padding: 32px 0; text-align: cente
     // Client handoff guide
     const handoffGuide =
       `# Client Handoff Guide\n\n` +
-      `This starter is safe to share with a hotel client. It does not include BlueStay database credentials.\n\n` +
+      `This starter is safe to share with a hotel client. It does not include hotel database credentials.\n\n` +
       `## What to Share\n` +
       `- Source code in this package\n` +
       `- A hotel-scoped API key\n` +
@@ -392,8 +392,8 @@ footer { background: #111827; color: #9ca3af; padding: 32px 0; text-align: cente
     // lib/api.ts — API client
     const apiClientTs =
       `/**\n` +
-      ` * BlueStay API Client\n` +
-      ` * Fetches hotel data via the BlueStay GraphQL API using your API key.\n` +
+      ` * Hotel Manager API Client\n` +
+      ` * Fetches hotel data via the Hotel Manager GraphQL API using your API key.\n` +
       ` */\n\n` +
       `const API_URL = process.env.NEXT_PUBLIC_API_URL + '/graphql';\n` +
       `const API_KEY = process.env.API_KEY!;\n` +
@@ -496,7 +496,7 @@ footer { background: #111827; color: #9ca3af; padding: 32px 0; text-align: cente
     // README.md
     const readmeMd =
       `# ${hotel.name} — Website\n\n` +
-      `A Next.js website powered by BlueStay API.\n\n` +
+      `A Next.js website powered by Hotel Manager API.\n\n` +
       `## Quick Start\n\n` +
       `1. Install dependencies:\n` +
       `   \`\`\`bash\n   npm install\n   \`\`\`\n\n` +

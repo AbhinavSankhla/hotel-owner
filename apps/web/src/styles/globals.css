@@ -1,5 +1,5 @@
 /**
- * BlueStay Global Styles - Tailwind CSS v4
+ * Hotel Manager Global Styles - Tailwind CSS v4
  * Modern, professional hotel booking platform styling
  */
 
@@ -17,7 +17,7 @@
   --font-heading: var(--tpl-font-heading);
   --font-theme: var(--tpl-font-body);
 
-  /* Brand Colors - BlueStay Primary */
+  /* Brand Colors - Primary */
   --color-brand-50: #eff6ff;
   --color-brand-100: #dbeafe;
   --color-brand-200: #bfdbfe;

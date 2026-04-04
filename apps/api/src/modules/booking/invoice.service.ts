@@ -3,7 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import PDFDocument from 'pdfkit';
 
 /**
- * Invoice Service - BlueStay
+ * Invoice Service - Hotel Manager
  *
  * Generates professional PDF invoices for completed bookings.
  * Uses PDFKit to produce clean, printable invoices with:
@@ -58,9 +58,8 @@ export class InvoiceService {
       if (!user) throw new ForbiddenException();
 
       const isHotelAdmin = user.role === 'HOTEL_ADMIN' && user.hotelId === booking.hotelId;
-      const isPlatformAdmin = user.role === 'PLATFORM_ADMIN';
 
-      if (!isHotelAdmin && !isPlatformAdmin) {
+      if (!isHotelAdmin) {
         throw new ForbiddenException('You can only download invoices for your own bookings');
       }
     }
@@ -75,7 +74,7 @@ export class InvoiceService {
         margin: 50,
         info: {
           Title: `Invoice - ${booking.bookingNumber}`,
-          Author: 'BlueStay',
+          Author: 'Hotel Manager',
           Subject: `Booking Invoice ${booking.bookingNumber}`,
         },
       });
@@ -278,7 +277,7 @@ export class InvoiceService {
       doc.fontSize(8).font('Helvetica').fillColor('#9ca3af')
         .text('Thank you for choosing ' + hotel.name + '!', { align: 'center' })
         .text('This is a computer-generated invoice and does not require a signature.', { align: 'center' })
-        .text(`Powered by BlueStay | Generated on ${new Date().toLocaleDateString('en-IN')}`, { align: 'center' });
+        .text(`Powered by Hotel Manager | Generated on ${new Date().toLocaleDateString('en-IN')}`, { align: 'center' });
 
       doc.end();
     });

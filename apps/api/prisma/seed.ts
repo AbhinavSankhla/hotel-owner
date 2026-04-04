@@ -13,7 +13,6 @@ async function main() {
 
   // Clean existing data (in reverse order of dependencies)
   console.log('🧹 Cleaning existing data...');
-  await prisma.commission.deleteMany();
   await prisma.payment.deleteMany();
   await prisma.review.deleteMany();
   await prisma.booking.deleteMany();
@@ -23,7 +22,6 @@ async function main() {
   await prisma.roomType.deleteMany();
   await prisma.sEOMeta.deleteMany();
   await prisma.media.deleteMany();
-  await prisma.hotelDomain.deleteMany();
   await prisma.user.deleteMany();
   await prisma.hotel.deleteMany();
 
@@ -55,9 +53,8 @@ async function main() {
       checkOutTime: '12:00',
       hourlyMinHours: 3,
       hourlyMaxHours: 12,
-      commissionRate: 0.10,
+      commissionRate: 0,
       isActive: true,
-      isFeatured: true,
       themeConfig: {
         primaryColor: '#1e40af',
         accentColor: '#f59e0b',
@@ -86,9 +83,8 @@ async function main() {
       bookingModel: BookingModel.DAILY,
       checkInTime: '15:00',
       checkOutTime: '11:00',
-      commissionRate: 0.12,
+      commissionRate: 0,
       isActive: true,
-      isFeatured: true,
     },
   });
 
@@ -112,24 +108,9 @@ async function main() {
       bookingModel: BookingModel.DAILY,
       checkInTime: '14:00',
       checkOutTime: '12:00',
-      commissionRate: 0.08,
+      commissionRate: 0,
       isActive: true,
-      isFeatured: false,
     },
-  });
-
-  // ============================================
-  // CREATE DOMAINS
-  // ============================================
-  console.log('🌐 Creating domains...');
-
-  await prisma.hotelDomain.createMany({
-    data: [
-      { hotelId: radhikaResort.id, domain: 'radhikaresort.in', isPrimary: true, sslStatus: 'ACTIVE' },
-      { hotelId: radhikaResort.id, domain: 'www.radhikaresort.in', isPrimary: false, sslStatus: 'ACTIVE' },
-      { hotelId: oceanView.id, domain: 'oceanviewhotel.in', isPrimary: true, sslStatus: 'ACTIVE' },
-      { hotelId: hillsideInn.id, domain: 'hillsideinn.in', isPrimary: true, sslStatus: 'PENDING' },
-    ],
   });
 
   // ============================================
@@ -332,27 +313,13 @@ async function main() {
 
   const hashedPassword = await bcrypt.hash('password123', 10);
 
-  // Platform admin
-  const platformAdmin = await prisma.user.create({
-    data: {
-      email: 'admin@bluestay.in',
-      phone: '+919999999999',
-      password: hashedPassword,
-      name: 'Platform Admin',
-      role: UserRole.PLATFORM_ADMIN,
-      isActive: true,
-      emailVerified: true,
-      phoneVerified: true,
-    },
-  });
-
-  // Hotel admin for Radhika Resort
+  // Hotel admin (main admin user)
   const hotelAdmin = await prisma.user.create({
     data: {
-      email: 'admin@radhikaresort.in',
+      email: 'admin@hotel.local',
       phone: '+919876543210',
       password: hashedPassword,
-      name: 'Radhika Resort Admin',
+      name: 'Hotel Admin',
       role: UserRole.HOTEL_ADMIN,
       hotelId: radhikaResort.id,
       isActive: true,
@@ -408,9 +375,7 @@ async function main() {
       roomTotal: 14997,
       taxes: 2699,
       totalAmount: 17696,
-      commissionAmount: 1770,
-      hotelPayout: 15926,
-      source: BookingSource.BLUESTAY,
+      source: BookingSource.DIRECT,
       status: BookingStatus.CONFIRMED,
       paymentStatus: PaymentStatus.PAID,
       guestName: 'John Doe',
@@ -436,8 +401,6 @@ async function main() {
       roomTotal: 2694,
       taxes: 485,
       totalAmount: 3179,
-      commissionAmount: 318,
-      hotelPayout: 2861,
       source: BookingSource.DIRECT,
       status: BookingStatus.PENDING,
       paymentStatus: PaymentStatus.PENDING,
@@ -531,12 +494,11 @@ async function main() {
   console.log(`   - Hotels: 3`);
   console.log(`   - Room Types: 5`);
   console.log(`   - Physical Rooms: 30`);
-  console.log(`   - Users: 4`);
+  console.log(`   - Users: 3`);
   console.log(`   - Bookings: 2`);
   console.log(`   - Reviews: 1`);
   console.log('\n🔐 Test Credentials:');
-  console.log('   Platform Admin: admin@bluestay.in / password123');
-  console.log('   Hotel Admin: admin@radhikaresort.in / password123');
+  console.log('   Hotel Admin: admin@hotel.local / password123');
   console.log('   Guest: guest@example.com / password123');
 }
 

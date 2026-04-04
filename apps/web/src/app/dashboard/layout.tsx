@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Dashboard Layout - BlueStay
+ * Dashboard Layout - Hotel Manager
  * Protected layout for authenticated user pages
  */
 

@@ -1,4 +1,4 @@
-# BlueStay API Dockerfile
+# Hotel Manager API Dockerfile
 # Multi-stage build for NestJS
 
 # ============================================

@@ -16,7 +16,7 @@ const TESTIMONIALS = [
     location: "Mumbai",
     avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80",
     rating: 5,
-    text: "Booked a last-minute getaway to Goa through BlueStay. The process was super smooth, and the hotel exceeded our expectations. Will definitely use again!",
+    text: "Booked a last-minute getaway to Goa. The process was super smooth, and the hotel exceeded our expectations. Will definitely book again!",
     hotel: "Radhika Resort, Goa",
   },
   {

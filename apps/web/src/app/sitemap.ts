@@ -1,5 +1,5 @@
 /**
- * Sitemap - BlueStay
+ * Sitemap - Hotel Manager
  * Dynamic sitemap generation for SEO
  * Includes static pages + dynamic hotel pages from API
  */
@@ -7,7 +7,7 @@
 import { MetadataRoute } from 'next';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://bluestay.in';
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
 async function getHotelSlugs(): Promise<string[]> {
   try {

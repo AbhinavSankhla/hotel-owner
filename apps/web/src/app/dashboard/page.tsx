@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Dashboard Overview Page - BlueStay
+ * Dashboard Overview Page - Hotel Manager
  * Shows summary of user's bookings, recent activity, and quick actions
  * Wired to real GraphQL API
  */

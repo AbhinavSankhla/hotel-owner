@@ -1,5 +1,5 @@
 /**
- * Payment Controller - BlueStay API
+ * Payment Controller - Hotel Manager API
  * 
  * REST endpoints for payment-related callbacks and webhooks.
  * Razorpay sends server-to-server webhook events for payment lifecycle:

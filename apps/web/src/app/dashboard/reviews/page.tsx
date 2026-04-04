@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * My Reviews Page - BlueStay Dashboard
+ * My Reviews Page - Hotel Manager Dashboard
  * Shows guest's reviews history with ratings
  * Wired to real GraphQL API
  */

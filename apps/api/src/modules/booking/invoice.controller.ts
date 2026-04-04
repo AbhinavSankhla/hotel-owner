@@ -4,7 +4,7 @@ import { InvoiceService } from './invoice.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 /**
- * Invoice Controller - BlueStay
+ * Invoice Controller - Hotel Manager
  *
  * REST endpoint for downloading booking invoices as PDF.
  * GET /api/invoices/:bookingId
@@ -31,7 +31,7 @@ export class InvoiceController {
 
     // Manual JWT verification
     const JwtService = await import('@nestjs/jwt').then(m => m.JwtService);
-    const jwtService = new JwtService({ secret: process.env.JWT_SECRET || 'bluestay-secret-key-change-in-production' });
+    const jwtService = new JwtService({ secret: process.env.JWT_SECRET || 'hotel-secret-key-change-in-production' });
 
     let userId: string | undefined;
     try {
@@ -49,7 +49,7 @@ export class InvoiceController {
 
     res.set({
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="BlueStay-Invoice-${bookingId.slice(0, 8)}.pdf"`,
+      'Content-Disposition': `attachment; filename="Hotel Manager-Invoice-${bookingId.slice(0, 8)}.pdf"`,
       'Content-Length': pdfBuffer.length.toString(),
     });
 

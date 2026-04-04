@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Admin Content Management - BlueStay
+ * Admin Content Management - Hotel Manager
  * Edit hotel description, hero image, logo, and theme settings
  */
 

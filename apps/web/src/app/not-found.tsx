@@ -1,5 +1,5 @@
 /**
- * Not Found Page - BlueStay
+ * Not Found Page - Hotel Manager
  * Displayed when a route is not found (404)
  */
 

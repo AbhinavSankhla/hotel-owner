@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Admin Room Management - BlueStay
+ * Admin Room Management - Hotel Manager
  * CRUD room types with pricing, amenities, and capacity
  */
 

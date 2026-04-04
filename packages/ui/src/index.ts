@@ -1,5 +1,5 @@
 /**
- * @bluestay/ui - Shared React UI components
+ * @hotel/ui - Shared React UI components
  *
  * Re-exports common components for use across the platform.
  * Components here are theme-agnostic and work in any tenant context.

@@ -1,17 +1,23 @@
 /**
- * Booking Processor - BlueStay API
+ * Booking Processor — Hotel Manager API
  * 
- * BullMQ worker that processes booking-related background jobs:
- * - Auto-cancel unpaid bookings after timeout
- * - Check-in reminders (1 day before)
- * - Post-checkout review requests
- * - Cleanup of expired bookings
+ * BullMQ worker that processes booking-related background jobs.
+ * Only starts when Redis is enabled.
  */
 
 import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { Worker, Job } from 'bullmq';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BookingJobData, QueueService } from '../queue.service';
+
+// Conditionally import BullMQ
+let Worker: any, Job: any;
+try {
+  const bullmq = require('bullmq');
+  Worker = bullmq.Worker;
+  Job = bullmq.Job;
+} catch {
+  Worker = null;
+}
 
 const REDIS_CONNECTION = {
   host: process.env.REDIS_HOST || 'localhost',
@@ -23,7 +29,7 @@ const REDIS_CONNECTION = {
 @Injectable()
 export class BookingProcessor implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(BookingProcessor.name);
-  private worker: Worker<BookingJobData>;
+  private worker: any;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -31,9 +37,14 @@ export class BookingProcessor implements OnModuleInit, OnModuleDestroy {
   ) {}
 
   async onModuleInit() {
-    this.worker = new Worker<BookingJobData>(
+    if (process.env.REDIS_ENABLED !== 'true' || !Worker) {
+      this.logger.warn('Booking processor skipped (Redis disabled)');
+      return;
+    }
+
+    this.worker = new Worker(
       'booking-jobs',
-      async (job: Job<BookingJobData>) => {
+      async (job: any) => {
         switch (job.data.type) {
           case 'auto-cancel':
             return this.handleAutoCancel(job);
@@ -50,11 +61,11 @@ export class BookingProcessor implements OnModuleInit, OnModuleDestroy {
       { connection: REDIS_CONNECTION, concurrency: 3 },
     );
 
-    this.worker.on('completed', (job) => {
+    this.worker.on('completed', (job: any) => {
       this.logger.debug(`Booking job completed: ${job.data.type} ${job.data.bookingId || ''}`);
     });
 
-    this.worker.on('failed', (job, err) => {
+    this.worker.on('failed', (job: any, err: any) => {
       this.logger.error(`Booking job failed: ${job?.data.type}: ${err.message}`);
     });
 
@@ -70,7 +81,7 @@ export class BookingProcessor implements OnModuleInit, OnModuleDestroy {
   /**
    * Auto-cancel unpaid bookings after timeout
    */
-  private async handleAutoCancel(job: Job<BookingJobData>) {
+  private async handleAutoCancel(job: any) {
     const { bookingId } = job.data;
     if (!bookingId) return;
 
@@ -156,7 +167,7 @@ export class BookingProcessor implements OnModuleInit, OnModuleDestroy {
   /**
    * Send check-in reminder 1 day before
    */
-  private async handleReminder(job: Job<BookingJobData>) {
+  private async handleReminder(job: any) {
     const { bookingId } = job.data;
     if (!bookingId) return;
 
@@ -194,7 +205,7 @@ export class BookingProcessor implements OnModuleInit, OnModuleDestroy {
   /**
    * Send review request after checkout
    */
-  private async handleReviewRequest(job: Job<BookingJobData>) {
+  private async handleReviewRequest(job: any) {
     const { bookingId } = job.data;
     if (!bookingId) return;
 
@@ -234,7 +245,7 @@ export class BookingProcessor implements OnModuleInit, OnModuleDestroy {
   /**
    * Cleanup expired/unpaid bookings older than 1 hour
    */
-  private async handleCleanupExpired(job: Job<BookingJobData>) {
+  private async handleCleanupExpired(job: any) {
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
 
     // Find expired bookings first so we can release their inventory

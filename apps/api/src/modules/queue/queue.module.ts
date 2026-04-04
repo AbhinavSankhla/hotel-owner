@@ -1,5 +1,5 @@
 /**
- * Queue Module - BlueStay API
+ * Queue Module - Hotel Manager API
  * 
  * BullMQ-based background job processing.
  * Queues: email, notifications, analytics, cleanup

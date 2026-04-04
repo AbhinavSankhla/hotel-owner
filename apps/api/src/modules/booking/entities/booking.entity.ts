@@ -8,7 +8,6 @@ export enum BookingType {
 
 export enum BookingSource {
   DIRECT = 'DIRECT',
-  BLUESTAY = 'BLUESTAY',
   WALK_IN = 'WALK_IN',
 }
 

@@ -109,7 +109,7 @@ export function PaymentForm({ bookingId, amount, guestName, guestEmail, guestPho
         key: gatewayData.razorpayKeyId,
         amount: gatewayData.amount,
         currency: gatewayData.currency || 'INR',
-        name: gatewayData.name || 'BlueStay',
+        name: gatewayData.name || process.env.NEXT_PUBLIC_APP_NAME || 'Hotel',
         description: gatewayData.description || 'Hotel Booking Payment',
         order_id: gatewayData.razorpayOrderId,
         prefill: {

@@ -81,7 +81,7 @@ export function WhyChooseUs() {
           className="text-center mb-12"
         >
           <span className="text-brand-600 font-medium text-sm uppercase tracking-wider">
-            Why BlueStay
+            Why Choose Us
           </span>
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mt-2">
             Why Guests Love Us

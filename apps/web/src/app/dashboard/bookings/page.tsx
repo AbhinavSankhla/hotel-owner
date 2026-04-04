@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * My Bookings Page - BlueStay
+ * My Bookings Page - Hotel Manager
  * Lists all user bookings with filtering and cancel support
  * Wired to real GraphQL API
  */

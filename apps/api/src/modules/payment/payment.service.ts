@@ -1,5 +1,5 @@
 /**
- * Payment Service - BlueStay API
+ * Payment Service - Hotel Manager API
  *
  * Payment service supporting Razorpay and Demo gateways.
  * Architecture: Uses a strategy pattern — DemoGateway for dev/testing,
@@ -122,7 +122,7 @@ class RazorpayGateway implements PaymentGatewayInterface {
         razorpayOrderId: order.id,
         amount: amountInPaise,
         currency: order.currency,
-        name: metadata?.hotelName || 'BlueStay',
+        name: metadata?.hotelName || 'Hotel Manager',
         description: `Booking ${metadata?.bookingNumber || ''}`,
         prefill: metadata?.prefill || {},
       },

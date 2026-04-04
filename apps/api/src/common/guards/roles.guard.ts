@@ -1,5 +1,5 @@
 /**
- * Roles Guard - BlueStay API
+ * Roles Guard - Hotel Manager API
  *
  * Checks if the authenticated user has the required role(s)
  * to access the resource. Use with @Roles() decorator.

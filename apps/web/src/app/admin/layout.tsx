@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Hotel Admin Layout - BlueStay
+ * Hotel Admin Layout - Hotel Manager
  * Protected layout for hotel admin pages with sidebar navigation
  */
 
@@ -38,7 +38,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const AGGREGATOR_HOSTS = new Set(['bluestay.in', 'www.bluestay.in']);
+const AGGREGATOR_HOSTS = new Set(['hotel.local', 'www.hotel.local']);
 
 const adminLinks = [
   {
@@ -266,7 +266,7 @@ export default function AdminLayout({
             className="flex items-center gap-2 px-3 py-2 text-sm text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-50"
           >
             <ChevronLeft className="w-4 h-4" />
-            Back to BlueStay
+            Back to Hotel Manager
           </Link>
           <button
             onClick={() => logout()}

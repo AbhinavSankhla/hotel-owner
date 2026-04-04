@@ -1,5 +1,5 @@
 /**
- * Payment Module - BlueStay API
+ * Payment Module - Hotel Manager API
  * Manages payment processing for Indian clients.
  * Uses Razorpay as the primary gateway (UPI, Cards, Net Banking, Wallets).
  * Falls back to DEMO gateway when Razorpay credentials are not configured.

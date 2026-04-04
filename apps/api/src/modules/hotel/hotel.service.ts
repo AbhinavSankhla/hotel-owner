@@ -44,7 +44,6 @@ export class HotelService {
             skip,
             take: limit,
             include: {
-              domains: true,
               roomTypes: {
                 where: { isActive: true },
                 orderBy: { sortOrder: 'asc' },
@@ -100,7 +99,6 @@ export class HotelService {
         const hotel = await this.prisma.hotel.findUnique({
           where: { id },
           include: {
-            domains: true,
             roomTypes: {
               where: { isActive: true },
               orderBy: { sortOrder: 'asc' },
@@ -154,7 +152,6 @@ export class HotelService {
         const hotel = await this.prisma.hotel.findUnique({
           where: { slug },
           include: {
-            domains: true,
             roomTypes: {
               where: { isActive: true },
               orderBy: { sortOrder: 'asc' },
@@ -192,44 +189,6 @@ export class HotelService {
   }
 
   /**
-   * Get hotel by domain (for multi-tenant routing)
-   */
-  async findByDomain(domain: string) {
-    const cacheKey = `hotel:domain:${domain}`;
-
-    return this.redis.cacheOrFetch(
-      cacheKey,
-      async () => {
-        const hotelDomain = await this.prisma.hotelDomain.findUnique({
-          where: { domain },
-          include: {
-            hotel: {
-              include: {
-                domains: true,
-                roomTypes: {
-                  where: { isActive: true },
-                  orderBy: { sortOrder: 'asc' },
-                },
-                seoMeta: true,
-                media: {
-                  orderBy: { sortOrder: 'asc' },
-                },
-              },
-            },
-          },
-        });
-
-        if (!hotelDomain || !hotelDomain.hotel.isActive) {
-          return null;
-        }
-
-        return hotelDomain.hotel;
-      },
-      this.CACHE_TTL,
-    );
-  }
-
-  /**
    * Get featured hotels for homepage
    */
   async getFeatured(limit = 6) {
@@ -241,7 +200,6 @@ export class HotelService {
         const hotels = await this.prisma.hotel.findMany({
           where: {
             isActive: true,
-            isFeatured: true,
           },
           take: limit,
           orderBy: [
@@ -367,10 +325,6 @@ export class HotelService {
       where.starRating = { gte: filters.minRating };
     }
 
-    if (filters.isFeatured !== undefined) {
-      where.isFeatured = filters.isFeatured;
-    }
-
     // Price filter requires joining with room types
     if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
       where.roomTypes = {
@@ -409,12 +363,11 @@ export class HotelService {
     const orderByMap: Record<string, Prisma.HotelOrderByWithRelationInput> = {
       [HotelSortBy.NAME]: { name: order },
       [HotelSortBy.RATING]: { starRating: order },
-      [HotelSortBy.FEATURED]: { isFeatured: order },
       [HotelSortBy.CREATED_AT]: { createdAt: order },
     };
 
     return [
-      orderByMap[sortBy || HotelSortBy.FEATURED],
+      orderByMap[sortBy || HotelSortBy.CREATED_AT],
       { createdAt: 'desc' },
     ];
   }

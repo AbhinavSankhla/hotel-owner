@@ -13,7 +13,7 @@ const nextConfig: NextConfig = {
   output: "standalone",
 
   // Transpile shared packages from monorepo
-  transpilePackages: ["@bluestay/ui", "@bluestay/types", "@bluestay/utils"],
+  transpilePackages: ["@hotel/ui", "@hotel/types", "@hotel/utils"],
 
   // Image optimization configuration
   images: {

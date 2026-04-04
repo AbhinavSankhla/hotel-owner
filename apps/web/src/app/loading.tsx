@@ -1,5 +1,5 @@
 /**
- * Root Loading - BlueStay
+ * Root Loading - Hotel Manager
  * Displayed during route transitions
  */
 

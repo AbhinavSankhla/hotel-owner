@@ -5,7 +5,6 @@ export enum HotelSortBy {
   NAME = 'name',
   RATING = 'rating',
   PRICE = 'price',
-  FEATURED = 'featured',
   CREATED_AT = 'createdAt',
 }
 
@@ -63,11 +62,6 @@ export class HotelFiltersInput {
   @IsOptional()
   amenities?: string[];
 
-  @Field({ nullable: true })
-  @IsOptional()
-  @IsBoolean()
-  isFeatured?: boolean;
-
   // For availability check
   @Field({ nullable: true })
   @IsOptional()
@@ -99,10 +93,10 @@ export class HotelPaginationInput {
   @Max(50)
   limit?: number = 12;
 
-  @Field(() => HotelSortBy, { nullable: true, defaultValue: HotelSortBy.FEATURED })
+  @Field(() => HotelSortBy, { nullable: true, defaultValue: HotelSortBy.CREATED_AT })
   @IsOptional()
   @IsEnum(HotelSortBy)
-  sortBy?: HotelSortBy = HotelSortBy.FEATURED;
+  sortBy?: HotelSortBy = HotelSortBy.CREATED_AT;
 
   @Field(() => SortOrder, { nullable: true, defaultValue: SortOrder.DESC })
   @IsOptional()

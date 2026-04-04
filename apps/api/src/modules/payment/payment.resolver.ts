@@ -1,5 +1,5 @@
 /**
- * Payment Resolver - BlueStay API
+ * Payment Resolver - Hotel Manager API
  * GraphQL mutations and queries for payment processing
  */
 

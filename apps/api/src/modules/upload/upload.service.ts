@@ -1,5 +1,5 @@
 /**
- * Upload Service - BlueStay API
+ * Upload Service - Hotel Manager API
  * 
  * Storage-agnostic upload service.
  * Default: Local filesystem (./uploads)
@@ -88,7 +88,7 @@ class S3StorageProvider implements StorageProvider {
   private readonly logger = new Logger('S3StorageProvider');
 
   constructor() {
-    this.bucket = process.env.S3_BUCKET || 'bluestay-uploads';
+    this.bucket = process.env.S3_BUCKET || 'hotel-uploads';
     this.region = process.env.S3_REGION || 'auto';
     this.endpoint = process.env.S3_ENDPOINT || '';
     this.accessKeyId = process.env.S3_ACCESS_KEY_ID || '';

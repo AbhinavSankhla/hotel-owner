@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Admin Hotel Settings - BlueStay
+ * Admin Hotel Settings - Hotel Manager
  * Edit hotel details, contact info, and configuration
  */
 
@@ -807,7 +807,7 @@ function DomainManagement({ hotelId }: { hotelId: string }) {
             <div className="flex gap-4">
               <span className="text-gray-700 w-12">CNAME</span>
               <span className="text-gray-700 w-20">www</span>
-              <span className="text-gray-900">bluestay.in</span>
+              <span className="text-gray-900">hotel.local</span>
             </div>
           </div>
         </div>

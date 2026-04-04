@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Hotel Offers & Deals Page - BlueStay
+ * Hotel Offers & Deals Page - Hotel Manager
  *
  * Displays current promotions, seasonal deals, and special packages
  * from the hotel. Data driven by hotel's offers configuration.

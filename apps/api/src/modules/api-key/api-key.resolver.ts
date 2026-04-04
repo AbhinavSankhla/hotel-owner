@@ -30,11 +30,11 @@ export class ApiKeyResolver {
     const req = context?.req;
     const origin = String(req?.headers?.origin || req?.headers?.referer || '').toLowerCase();
     if (
-      origin.includes('://bluestay.in') ||
-      origin.includes('://www.bluestay.in')
+      origin.includes('://hotel.local') ||
+      origin.includes('://www.hotel.local')
     ) {
       throw new ForbiddenException(
-        'API key creation is disabled on BlueStay admin. Please contact BlueStay team for custom website access.',
+        'API key creation is disabled on Hotel Manager admin. Please contact Hotel Manager team for custom website access.',
       );
     }
 
@@ -113,11 +113,11 @@ export class ApiKeyResolver {
     const req = context?.req;
     const origin = String(req?.headers?.origin || req?.headers?.referer || '').toLowerCase();
     if (
-      origin.includes('://bluestay.in') ||
-      origin.includes('://www.bluestay.in')
+      origin.includes('://hotel.local') ||
+      origin.includes('://www.hotel.local')
     ) {
       throw new ForbiddenException(
-        'API key rotation is disabled on BlueStay admin. Please contact BlueStay team for custom website access.',
+        'API key rotation is disabled on Hotel Manager admin. Please contact Hotel Manager team for custom website access.',
       );
     }
 

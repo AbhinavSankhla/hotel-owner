@@ -4,7 +4,6 @@ export enum UserRole {
   GUEST = 'GUEST',
   HOTEL_ADMIN = 'HOTEL_ADMIN',
   HOTEL_STAFF = 'HOTEL_STAFF',
-  PLATFORM_ADMIN = 'PLATFORM_ADMIN',
 }
 
 registerEnumType(UserRole, {

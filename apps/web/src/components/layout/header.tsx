@@ -16,7 +16,6 @@ import {
   LogOut,
   LayoutDashboard,
   Loader2,
-  Shield,
   Hotel,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -24,7 +23,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth/auth-context";
 
 /**
- * Header Component for BlueStay Aggregator
+ * Header Component for Hotel Manager
  * 
  * Features:
  * - Sticky navigation with blur effect on scroll
@@ -148,7 +147,7 @@ export function Header() {
                   isScrolled ? "text-gray-900" : "text-gray-900"
                 )}
               >
-                BlueStay
+                Hotel Manager
               </span>
             </Link>
 
@@ -208,19 +207,9 @@ export function Header() {
                             <p className="text-sm font-medium text-gray-900">{user.name}</p>
                             <p className="text-xs text-gray-500 truncate">{user.email}</p>
                             <p className="text-xs text-gray-400 mt-0.5">
-                              {user.role === 'PLATFORM_ADMIN' ? 'Platform Admin' : user.role === 'HOTEL_ADMIN' ? 'Hotel Admin' : 'Guest'}
+                              {user.role === 'HOTEL_ADMIN' ? 'Hotel Admin' : 'Guest'}
                             </p>
                           </div>
-                          {user.role === 'PLATFORM_ADMIN' && (
-                            <Link
-                              href="/platform-admin"
-                              className="flex items-center gap-3 px-4 py-2.5 text-sm text-indigo-700 hover:bg-indigo-50 transition-colors font-medium"
-                              onClick={() => setShowUserMenu(false)}
-                            >
-                              <Shield size={16} />
-                              Platform Admin
-                            </Link>
-                          )}
                           {user.role === 'HOTEL_ADMIN' && (
                             <Link
                               href="/admin"
@@ -345,7 +334,7 @@ export function Header() {
                     <span className="text-white font-bold">B</span>
                   </div>
                   <span className="text-lg font-bold text-gray-900">
-                    BlueStay
+                    Hotel Manager
                   </span>
                 </Link>
                 <button
@@ -416,19 +405,7 @@ export function Header() {
                       </div>
                     </div>
                     <div className="flex gap-3">
-                      {user.role === 'PLATFORM_ADMIN' ? (
-                        <Button
-                          variant="outline"
-                          className="flex-1"
-                          onClick={() => {
-                            setIsMobileMenuOpen(false);
-                            router.push('/platform-admin');
-                          }}
-                        >
-                          <Shield size={16} className="mr-2" />
-                          Platform Admin
-                        </Button>
-                      ) : user.role === 'HOTEL_ADMIN' ? (
+                      {user.role === 'HOTEL_ADMIN' ? (
                         <Button
                           variant="outline"
                           className="flex-1"

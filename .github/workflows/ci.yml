@@ -20,7 +20,7 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: bluestay_test
+          POSTGRES_DB: hotel_test
         options: >-
           --health-cmd "pg_isready -U postgres"
           --health-interval 10s
@@ -40,7 +40,7 @@ jobs:
           - 6379:6379
 
     env:
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/bluestay_test?schema=public
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/hotel_test?schema=public
       REDIS_URL: redis://localhost:6379
       JWT_SECRET: ci-test-secret
       JWT_REFRESH_SECRET: ci-test-refresh-secret

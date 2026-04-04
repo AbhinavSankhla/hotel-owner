@@ -131,9 +131,6 @@ export class Hotel {
   @Field()
   isActive: boolean;
 
-  @Field()
-  isFeatured: boolean;
-
   // Timestamps
   @Field()
   createdAt: Date;
@@ -142,8 +139,7 @@ export class Hotel {
   updatedAt: Date;
 
   // Relations (resolved by field resolvers)
-  @Field(() => [HotelDomain], { nullable: true })
-  domains?: HotelDomain[];
+
 
   @Field(() => [RoomType], { nullable: true })
   roomTypes?: RoomType[];
@@ -160,21 +156,6 @@ export class Hotel {
 
   @Field(() => Float, { nullable: true })
   startingPrice?: number;
-}
-
-@ObjectType({ description: 'Hotel domain mapping' })
-export class HotelDomain {
-  @Field(() => ID)
-  id: string;
-
-  @Field()
-  domain: string;
-
-  @Field()
-  isPrimary: boolean;
-
-  @Field()
-  sslStatus: string;
 }
 
 @ObjectType({ description: 'Paginated hotels response' })

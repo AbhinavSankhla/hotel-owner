@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Admin SEO Settings - BlueStay
+ * Admin SEO Settings - Hotel Manager
  * Manage meta tags, OG images, JSON-LD per page
  */
 

@@ -1,57 +1,104 @@
 /**
- * Redis Service
+ * Redis Service (with in-memory fallback)
  * 
- * Provides Redis client for:
+ * When REDIS_ENABLED=true, uses Redis for:
  * - Caching (hotel data, room inventory)
- * - Session storage
  * - Distributed locks (prevent double booking)
  * - Rate limiting
+ * 
+ * When Redis is not available, falls back to an in-memory
+ * Map cache and simple locks. Suitable for single-instance
+ * standalone deployments.
  */
 
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import Redis from 'ioredis';
+
+// Conditionally import ioredis — won't crash if not installed
+let Redis: any;
+try {
+  Redis = require('ioredis').default ?? require('ioredis');
+} catch {
+  Redis = null;
+}
 
 @Injectable()
 export class RedisService implements OnModuleInit, OnModuleDestroy {
-  private client: Redis;
+  private readonly logger = new Logger(RedisService.name);
+  private client: any | null = null;
+  private useMemory = false;
+
+  // In-memory fallback stores
+  private memCache = new Map<string, { value: string; expiresAt?: number }>();
+  private memLocks = new Map<string, number>(); // key → expiresAt timestamp
 
   constructor(private configService: ConfigService) {}
 
   async onModuleInit() {
-    this.client = new Redis({
-      host: this.configService.get('REDIS_HOST', 'localhost'),
-      port: this.configService.get('REDIS_PORT', 6379),
-      password: this.configService.get('REDIS_PASSWORD', ''),
-      db: this.configService.get('REDIS_DB', 0),
-      // Retry strategy
-      retryStrategy: (times) => {
-        if (times > 3) {
-          console.error('Redis connection failed after 3 retries');
-          return null; // Stop retrying
-        }
-        return Math.min(times * 100, 3000); // Wait before retry
-      },
-    });
+    const enabled = this.configService.get('REDIS_ENABLED', 'false');
+    if (enabled !== 'true' || !Redis) {
+      this.useMemory = true;
+      this.logger.warn('Redis disabled — using in-memory cache (single-instance only)');
+      // Periodic cleanup of expired entries (every 60s)
+      this.startMemoryCleanup();
+      return;
+    }
 
-    this.client.on('connect', () => {
-      console.log('✅ Redis connected');
-    });
+    try {
+      this.client = new Redis({
+        host: this.configService.get('REDIS_HOST', 'localhost'),
+        port: this.configService.get('REDIS_PORT', 6379),
+        password: this.configService.get('REDIS_PASSWORD', ''),
+        db: this.configService.get('REDIS_DB', 0),
+        retryStrategy: (times: number) => {
+          if (times > 3) {
+            this.logger.error('Redis connection failed after 3 retries — falling back to memory');
+            this.useMemory = true;
+            this.startMemoryCleanup();
+            return null;
+          }
+          return Math.min(times * 100, 3000);
+        },
+      });
 
-    this.client.on('error', (err) => {
-      console.error('❌ Redis error:', err);
-    });
+      this.client.on('connect', () => {
+        this.logger.log('Redis connected');
+      });
+
+      this.client.on('error', (err: Error) => {
+        this.logger.error(`Redis error: ${err.message}`);
+      });
+    } catch {
+      this.useMemory = true;
+      this.logger.warn('Redis init failed — using in-memory cache');
+      this.startMemoryCleanup();
+    }
+  }
+
+  private cleanupInterval: ReturnType<typeof setInterval> | null = null;
+
+  private startMemoryCleanup() {
+    if (this.cleanupInterval) return;
+    this.cleanupInterval = setInterval(() => {
+      const now = Date.now();
+      for (const [key, entry] of this.memCache) {
+        if (entry.expiresAt && entry.expiresAt < now) this.memCache.delete(key);
+      }
+      for (const [key, expiresAt] of this.memLocks) {
+        if (expiresAt < now) this.memLocks.delete(key);
+      }
+    }, 60_000);
   }
 
   async onModuleDestroy() {
-    await this.client.quit();
-    console.log('❌ Redis disconnected');
+    if (this.cleanupInterval) clearInterval(this.cleanupInterval);
+    if (this.client) {
+      await this.client.quit();
+      this.logger.log('Redis disconnected');
+    }
   }
 
-  /**
-   * Get the raw Redis client
-   */
-  getClient(): Redis {
+  getClient(): any | null {
     return this.client;
   }
 
@@ -59,6 +106,15 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
    * Get a value from cache
    */
   async get(key: string): Promise<string | null> {
+    if (this.useMemory) {
+      const entry = this.memCache.get(key);
+      if (!entry) return null;
+      if (entry.expiresAt && entry.expiresAt < Date.now()) {
+        this.memCache.delete(key);
+        return null;
+      }
+      return entry.value;
+    }
     return this.client.get(key);
   }
 
@@ -93,6 +149,13 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
    * @param ttl Time-to-live in seconds (optional)
    */
   async set(key: string, value: string, ttl?: number): Promise<void> {
+    if (this.useMemory) {
+      this.memCache.set(key, {
+        value,
+        expiresAt: ttl ? Date.now() + ttl * 1000 : undefined,
+      });
+      return;
+    }
     if (ttl) {
       await this.client.setex(key, ttl, value);
     } else {
@@ -111,6 +174,10 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
    * Delete a key
    */
   async del(key: string): Promise<void> {
+    if (this.useMemory) {
+      this.memCache.delete(key);
+      return;
+    }
     await this.client.del(key);
   }
 
@@ -118,6 +185,13 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
    * Delete multiple keys matching a pattern
    */
   async delPattern(pattern: string): Promise<void> {
+    if (this.useMemory) {
+      const regex = new RegExp('^' + pattern.replace(/\*/g, '.*') + '$');
+      for (const key of this.memCache.keys()) {
+        if (regex.test(key)) this.memCache.delete(key);
+      }
+      return;
+    }
     const keys = await this.client.keys(pattern);
     if (keys.length > 0) {
       await this.client.del(...keys);
@@ -125,23 +199,29 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
-   * Acquire a distributed lock
+   * Acquire a distributed lock (or in-memory lock)
    * Used to prevent double bookings
-   * 
-   * @param key Lock key (e.g., "lock:room:123:2026-03-15")
-   * @param ttl Lock timeout in seconds (auto-release)
-   * @returns true if lock acquired, false if already locked
    */
   async acquireLock(key: string, ttl: number = 600): Promise<boolean> {
-    // SET NX = only set if not exists, EX = expire time
+    if (this.useMemory) {
+      const now = Date.now();
+      const existing = this.memLocks.get(key);
+      if (existing && existing > now) return false; // Already locked
+      this.memLocks.set(key, now + ttl * 1000);
+      return true;
+    }
     const result = await this.client.set(key, '1', 'EX', ttl, 'NX');
     return result === 'OK';
   }
 
   /**
-   * Release a distributed lock
+   * Release a lock
    */
   async releaseLock(key: string): Promise<void> {
+    if (this.useMemory) {
+      this.memLocks.delete(key);
+      return;
+    }
     await this.client.del(key);
   }
 
@@ -149,21 +229,37 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
    * Check if a lock exists
    */
   async isLocked(key: string): Promise<boolean> {
+    if (this.useMemory) {
+      const existing = this.memLocks.get(key);
+      if (!existing || existing < Date.now()) return false;
+      return true;
+    }
     const exists = await this.client.exists(key);
     return exists === 1;
   }
 
   /**
-   * Increment a counter (for rate limiting, analytics)
+   * Increment a counter
    */
   async incr(key: string): Promise<number> {
+    if (this.useMemory) {
+      const entry = this.memCache.get(key);
+      const val = entry ? parseInt(entry.value, 10) + 1 : 1;
+      this.memCache.set(key, { value: String(val), expiresAt: entry?.expiresAt });
+      return val;
+    }
     return this.client.incr(key);
   }
 
   /**
-   * Set expiry on a key (seconds)
+   * Set expiry on a key
    */
   async expire(key: string, seconds: number): Promise<void> {
+    if (this.useMemory) {
+      const entry = this.memCache.get(key);
+      if (entry) entry.expiresAt = Date.now() + seconds * 1000;
+      return;
+    }
     await this.client.expire(key, seconds);
   }
 

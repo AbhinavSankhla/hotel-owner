@@ -1,5 +1,5 @@
 /**
- * @CurrentHotel() decorator - BlueStay API
+ * @CurrentHotel() decorator - Hotel Manager API
  *
  * Extracts the current hotel ID from the request context.
  * Works for both REST and GraphQL endpoints.

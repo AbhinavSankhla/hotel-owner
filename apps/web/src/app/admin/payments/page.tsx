@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Admin Payments Page - BlueStay
+ * Admin Payments Page - Hotel Manager
  * Payment gateway configuration and transaction overview
  */
 

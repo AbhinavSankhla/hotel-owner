@@ -1,4 +1,4 @@
-# BlueStay Web Dockerfile
+# Hotel Manager Web Dockerfile
 # Multi-stage build for Next.js
 
 # ============================================

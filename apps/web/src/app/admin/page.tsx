@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Hotel Admin Dashboard - BlueStay
+ * Hotel Admin Dashboard - Hotel Manager
  * Overview with revenue cards, occupancy, check-ins/outs, recent bookings
  */
 

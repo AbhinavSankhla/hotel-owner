@@ -1,5 +1,5 @@
 /**
- * Analytics Service - BlueStay API
+ * Analytics Service - Hotel Manager API
  *
  * Provides comprehensive analytics for hotel admins and platform admins.
  * Revenue tracking, occupancy analysis, booking trends, and guest insights.

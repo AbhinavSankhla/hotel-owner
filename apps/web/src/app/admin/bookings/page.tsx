@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Admin Bookings Management - BlueStay
+ * Admin Bookings Management - Hotel Manager
  * List, filter, and manage hotel bookings
  */
 

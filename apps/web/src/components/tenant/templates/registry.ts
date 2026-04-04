@@ -54,7 +54,7 @@ export const TEMPLATE_CATALOG: TemplateMeta[] = [
   {
     id: 'STARTER',
     name: 'Classic Starter',
-    description: 'The default BlueStay layout — bold and straightforward with a familiar hotel website feel.',
+    description: 'The default Hotel Manager layout — bold and straightforward with a familiar hotel website feel.',
     preview: 'from-blue-600 to-blue-800',
     fontHint: 'Inter / Sans-serif',
   },

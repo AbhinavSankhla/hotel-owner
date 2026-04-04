@@ -139,7 +139,7 @@ export class BookingService {
       numExtraGuests = 0,
       guestInfo,
       specialRequests,
-      source = BookingSource.BLUESTAY,
+      source = BookingSource.DIRECT,
     } = input;
 
     // Validate dates
@@ -228,15 +228,6 @@ export class BookingService {
       const taxes = subtotal * this.TAX_RATE;
       const totalAmount = subtotal + taxes;
 
-      // Calculate commission for BlueStay bookings
-      let commissionAmount = 0;
-      let hotelPayout = totalAmount;
-
-      if (source === BookingSource.BLUESTAY) {
-        commissionAmount = totalAmount * roomType.hotel.commissionRate;
-        hotelPayout = totalAmount - commissionAmount;
-      }
-
       const resolvedGuestId = await this.resolveBookingGuestId(guestId, guestInfo);
 
       // Create booking and update inventory in a transaction
@@ -259,8 +250,6 @@ export class BookingService {
             taxes,
             discountAmount: 0,
             totalAmount,
-            commissionAmount,
-            hotelPayout,
             source,
             status: BookingStatus.PENDING,
             paymentStatus: PaymentStatus.PENDING,
@@ -320,20 +309,6 @@ export class BookingService {
           }
         }
 
-        // Create commission record for BlueStay bookings
-        if (source === BookingSource.BLUESTAY && commissionAmount > 0) {
-          await tx.commission.create({
-            data: {
-              hotelId,
-              bookingId: newBooking.id,
-              bookingAmount: totalAmount,
-              commissionRate: roomType.hotel.commissionRate,
-              commissionAmount,
-              status: 'PENDING',
-            },
-          });
-        }
-
         return newBooking;
       });
 
@@ -372,7 +347,7 @@ export class BookingService {
       numGuests = 2,
       guestInfo,
       specialRequests,
-      source = BookingSource.BLUESTAY,
+      source = BookingSource.DIRECT,
     } = input;
 
     const bookingDate = new Date(date);
@@ -448,15 +423,6 @@ export class BookingService {
       const taxes = roomTotal * this.TAX_RATE;
       const totalAmount = roomTotal + taxes;
 
-      // Calculate commission
-      let commissionAmount = 0;
-      let hotelPayout = totalAmount;
-
-      if (source === BookingSource.BLUESTAY) {
-        commissionAmount = totalAmount * roomType.hotel.commissionRate;
-        hotelPayout = totalAmount - commissionAmount;
-      }
-
       const resolvedGuestId = await this.resolveBookingGuestId(guestId, guestInfo);
 
       // Create booking and update slots
@@ -481,8 +447,6 @@ export class BookingService {
             taxes,
             discountAmount: 0,
             totalAmount,
-            commissionAmount,
-            hotelPayout,
             source,
             status: BookingStatus.PENDING,
             paymentStatus: PaymentStatus.PENDING,
@@ -528,20 +492,6 @@ export class BookingService {
               slotStart: checkInTime,
               slotEnd: checkOutTime,
               availableCount: roomType.totalRooms - numRooms,
-            },
-          });
-        }
-
-        // Create commission record
-        if (source === BookingSource.BLUESTAY && commissionAmount > 0) {
-          await tx.commission.create({
-            data: {
-              hotelId,
-              bookingId: newBooking.id,
-              bookingAmount: totalAmount,
-              commissionRate: roomType.hotel.commissionRate,
-              commissionAmount,
-              status: 'PENDING',
             },
           });
         }

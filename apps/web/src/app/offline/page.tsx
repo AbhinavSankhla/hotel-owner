@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Offline — BlueStay',
+  title: 'Offline',
 };
 
 export default function OfflinePage() {
