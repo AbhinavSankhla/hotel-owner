@@ -59,12 +59,22 @@ export class HotelService {
         ]);
 
         // Transform to include computed fields
-        const transformedHotels = hotels.map((hotel) => ({
+        let transformedHotels = hotels.map((hotel) => ({
           ...hotel,
           averageRating: this.calculateAverageRating(hotel.reviews),
           reviewCount: hotel.reviews.length,
           startingPrice: this.getStartingPrice(hotel.roomTypes),
         }));
+
+        // Post-query sort by price (needs computed startingPrice)
+        if (pagination?.sortBy === HotelSortBy.PRICE) {
+          const dir = (pagination?.sortOrder || SortOrder.ASC) === SortOrder.ASC ? 1 : -1;
+          transformedHotels = transformedHotels.sort((a, b) => {
+            const pa = a.startingPrice ?? Infinity;
+            const pb = b.startingPrice ?? Infinity;
+            return (pa - pb) * dir;
+          });
+        }
 
         return {
           hotels: transformedHotels,
@@ -390,12 +400,17 @@ export class HotelService {
     sortOrder?: SortOrder,
   ): Prisma.HotelOrderByWithRelationInput[] {
     const order = sortOrder || SortOrder.DESC;
-    const orderByMap: Record<HotelSortBy, Prisma.HotelOrderByWithRelationInput> = {
+
+    // PRICE sorting is handled post-query since it depends on aggregated room data
+    if (sortBy === HotelSortBy.PRICE) {
+      return [{ createdAt: 'desc' }];
+    }
+
+    const orderByMap: Record<string, Prisma.HotelOrderByWithRelationInput> = {
       [HotelSortBy.NAME]: { name: order },
       [HotelSortBy.RATING]: { starRating: order },
       [HotelSortBy.FEATURED]: { isFeatured: order },
       [HotelSortBy.CREATED_AT]: { createdAt: order },
-      [HotelSortBy.PRICE]: { name: order }, // Fallback, actual sorting done in app
     };
 
     return [

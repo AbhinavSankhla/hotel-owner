@@ -1,16 +1,17 @@
 /**
  * Payment Service - BlueStay API
- * 
- * Gateway-agnostic payment service with Razorpay integration.
- * Architecture: Uses a strategy pattern — DemoGateway for dev, 
- * RazorpayGateway for production (Indian payments only).
+ *
+ * Payment service supporting Razorpay and Demo gateways.
+ * Architecture: Uses a strategy pattern — DemoGateway for dev/testing,
+ * RazorpayGateway for production (Indian payments — UPI, Cards, Net Banking, Wallets).
+ *
+ * Gateway priority for Indian clients: Razorpay → Demo
  */
 
 import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { randomUUID, createHmac } from 'crypto';
 import Razorpay from 'razorpay';
-import Stripe from 'stripe';
 
 export interface PaymentGatewayInterface {
   readonly name: string;
@@ -162,103 +163,19 @@ class RazorpayGateway implements PaymentGatewayInterface {
   }
 }
 
-/**
- * Stripe Payment Gateway
- * International payment processing.
- * Amounts are in smallest currency unit (e.g. paise for INR, cents for USD).
- */
-class StripeGateway implements PaymentGatewayInterface {
-  readonly name = 'STRIPE';
-  private stripe: Stripe;
-
-  constructor() {
-    this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-      apiVersion: '2026-02-25.clover',
-    });
-  }
-
-  async createOrder(amount: number, currency: string, metadata?: Record<string, any>) {
-    const amountInSmallest = Math.round(amount * 100);
-
-    const session = await this.stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      line_items: [
-        {
-          price_data: {
-            currency: (currency || 'INR').toLowerCase(),
-            product_data: {
-              name: `Booking ${metadata?.bookingNumber || ''}`,
-              description: `${metadata?.hotelName || 'BlueStay'} - ${metadata?.roomType || 'Room'}`,
-            },
-            unit_amount: amountInSmallest,
-          },
-          quantity: 1,
-        },
-      ],
-      mode: 'payment',
-      success_url: `${process.env.WEB_URL || 'http://localhost:3000'}/booking/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.WEB_URL || 'http://localhost:3000'}/booking/cancel`,
-      metadata: metadata ? {
-        bookingId: metadata.bookingId || '',
-        bookingNumber: metadata.bookingNumber || '',
-      } : undefined,
-    });
-
-    return {
-      orderId: session.id,
-      amount,
-      currency: (currency || 'INR').toUpperCase(),
-      gatewayData: {
-        gateway: 'STRIPE',
-        sessionId: session.id,
-        sessionUrl: session.url,
-      },
-    };
-  }
-
-  async verifyPayment(paymentId: string, orderId: string) {
-    const session = await this.stripe.checkout.sessions.retrieve(orderId);
-    const verified = session.payment_status === 'paid';
-
-    return {
-      verified,
-      gatewayPaymentId: (session.payment_intent as string) || paymentId,
-      status: verified ? 'CAPTURED' : 'FAILED',
-    };
-  }
-
-  async processRefund(paymentId: string, amount: number) {
-    const amountInSmallest = Math.round(amount * 100);
-
-    const refund = await this.stripe.refunds.create({
-      payment_intent: paymentId,
-      amount: amountInSmallest,
-    });
-
-    return {
-      refundId: refund.id,
-      amount,
-      status: refund.status === 'succeeded' ? 'REFUNDED' : 'PENDING',
-    };
-  }
-}
-
 @Injectable()
 export class PaymentService {
   private readonly logger = new Logger(PaymentService.name);
   private gateway: PaymentGatewayInterface;
 
   constructor(private readonly prisma: PrismaService) {
-    // Auto-select gateway based on env config
+    // Gateway selection for Indian clients: Razorpay → Demo
     if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
       this.gateway = new RazorpayGateway();
       this.logger.log('Payment service initialized with RAZORPAY gateway');
-    } else if (process.env.STRIPE_SECRET_KEY) {
-      this.gateway = new StripeGateway();
-      this.logger.log('Payment service initialized with STRIPE gateway');
     } else {
       this.gateway = new DemoGateway();
-      this.logger.log('Payment service initialized with DEMO gateway (set RAZORPAY_KEY_ID & RAZORPAY_KEY_SECRET or STRIPE_SECRET_KEY for real payments)');
+      this.logger.log('Payment service initialized with DEMO gateway (set RAZORPAY_KEY_ID & RAZORPAY_KEY_SECRET for real payments)');
     }
   }
 
