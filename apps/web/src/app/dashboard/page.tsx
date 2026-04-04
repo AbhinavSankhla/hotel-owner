@@ -192,7 +192,7 @@ export default function DashboardPage() {
                   <Hotel size={48} className="mx-auto text-gray-300" />
                   <p className="mt-4 text-gray-500">No bookings yet</p>
                   <Button asChild className="mt-4">
-                    <Link href="/hotels">Book Your First Stay</Link>
+                    <Link href="/rooms">Browse Rooms</Link>
                   </Button>
                 </div>
               )}

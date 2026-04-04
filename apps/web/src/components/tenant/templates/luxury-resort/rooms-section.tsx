@@ -77,7 +77,7 @@ export function LuxuryResortRooms({ hotel, theme }: RoomsSectionProps) {
                       <span className="text-4xl tracking-wider font-serif">₹{room.basePriceDaily.toLocaleString('en-IN')}</span>
                     </div>
                     
-                    <Link href={`/hotel/rooms/${room.id}`} className="inline-flex items-center gap-6 px-10 py-5 bg-white/5 hover:bg-white/10 backdrop-blur-md border border-white/20 transition-all duration-500 text-sm tracking-[0.2em] uppercase origin-left hover:scale-105">
+                    <Link href={`/rooms/${room.id}`} className="inline-flex items-center gap-6 px-10 py-5 bg-white/5 hover:bg-white/10 backdrop-blur-md border border-white/20 transition-all duration-500 text-sm tracking-[0.2em] uppercase origin-left hover:scale-105">
                       Reserve <ArrowRight className="w-5 h-5" />
                     </Link>
                   </div>

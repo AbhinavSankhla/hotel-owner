@@ -8,7 +8,6 @@ import { useState } from 'react';
 import { MapPin, Phone, Mail, MessageCircle, Clock, Send, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTenant } from '@/lib/tenant/tenant-context';
-import { HotelMap } from '@/components/map/hotel-map';
 
 export default function TenantContactPage() {
   const { hotel, loading, theme } = useTenant();
@@ -111,15 +110,19 @@ export default function TenantContactPage() {
             </div>
 
             {/* Map */}
-            <div className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100">
-              <HotelMap
-                latitude={hotel.latitude}
-                longitude={hotel.longitude}
-                hotelName={hotel.name}
-                address={`${hotel.address}, ${hotel.city}, ${hotel.state}`}
-                height="280px"
-              />
-            </div>
+            {hotel.latitude && hotel.longitude && (
+              <div className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100">
+                <iframe
+                  title="Hotel Location"
+                  src={`https://www.google.com/maps?q=${hotel.latitude},${hotel.longitude}&z=15&output=embed`}
+                  width="100%"
+                  height="280"
+                  style={{ border: 0 }}
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
+              </div>
+            )}
           </div>
 
           {/* Contact Form */}

@@ -50,12 +50,12 @@ export function TenantFooter() {
           <div>
             <h4 className="text-white font-semibold mb-4">Quick Links</h4>
             <ul className="space-y-2.5">
-              <li><Link href="/hotel" className="text-sm hover:text-white transition-colors">Home</Link></li>
-              <li><Link href="/hotel/rooms" className="text-sm hover:text-white transition-colors">Rooms & Suites</Link></li>
-              <li><Link href="/hotel/gallery" className="text-sm hover:text-white transition-colors">Gallery</Link></li>
-              <li><Link href="/hotel/reviews" className="text-sm hover:text-white transition-colors">Guest Reviews</Link></li>
-              <li><Link href="/hotel/about" className="text-sm hover:text-white transition-colors">About Us</Link></li>
-              <li><Link href="/hotel/contact" className="text-sm hover:text-white transition-colors">Contact</Link></li>
+              <li><Link href="/" className="text-sm hover:text-white transition-colors">Home</Link></li>
+              <li><Link href="/rooms" className="text-sm hover:text-white transition-colors">Rooms & Suites</Link></li>
+              <li><Link href="/gallery" className="text-sm hover:text-white transition-colors">Gallery</Link></li>
+              <li><Link href="/reviews" className="text-sm hover:text-white transition-colors">Guest Reviews</Link></li>
+              <li><Link href="/about" className="text-sm hover:text-white transition-colors">About Us</Link></li>
+              <li><Link href="/contact" className="text-sm hover:text-white transition-colors">Contact</Link></li>
             </ul>
           </div>
 

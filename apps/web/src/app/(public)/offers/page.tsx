@@ -212,7 +212,7 @@ export default function HotelOffersPage() {
         {/* CTA */}
         <div className="text-center mt-12">
           <Button size="lg" asChild>
-            <Link href="/hotel/rooms">
+            <Link href="/rooms">
               Browse Rooms
               <ArrowRight size={18} className="ml-2" />
             </Link>
@@ -277,7 +277,7 @@ function OfferCard({ offer, upcoming }: { offer: Offer; upcoming?: boolean }) {
 
         {!upcoming && (
           <Button className="w-full mt-4" variant="outline" size="sm" asChild>
-            <Link href="/hotel/rooms">
+            <Link href="/rooms">
               Book Now
               <ArrowRight size={14} className="ml-1" />
             </Link>

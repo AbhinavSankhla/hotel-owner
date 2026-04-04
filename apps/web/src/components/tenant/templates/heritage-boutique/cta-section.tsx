@@ -43,7 +43,7 @@ export function HeritageBoutiqueCTA({ hotel, theme }: CTASectionProps) {
         >
           Reserve your stay and become part of our story — best rates guaranteed when booked directly.
         </p>
-        <Link href="/hotel/rooms">
+        <Link href="/rooms">
           <Button
             size="lg"
             className="px-10 text-white border-2 bg-transparent hover:bg-white/10"

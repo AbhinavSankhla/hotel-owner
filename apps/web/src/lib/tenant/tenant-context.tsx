@@ -59,7 +59,6 @@ export interface TenantHotel {
   policies?: string[];
   themeConfig?: ThemeConfig;
   template?: HotelTemplateName;
-  isFeatured?: boolean;
   isVerified?: boolean;
   roomTypes?: RoomTypeInfo[];
 }
@@ -174,8 +173,8 @@ function applyTheme(theme: ThemeConfig) {
     generateShades(theme.primaryColor)['50'] || '#f9fafb' : '#f9fafb');
 }
 
-// In dev, we default to "radhika-resort" slug
-const DEFAULT_SLUG = 'radhika-resort';
+// Hotel slug — set NEXT_PUBLIC_HOTEL_SLUG in .env for production
+const DEFAULT_SLUG = process.env.NEXT_PUBLIC_HOTEL_SLUG || 'radhika-resort';
 
 export function TenantProvider({ 
   children, 

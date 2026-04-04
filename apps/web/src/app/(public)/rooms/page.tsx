@@ -406,14 +406,14 @@ export default function TenantRoomsPage() {
 
                     {/* Action */}
                     <div className="flex items-center gap-3 mt-auto pt-4 border-t border-gray-100">
-                      <Link href={`/hotel/rooms/${room.id}`} className="flex-1">
+                      <Link href={`/rooms/${room.id}`} className="flex-1">
                         <Button variant="outline" className="w-full">
                           View Details
                         </Button>
                       </Link>
                       {isAvailable ? (
                         <Link
-                          href={`/hotel/rooms/${room.id}?checkIn=${checkIn}&checkOut=${checkOut}&guests=${guestCount}`}
+                          href={`/rooms/${room.id}?checkIn=${checkIn}&checkOut=${checkOut}&guests=${guestCount}`}
                           className="flex-1"
                         >
                           <Button

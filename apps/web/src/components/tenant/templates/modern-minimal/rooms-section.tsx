@@ -26,7 +26,7 @@ export function ModernMinimalRooms({ hotel, theme }: RoomsSectionProps) {
           return (
             <Link
               key={room.id}
-              href={`/hotel/rooms/${room.id}`}
+              href={`/rooms/${room.id}`}
               className="group block border-8 border-black p-8 hover:bg-black hover:text-white transition-colors duration-0 rounded-none"
             >
               <div className="relative aspect-video w-full overflow-hidden border-4 border-black mb-8 group-hover:border-white rounded-none">

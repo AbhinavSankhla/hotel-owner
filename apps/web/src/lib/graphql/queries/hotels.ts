@@ -1,10 +1,10 @@
 /**
- * GraphQL Queries for Hotels
+ * GraphQL Queries for Hotel
+ * Single-hotel standalone queries
  */
 
 import { gql } from '@apollo/client';
 
-// Hotel fragments for reuse
 export const HOTEL_CARD_FRAGMENT = gql`
   fragment HotelCard on Hotel {
     id
@@ -20,7 +20,6 @@ export const HOTEL_CARD_FRAGMENT = gql`
     averageRating
     reviewCount
     startingPrice
-    isFeatured
     bookingModel
   }
 `;
@@ -40,31 +39,6 @@ export const HOTEL_DETAIL_FRAGMENT = gql`
     hourlyMaxHours
     themeConfig
     template
-  }
-  ${HOTEL_CARD_FRAGMENT}
-`;
-
-// Queries
-export const GET_FEATURED_HOTELS = gql`
-  query GetFeaturedHotels($limit: Float) {
-    featuredHotels(limit: $limit) {
-      ...HotelCard
-    }
-  }
-  ${HOTEL_CARD_FRAGMENT}
-`;
-
-export const GET_HOTELS = gql`
-  query GetHotels($filters: HotelFiltersInput, $pagination: HotelPaginationInput) {
-    hotels(filters: $filters, pagination: $pagination) {
-      hotels {
-        ...HotelCard
-      }
-      total
-      page
-      limit
-      hasMore
-    }
   }
   ${HOTEL_CARD_FRAGMENT}
 `;
@@ -111,28 +85,4 @@ export const GET_HOTEL_BY_ID = gql`
     }
   }
   ${HOTEL_DETAIL_FRAGMENT}
-`;
-
-export const SEARCH_HOTELS = gql`
-  query SearchHotels($query: String!, $limit: Float) {
-    searchHotels(query: $query, limit: $limit) {
-      id
-      name
-      slug
-      city
-      state
-      heroImageUrl
-      starRating
-    }
-  }
-`;
-
-export const GET_POPULAR_CITIES = gql`
-  query GetPopularCities($limit: Float) {
-    popularCities(limit: $limit) {
-      city
-      state
-      hotelCount
-    }
-  }
 `;

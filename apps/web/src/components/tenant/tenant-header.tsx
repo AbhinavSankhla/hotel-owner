@@ -16,14 +16,14 @@ import { useAuth } from '@/lib/auth/auth-context';
 import { cn } from '@/lib/utils';
 
 const NAV_LINKS = [
-  { href: '/hotel', label: 'Home' },
-  { href: '/hotel/rooms', label: 'Rooms' },
-  { href: '/hotel/offers', label: 'Offers' },
+  { href: '/', label: 'Home' },
+  { href: '/rooms', label: 'Rooms' },
+  { href: '/offers', label: 'Offers' },
   { href: '/blog', label: 'Blog' },
-  { href: '/hotel/gallery', label: 'Gallery' },
-  { href: '/hotel/reviews', label: 'Reviews' },
-  { href: '/hotel/about', label: 'About' },
-  { href: '/hotel/contact', label: 'Contact' },
+  { href: '/gallery', label: 'Gallery' },
+  { href: '/reviews', label: 'Reviews' },
+  { href: '/about', label: 'About' },
+  { href: '/contact', label: 'Contact' },
 ];
 
 export function TenantHeader() {
@@ -111,7 +111,7 @@ export function TenantHeader() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <Link href="/hotel" className="flex items-center gap-3">
+            <Link href="/" className="flex items-center gap-3">
               {hotel?.logoUrl ? (
                 <Image
                   src={hotel.logoUrl}
@@ -162,7 +162,7 @@ export function TenantHeader() {
 
             {/* Right side */}
             <div className="flex items-center gap-3">
-              <Link href="/hotel/rooms">
+              <Link href="/rooms">
                 <Button
                   size="sm"
                   className="hidden sm:inline-flex"
@@ -235,7 +235,7 @@ export function TenantHeader() {
               ))}
               <hr className="my-4" />
               <Link
-                href="/hotel/rooms"
+                href="/rooms"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="block"
               >

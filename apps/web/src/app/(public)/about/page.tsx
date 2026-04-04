@@ -167,7 +167,7 @@ export default function TenantAboutPage() {
         <section className="bg-gray-50 rounded-2xl p-8 text-center">
           <h2 className="text-2xl font-bold text-gray-900 mb-3">Ready to Book?</h2>
           <p className="text-gray-600 mb-6">Browse our rooms and find the perfect one for your stay.</p>
-          <Link href="/hotel/rooms">
+          <Link href="/rooms">
             <Button size="lg" style={{ backgroundColor: theme.primaryColor || undefined }}>
               View Rooms & Suites
             </Button>

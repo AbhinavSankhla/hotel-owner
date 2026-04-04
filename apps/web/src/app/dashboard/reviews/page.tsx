@@ -168,7 +168,7 @@ export default function GuestReviewsPage() {
               After completing a stay, you can leave a review for the hotel.
             </p>
             <Button asChild className="mt-6">
-              <Link href="/hotels">Explore Hotels</Link>
+              <Link href="/rooms">Browse Rooms</Link>
             </Button>
           </CardContent>
         </Card>

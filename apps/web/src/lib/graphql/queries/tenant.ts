@@ -33,7 +33,6 @@ export const TENANT_HOTEL_FRAGMENT = gql`
     hourlyMaxHours
     themeConfig
     template
-    isFeatured
   }
 `;
 

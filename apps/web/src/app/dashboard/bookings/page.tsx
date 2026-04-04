@@ -235,7 +235,7 @@ export default function BookingsPage() {
           <p className="text-gray-600 mt-1">Manage and view your hotel reservations</p>
         </div>
         <Button asChild>
-          <Link href="/hotels">
+          <Link href="/rooms">
             <Hotel size={18} className="mr-2" />
             Book New Stay
           </Link>
@@ -457,7 +457,7 @@ export default function BookingsPage() {
                 : `You don't have any ${filter} bookings.`}
             </p>
             <Button asChild className="mt-6">
-              <Link href="/hotels">Explore Hotels</Link>
+              <Link href="/rooms">Browse Rooms</Link>
             </Button>
           </CardContent>
         </Card>

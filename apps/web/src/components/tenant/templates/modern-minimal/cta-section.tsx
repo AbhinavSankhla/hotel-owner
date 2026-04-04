@@ -29,7 +29,7 @@ export function ModernMinimalCTA({ hotel, theme }: CTASectionProps) {
         <p className="text-white/70 mb-8 font-light">
           Book your stay today and enjoy the best rates when you book direct.
         </p>
-        <Link href="/hotel/rooms">
+        <Link href="/rooms">
           <Button size="lg" className="bg-white text-gray-900 hover:bg-gray-50 rounded-full px-10">
             Browse Rooms
           </Button>

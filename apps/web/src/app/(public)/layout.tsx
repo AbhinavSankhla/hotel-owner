@@ -1,21 +1,18 @@
 'use client';
 
 /**
- * Hotel Tenant Layout
- * Wraps all hotel-specific pages with tenant context, themed header/footer.
- * In production, the middleware resolves the hotel domain and injects headers.
- * In dev, we use the "radhika-resort" slug as default.
+ * Public Layout — Single Hotel Website
+ * Wraps all guest-facing pages with hotel branding, themed header/footer.
  */
 
-import { useSearchParams } from 'next/navigation';
 import { TenantProvider, useTenant } from '@/lib/tenant/tenant-context';
 import { TenantHeader } from '@/components/tenant/tenant-header';
 import { TenantFooter } from '@/components/tenant/tenant-footer';
 
 function ThemeWrapper({ children }: { children: React.ReactNode }) {
   const { hotel } = useTenant();
-  
-  const themeClass = hotel?.template 
+
+  const themeClass = hotel?.template
     ? `theme-${hotel.template.toLowerCase().replace(/_/g, '-')}`
     : 'theme-modern-minimal';
 
@@ -28,19 +25,14 @@ function ThemeWrapper({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function TenantLayout({
+export default function PublicLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const searchParams = useSearchParams();
-  const slug = searchParams.get('hotel') || undefined; // ?hotel=radhika-resort for dev
-
   return (
-    <TenantProvider slug={slug}>
-      <ThemeWrapper>
-        {children}
-      </ThemeWrapper>
+    <TenantProvider>
+      <ThemeWrapper>{children}</ThemeWrapper>
     </TenantProvider>
   );
 }

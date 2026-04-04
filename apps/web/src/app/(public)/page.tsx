@@ -325,7 +325,7 @@ export default function TenantHomePage() {
                 </div>
               </div>
               <Link
-                href={`/hotel/rooms?checkIn=${checkIn}&checkOut=${checkOut}&guests=${guests}`}
+                href={`/rooms?checkIn=${checkIn}&checkOut=${checkOut}&guests=${guests}`}
               >
                 <Button className="w-full py-2.5" style={{ backgroundColor: theme.primaryColor || undefined }}>
                   Check Availability
@@ -353,7 +353,7 @@ export default function TenantHomePage() {
               {activeRooms.slice(0, 3).map((room) => (
                 <Link
                   key={room.id}
-                  href={`/hotel/rooms/${room.id}`}
+                  href={`/rooms/${room.id}`}
                   className="group bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300"
                 >
                   <div className="relative h-56 overflow-hidden">
@@ -413,7 +413,7 @@ export default function TenantHomePage() {
 
             {activeRooms.length > 3 && (
               <div className="text-center mt-8">
-                <Link href="/hotel/rooms">
+                <Link href="/rooms">
                   <Button variant="outline" size="lg">
                     View All Rooms ({activeRooms.length})
                   </Button>
@@ -516,7 +516,7 @@ export default function TenantHomePage() {
                 <Clock className="w-4 h-4" style={{ color: theme.primaryColor || '#2563eb' }} />
                 Check-in: {hotel.checkInTime || '2:00 PM'} | Check-out: {hotel.checkOutTime || '11:00 AM'}
               </div>
-              <Link href="/hotel/contact">
+              <Link href="/contact">
                 <Button variant="outline">Get Directions</Button>
               </Link>
             </div>
@@ -541,7 +541,7 @@ export default function TenantHomePage() {
           <p className="text-white/80 mb-8 text-lg">
             Book your stay today and enjoy our best rates when you book directly.
           </p>
-          <Link href="/hotel/rooms">
+          <Link href="/rooms">
             <Button size="lg" className="bg-white text-gray-900 hover:bg-gray-100 px-8 py-3 text-lg">
               Browse Rooms & Book Now
             </Button>

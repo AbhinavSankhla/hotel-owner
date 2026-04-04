@@ -92,7 +92,7 @@ export function SearchWidget({
             </select>
           </div>
         </div>
-        <Link href={`/hotel/rooms?checkIn=${encodeURIComponent(checkIn)}&checkOut=${encodeURIComponent(checkOut)}&guests=${guests}`}>
+        <Link href={`/rooms?checkIn=${encodeURIComponent(checkIn)}&checkOut=${encodeURIComponent(checkOut)}&guests=${guests}`}>
           <Button
             className="w-full py-2.5 text-sm font-medium"
             style={{ backgroundColor: primary }}

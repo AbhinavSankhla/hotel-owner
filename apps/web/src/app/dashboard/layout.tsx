@@ -9,8 +9,7 @@ import { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth/auth-context';
-import { Header } from '@/components/layout/header';
-import { Footer } from '@/components/layout/footer';
+import Link from 'next/link';
 import { 
   LayoutDashboard, 
   CalendarDays, 
@@ -75,16 +74,12 @@ export default function DashboardLayout({
 
   if (isLoading) {
     return (
-      <>
-        <Header />
-        <main className="min-h-[calc(100vh-200px)] bg-gray-50 flex items-center justify-center">
-          <div className="text-center">
-            <Loader2 className="w-10 h-10 animate-spin text-brand-600 mx-auto" />
-            <p className="mt-4 text-gray-600">Loading...</p>
-          </div>
-        </main>
-        <Footer />
-      </>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-10 h-10 animate-spin text-brand-600 mx-auto" />
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
     );
   }
 
@@ -94,8 +89,16 @@ export default function DashboardLayout({
 
   return (
     <>
-      <Header />
-      <main className="min-h-[calc(100vh-200px)] bg-gray-50">
+      {/* Simple top nav */}
+      <header className="bg-white border-b border-gray-100 sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-14">
+          <Link href="/" className="font-semibold text-gray-900">
+            ← Back to Hotel
+          </Link>
+          <span className="text-sm text-gray-500">My Account</span>
+        </div>
+      </header>
+      <main className="min-h-[calc(100vh-56px)] bg-gray-50">
         <div className="container-app py-8">
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Sidebar */}
@@ -135,7 +138,6 @@ export default function DashboardLayout({
           </div>
         </div>
       </main>
-      <Footer />
     </>
   );
 }

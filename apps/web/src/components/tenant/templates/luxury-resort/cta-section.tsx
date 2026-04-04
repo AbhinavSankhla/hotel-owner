@@ -21,7 +21,7 @@ export function LuxuryResortCTA({ hotel, theme }: CTASectionProps) {
         <p className="text-gray-400 mb-10 font-light">
           Reserve your experience today — best rates guaranteed when booked directly.
         </p>
-        <Link href="/hotel/rooms">
+        <Link href="/rooms">
           <Button
             size="lg"
             className="text-gray-950 px-10"

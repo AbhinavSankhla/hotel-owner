@@ -39,7 +39,7 @@ export function ModernMinimalLocation({ hotel, theme }: LocationSectionProps) {
               <Clock className="w-4 h-4" style={{ color: primary }} />
               Check-in: {hotel.checkInTime || '2:00 PM'} &middot; Check-out: {hotel.checkOutTime || '11:00 AM'}
             </div>
-            <Link href="/hotel/contact">
+            <Link href="/contact">
               <Button variant="outline" className="rounded-full">Get Directions</Button>
             </Link>
           </div>

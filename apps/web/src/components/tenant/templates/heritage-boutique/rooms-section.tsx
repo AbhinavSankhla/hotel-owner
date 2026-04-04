@@ -79,7 +79,7 @@ export function HeritageBoutiqueRooms({ hotel, theme }: RoomsSectionProps) {
                       <span className="text-5xl text-stone-800 break-words">₹{room.basePriceDaily.toLocaleString('en-IN')}</span>
                     </div>
 
-                    <Link href={`/hotel/rooms/${room.id}`} className="inline-flex items-center justify-center w-full py-6 bg-stone-800 text-stone-50 hover:bg-stone-900 border border-stone-900 transition-colors text-sm tracking-[0.3em] uppercase whitespace-nowrap">
+                    <Link href={`/rooms/${room.id}`} className="inline-flex items-center justify-center w-full py-6 bg-stone-800 text-stone-50 hover:bg-stone-900 border border-stone-900 transition-colors text-sm tracking-[0.3em] uppercase whitespace-nowrap">
                       Inspect Details <ArrowRight className="w-5 h-5 ml-4" />
                     </Link>
                   </div>
