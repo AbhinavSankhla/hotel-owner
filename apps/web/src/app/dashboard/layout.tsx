@@ -9,7 +9,6 @@ import { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth/auth-context';
-import Link from 'next/link';
 import { 
   LayoutDashboard, 
   CalendarDays, 
