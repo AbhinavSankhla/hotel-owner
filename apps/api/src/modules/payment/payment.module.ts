@@ -1,8 +1,8 @@
 /**
  * Payment Module - BlueStay API
- * Manages payment processing with abstractable gateway support.
- * Currently uses DEMO gateway. Real gateways (Razorpay/Stripe) 
- * can be plugged in later using the PaymentGatewayInterface.
+ * Manages payment processing for Indian clients.
+ * Uses Razorpay as the primary gateway (UPI, Cards, Net Banking, Wallets).
+ * Falls back to DEMO gateway when Razorpay credentials are not configured.
  */
 
 import { Module } from '@nestjs/common';
