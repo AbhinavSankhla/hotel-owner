@@ -1,7 +1,7 @@
 /**
  * Payment Service - BlueStay API
  *
- * Gateway-agnostic payment service with Razorpay integration.
+ * Payment service supporting Razorpay and Demo gateways.
  * Architecture: Uses a strategy pattern — DemoGateway for dev/testing,
  * RazorpayGateway for production (Indian payments — UPI, Cards, Net Banking, Wallets).
  *

@@ -32,8 +32,7 @@
 | Search by price | ✅ Done | Price range filter |
 | Search by availability (date-aware) | ⚠️ Partial | Per-room check exists, but hotel listing can't filter by check-in/out dates |
 | Search by ratings | ✅ Done | Star rating filter |
-| Secure payment (Razorpay) | ✅ Done | Full flow with signature verification |
-| Secure payment (Stripe) | ⚠️ API only | Backend supports Stripe, frontend only has Razorpay |
+| Secure payment (Razorpay) | ✅ Done | Full flow with signature verification, UPI/Cards/Net Banking/Wallets |
 | GST/tax handling | ✅ Done | 18% GST, CGST/SGST in PDF invoices |
 | Booking management dashboard | ✅ Done | `/admin/bookings` with status workflow |
 | Commission (10-25%) | ✅ Done | Per-hotel configurable, auto-calculated, settlement workflow |
@@ -112,12 +111,7 @@
 
 ### 🟡 P2 — Medium (nice to fix before fork)
 
-#### 2.4 Stripe frontend missing
-- **Where**: `apps/web/src/app/booking/[id]/payment/payment-form.tsx`
-- **Problem**: Only Razorpay checkout is implemented in the frontend. Stripe is fully supported in the API but the payment form doesn't render Stripe Checkout.
-- **Fix**: Add Stripe Checkout Session redirect when gateway returns `stripe` type.
-
-#### 2.5 Date-aware hotel search missing on marketplace
+#### 2.4 Date-aware hotel search missing on marketplace
 - **Where**: `apps/api/src/modules/hotel/hotel.service.ts`, hotel listing frontend
 - **Problem**: Marketplace listing can't filter hotels by check-in/check-out dates.
 - **Fix**: Add `availableFrom`/`availableTo` filter params to `hotels` query that cross-references `RoomInventory`.
@@ -192,7 +186,7 @@ For hotels that want the absolute cheapest hosting, you could later offer a SQLi
 | `modules/hotel/` | Hotel settings & branding (single hotel) |
 | `modules/room/` | Full room management |
 | `modules/booking/` | Core booking engine |
-| `modules/payment/` | Payment processing (Razorpay + Stripe) |
+| `modules/payment/` | Payment processing (Razorpay) |
 | `modules/auth/` | Authentication & authorization |
 | `modules/review/` | Guest reviews |
 | `modules/analytics/` | Business analytics |
@@ -266,7 +260,7 @@ For hotels that want the absolute cheapest hosting, you could later offer a SQLi
 | 0.1 | Enable auth guards on booking resolver | 🔴 P0 | Small |
 | 0.2 | Wire SmsService into OTP flow | 🟠 P1 | Small |
 | 0.3 | Fix hotel price sorting | 🟠 P1 | Small |
-| 0.4 | Add Stripe frontend to payment form | 🟡 P2 | Medium |
+| 0.4 | ~~Add Stripe frontend to payment form~~ (removed — Razorpay only for Indian clients) | — | — |
 
 ### Phase 1: Fork & Strip (create standalone repo)
 
@@ -335,7 +329,7 @@ hotel-manager/                    # New repo name (not "bluestay")
 │   │           ├── hotel/        # Single hotel config
 │   │           ├── room/         # Room management
 │   │           ├── booking/      # Booking engine
-│   │           ├── payment/      # Razorpay + Stripe
+│   │           ├── payment/      # Razorpay (Indian payments)
 │   │           ├── auth/         # Auth (3 roles only)
 │   │           ├── user/         # Users + staff management ← NEW
 │   │           ├── review/       # Reviews
@@ -398,7 +392,6 @@ model Hotel {
   - commissionRate
   - commissionType
   - razorpayAccountId   # Move to env vars (single hotel)
-  - stripeAccountId     # Move to env vars (single hotel)
   - isFeatured          # Not needed
   - template            # Keep but simplify
 
