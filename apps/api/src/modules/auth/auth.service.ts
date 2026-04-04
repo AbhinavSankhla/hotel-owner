@@ -20,6 +20,7 @@ import {
   ResendVerificationInput,
 } from './dto/auth.input';
 import { NotificationService } from '../notification/notification.service';
+import { SmsService } from '../notification/sms.service';
 import { UserRole } from '../user/entities/user.entity';
 import { GoogleAuthService } from './strategies/google.service';
 import * as bcrypt from 'bcryptjs';
@@ -50,6 +51,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly googleAuth: GoogleAuthService,
     private readonly notifications: NotificationService,
+    private readonly smsService: SmsService,
   ) {}
 
   /**
@@ -179,12 +181,11 @@ export class AuthService {
     const otpKey = `otp:${phone}`;
     await this.redis.set(otpKey, otp, this.OTP_EXPIRY);
 
-    // In production, send OTP via SMS (Twilio, MSG91, etc.)
-    // For development, log it
-    this.logger.log(`OTP for ${phone}: ${otp}`);
-
-    // TODO: Integrate with SMS provider
-    // await this.smsService.sendOTP(phone, otp);
+    // Send OTP via SMS (MSG91). Falls back to logging when MSG91 is not configured.
+    const sent = await this.smsService.sendOTP(phone, otp);
+    if (!sent) {
+      this.logger.warn(`OTP delivery failed for ${phone}, OTP stored in Redis for dev usage`);
+    }
 
     return {
       success: true,

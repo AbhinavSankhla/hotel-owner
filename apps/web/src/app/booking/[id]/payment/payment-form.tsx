@@ -183,6 +183,10 @@ export function PaymentForm({ bookingId, amount, guestName, guestEmail, guestPho
         const response = await openRazorpayCheckout(gatewayData, paymentId);
         gatewayPaymentId = response.razorpay_payment_id;
         gatewaySignature = response.razorpay_signature;
+      } else if (gateway === 'STRIPE' && gatewayData.sessionUrl) {
+        // Redirect to Stripe Checkout (returns to success/cancel URLs)
+        window.location.href = gatewayData.sessionUrl;
+        return;
       } else if (gateway === 'DEMO') {
         // Demo mode: small delay for UX
         await new Promise(resolve => setTimeout(resolve, 1500));
