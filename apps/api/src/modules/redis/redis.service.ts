@@ -140,7 +140,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
    * Get a JSON value from cache
    */
   async getJson<T>(key: string): Promise<T | null> {
-    const value = await this.client.get(key);
+    const value = await this.get(key);
     return value ? JSON.parse(value, RedisService.dateReviver) : null;
   }
 
