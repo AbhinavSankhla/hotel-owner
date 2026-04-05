@@ -44,7 +44,7 @@ export function HeritageBoutiqueLocation({ hotel, theme }: LocationSectionProps)
                 Check-in: {hotel.checkInTime || '2:00 PM'} &middot; Check-out: {hotel.checkOutTime || '11:00 AM'}
               </span>
             </div>
-            <Link href="/contact">
+            <Link href="/about#contact">
               <Button variant="outline" className="border-stone-300 text-stone-600 hover:bg-stone-100 rounded-lg">
                 Get Directions
               </Button>

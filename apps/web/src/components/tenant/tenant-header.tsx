@@ -23,7 +23,6 @@ const NAV_LINKS = [
   { href: '/gallery', label: 'Gallery' },
   { href: '/reviews', label: 'Reviews' },
   { href: '/about', label: 'About' },
-  { href: '/contact', label: 'Contact' },
 ];
 
 export function TenantHeader() {

@@ -96,7 +96,7 @@ export const GET_TENANT_ROOM_DETAIL = gql`
       amenities
       images
       isActive
-      availableRooms
+      availableTonight
     }
   }
 `;

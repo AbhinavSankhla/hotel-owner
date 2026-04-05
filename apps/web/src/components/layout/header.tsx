@@ -18,7 +18,7 @@ export function Header() {
           <Link href="/rooms" className="hover:text-gray-900 transition-colors">
             Rooms
           </Link>
-          <Link href="/contact" className="hover:text-gray-900 transition-colors">
+          <Link href="/about#contact" className="hover:text-gray-900 transition-colors">
             Contact
           </Link>
         </div>

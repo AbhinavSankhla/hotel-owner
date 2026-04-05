@@ -55,7 +55,7 @@ export function TenantFooter() {
               <li><Link href="/gallery" className="text-sm hover:text-white transition-colors">Gallery</Link></li>
               <li><Link href="/reviews" className="text-sm hover:text-white transition-colors">Guest Reviews</Link></li>
               <li><Link href="/about" className="text-sm hover:text-white transition-colors">About Us</Link></li>
-              <li><Link href="/contact" className="text-sm hover:text-white transition-colors">Contact</Link></li>
+              <li><Link href="/about#contact" className="text-sm hover:text-white transition-colors">Contact</Link></li>
             </ul>
           </div>
 

@@ -20,7 +20,7 @@ export const ROOM_TYPE_FRAGMENT = gql`
     amenities
     images
     isActive
-    availableRooms
+    availableTonight
   }
 `;
 

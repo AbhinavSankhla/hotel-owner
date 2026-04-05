@@ -728,7 +728,7 @@ function LocationSection({ hotel, theme }: { hotel: any; theme: any }) {
                 )}
               </div>
             )}
-            <Link href="/contact">
+            <Link href="/about#contact">
               <Button variant="outline" className="rounded-full px-6 hover:scale-105 transition-transform">
                 Get Directions
               </Button>

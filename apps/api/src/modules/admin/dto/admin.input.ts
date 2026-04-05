@@ -1,6 +1,7 @@
 import { InputType, Field, Float, Int, ID } from '@nestjs/graphql';
 import { GraphQLJSON } from 'graphql-scalars';
-import { IsNotEmpty, IsOptional, IsString, IsNumber, IsEnum, IsEmail, IsBoolean, MinLength } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsNumber, IsEnum, IsEmail, IsBoolean, IsArray, IsDate, MinLength } from 'class-validator';
+import { Type } from 'class-transformer';
 import { BookingModel, HotelTemplate } from '../../hotel/entities/hotel.entity';
 
 @InputType()
@@ -128,129 +129,196 @@ export class UpdateHotelInput {
 @InputType()
 export class CreateRoomTypeInput {
   @Field(() => ID)
+  @IsNotEmpty()
+  @IsString()
   hotelId: string;
 
   @Field()
+  @IsNotEmpty()
+  @IsString()
   name: string;
 
   @Field()
+  @IsNotEmpty()
+  @IsString()
   slug: string;
 
   @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
   description?: string;
 
   @Field(() => Float)
+  @IsNumber()
   basePriceDaily: number;
 
   @Field(() => Float, { nullable: true })
+  @IsOptional()
+  @IsNumber()
   basePriceHourly?: number;
 
   @Field(() => Int, { defaultValue: 2 })
+  @IsNumber()
   maxGuests: number;
 
   @Field(() => Int, { defaultValue: 0 })
+  @IsNumber()
   maxExtraGuests: number;
 
   @Field(() => Float, { defaultValue: 0 })
+  @IsNumber()
   extraGuestCharge: number;
 
   @Field(() => Int, { defaultValue: 1 })
+  @IsNumber()
   totalRooms: number;
 
   @Field(() => [String], { defaultValue: [] })
+  @IsArray()
   amenities: string[];
 
   @Field(() => [String], { defaultValue: [] })
+  @IsArray()
   images: string[];
 
   @Field(() => Int, { defaultValue: 0 })
+  @IsNumber()
   sortOrder: number;
 }
 
 @InputType()
 export class UpdateRoomTypeInput {
   @Field(() => ID)
+  @IsNotEmpty()
+  @IsString()
   id: string;
 
   @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
   name?: string;
 
   @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
   description?: string;
 
   @Field(() => Float, { nullable: true })
+  @IsOptional()
+  @IsNumber()
   basePriceDaily?: number;
 
   @Field(() => Float, { nullable: true })
+  @IsOptional()
+  @IsNumber()
   basePriceHourly?: number;
 
   @Field(() => Int, { nullable: true })
+  @IsOptional()
+  @IsNumber()
   maxGuests?: number;
 
   @Field(() => Int, { nullable: true })
+  @IsOptional()
+  @IsNumber()
   maxExtraGuests?: number;
 
   @Field(() => Float, { nullable: true })
+  @IsOptional()
+  @IsNumber()
   extraGuestCharge?: number;
 
   @Field(() => Int, { nullable: true })
+  @IsOptional()
+  @IsNumber()
   totalRooms?: number;
 
   @Field(() => [String], { nullable: true })
+  @IsOptional()
+  @IsArray()
   amenities?: string[];
 
   @Field(() => [String], { nullable: true })
+  @IsOptional()
+  @IsArray()
   images?: string[];
 
   @Field(() => Int, { nullable: true })
+  @IsOptional()
+  @IsNumber()
   sortOrder?: number;
 
   @Field({ nullable: true })
+  @IsOptional()
+  @IsBoolean()
   isActive?: boolean;
 }
 
 @InputType()
 export class BulkInventoryUpdateInput {
   @Field(() => ID)
+  @IsNotEmpty()
+  @IsString()
   roomTypeId: string;
 
   @Field()
+  @IsNotEmpty()
   startDate: Date;
 
   @Field()
+  @IsNotEmpty()
   endDate: Date;
 
   @Field(() => Float, { nullable: true, description: 'Price override for the date range (null = use base price)' })
+  @IsOptional()
+  @IsNumber()
   priceOverride?: number;
 
   @Field(() => Int, { nullable: true, description: 'Override available count' })
+  @IsOptional()
+  @IsNumber()
   availableCount?: number;
 
   @Field({ nullable: true, description: 'Close/open dates for booking' })
+  @IsOptional()
+  @IsBoolean()
   isClosed?: boolean;
 
   @Field(() => Int, { nullable: true, description: 'Minimum stay nights' })
+  @IsOptional()
+  @IsNumber()
   minStayNights?: number;
 }
 
 @InputType()
 export class SingleDateInventoryInput {
   @Field(() => ID)
+  @IsNotEmpty()
+  @IsString()
   roomTypeId: string;
 
   @Field()
+  @IsNotEmpty()
   date: Date;
 
   @Field(() => Float, { nullable: true })
+  @IsOptional()
+  @IsNumber()
   priceOverride?: number;
 
   @Field(() => Int, { nullable: true })
+  @IsOptional()
+  @IsNumber()
   availableCount?: number;
 
   @Field({ nullable: true })
+  @IsOptional()
+  @IsBoolean()
   isClosed?: boolean;
 
   @Field(() => Int, { nullable: true })
+  @IsOptional()
+  @IsNumber()
   minStayNights?: number;
 }
 
@@ -261,24 +329,37 @@ export class SingleDateInventoryInput {
 @InputType()
 export class UpsertSeoMetaInput {
   @Field(() => ID)
+  @IsNotEmpty()
+  @IsString()
   hotelId: string;
 
   @Field({ description: 'Page identifier e.g. "homepage", "rooms", "contact"' })
+  @IsNotEmpty()
+  @IsString()
   pageSlug: string;
 
   @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
   metaTitle?: string;
 
   @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
   metaDescription?: string;
 
   @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
   ogImageUrl?: string;
 
   @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
   canonicalUrl?: string;
 
   @Field(() => GraphQLJSON, { nullable: true })
+  @IsOptional()
   customJsonLd?: any;
 }
 
@@ -289,18 +370,27 @@ export class UpsertSeoMetaInput {
 @InputType()
 export class UpdateHotelContentInput {
   @Field(() => ID)
+  @IsNotEmpty()
+  @IsString()
   hotelId: string;
 
   @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
   description?: string;
 
   @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
   heroImageUrl?: string;
 
   @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
   logoUrl?: string;
 
   @Field(() => GraphQLJSON, { nullable: true, description: 'Theme config: { primaryColor, fontFamily, etc. }' })
+  @IsOptional()
   themeConfig?: any;
 }
 

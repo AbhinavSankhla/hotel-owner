@@ -63,7 +63,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 const SOURCE_COLORS: Record<string, string> = {
   DIRECT: 'bg-emerald-500',
-  DIRECT: 'bg-blue-500',
+  ONLINE: 'bg-blue-500',
   OTA: 'bg-purple-500',
   WALK_IN: 'bg-amber-500',
 };
