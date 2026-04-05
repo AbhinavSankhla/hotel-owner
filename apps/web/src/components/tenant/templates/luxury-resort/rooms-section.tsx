@@ -2,89 +2,98 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { Users, Clock, ArrowRight } from 'lucide-react';
+import { Users, ArrowRight } from 'lucide-react';
 import { sanitizeColor, sanitizeImageUrl, sanitizeText } from '@/lib/security/sanitize';
 import { getAmenityLabel } from '../shared/amenities';
+import { useScrollReveal } from '../shared/use-scroll-reveal';
 import type { RoomsSectionProps } from '../types';
 
+function RoomCard({ room, primary, index }: { room: any; primary: string; index: number }) {
+  const { ref, isVisible } = useScrollReveal(0.1);
+  const roomImg = sanitizeImageUrl(room.images?.[0]);
+
+  return (
+    <div
+      ref={ref}
+      className="group opacity-0"
+      style={isVisible ? { animation: `slide-up 0.7s ease-out ${index * 0.15}s both` } : undefined}
+    >
+      <Link href={`/rooms/${room.id}`} className="block">
+        <div className="relative aspect-[3/4] rounded-xl overflow-hidden mb-6">
+          {roomImg ? (
+            <Image
+              src={roomImg}
+              alt={sanitizeText(room.name)}
+              fill
+              className="object-cover transition-transform duration-1000 ease-out group-hover:scale-105"
+            />
+          ) : (
+            <div className="w-full h-full bg-gray-800 flex items-center justify-center text-gray-600">No Image</div>
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-gray-950/80 via-transparent to-transparent" />
+          <div className="absolute bottom-6 left-6 right-6">
+            <h3
+              className="text-2xl text-white mb-2"
+              style={{ fontFamily: "'Playfair Display', serif", fontWeight: 400 }}
+            >
+              {sanitizeText(room.name)}
+            </h3>
+            <div className="flex items-center gap-3 text-white/50 text-sm">
+              <span className="flex items-center gap-1.5">
+                <Users className="w-3.5 h-3.5" /> {room.maxGuests} guests
+              </span>
+              {room.amenities.slice(0, 2).map((a: string) => (
+                <span key={a} className="hidden sm:inline">{getAmenityLabel(a)}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between px-1">
+          <div>
+            <span className="text-2xl text-gray-900" style={{ fontFamily: "'Playfair Display', serif" }}>
+              ₹{room.basePriceDaily.toLocaleString('en-IN')}
+            </span>
+            <span className="text-gray-400 text-sm ml-2">/ night</span>
+          </div>
+          <span
+            className="inline-flex items-center gap-1.5 text-sm font-medium transition-all duration-300 group-hover:gap-3"
+            style={{ color: primary }}
+          >
+            View <ArrowRight className="w-4 h-4" />
+          </span>
+        </div>
+      </Link>
+    </div>
+  );
+}
+
 export function LuxuryResortRooms({ hotel, theme }: RoomsSectionProps) {
-  const accent = sanitizeColor(theme.accentColor, '#d4af37');
-  const activeRooms = hotel.roomTypes?.filter((r) => r.isActive) || [];
+  const primary = sanitizeColor(theme.primaryColor, '#d4a574');
+  const activeRooms = hotel.roomTypes?.filter((r: any) => r.isActive) || [];
 
   if (activeRooms.length === 0) return null;
 
   return (
-    <section className="py-32 bg-zinc-950 font-serif text-amber-50">
-      <div className="max-w-7xl mx-auto px-6 lg:px-12">
-        <div className="flex flex-col items-center text-center mb-32">
-          <span className="text-xs tracking-[0.4em] uppercase text-amber-200/60 mb-6 font-sans">Discover</span>
-          <h2 className="text-5xl md:text-6xl font-light tracking-wide mb-8" style={{ color: accent }}>
-            Exquisite Accommodations
+    <section className="py-28 bg-white">
+      <div className="max-w-7xl mx-auto px-6 md:px-12">
+        <div className="text-center mb-20">
+          <div className="w-12 h-px mx-auto mb-6" style={{ backgroundColor: primary }} />
+          <h2
+            className="text-3xl md:text-4xl text-gray-900 mb-3"
+            style={{ fontFamily: "'Playfair Display', serif", fontWeight: 400 }}
+          >
+            Rooms & Suites
           </h2>
-          <div className="w-24 h-px bg-white/20"></div>
+          <p className="text-gray-400 font-light max-w-md mx-auto">
+            Refined spaces designed for your comfort and pleasure
+          </p>
         </div>
 
-        <div className="space-y-40">
-          {activeRooms.map((room, idx) => {
-            const roomImg = sanitizeImageUrl(room.images?.[0]);
-            const isReversed = idx % 2 !== 0;
-            return (
-              <div key={room.id} className={`flex flex-col ${isReversed ? 'lg:flex-row-reverse' : 'lg:flex-row'} gap-16 lg:gap-24 items-center group`}>
-                <div className="w-full lg:w-1/2 relative bg-zinc-950">
-                  <div className="aspect-[4/5] relative overflow-hidden border border-white/10 shadow-2xl">
-                    {roomImg ? (
-                      <Image
-                        src={roomImg}
-                        alt={sanitizeText(room.name)}
-                        fill
-                        className="object-cover scale-100 group-hover:scale-110 transition-transform duration-[15s] ease-out"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-zinc-900" />
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-transparent opacity-80" />
-                  </div>
-                  {hotel.bookingModel === 'BOTH' && room.basePriceHourly && (
-                    <div className="absolute top-8 left-8 backdrop-blur-xl bg-white/10 border border-white/20 text-xs tracking-widest px-6 py-3 flex items-center gap-3 font-sans">
-                      <Clock className="w-4 h-4" /> Hourly Available
-                    </div>
-                  )}
-                </div>
-
-                <div className="w-full lg:w-1/2 flex flex-col justify-center bg-zinc-950">
-                  <span className="text-xs tracking-[0.3em] uppercase text-zinc-500 mb-6 font-sans">Suite {idx + 1}</span>
-                  <h3 className="text-4xl lg:text-5xl font-light tracking-wide mb-8" style={{ color: accent }}>
-                    {sanitizeText(room.name)}
-                  </h3>
-                  <p className="text-lg lg:text-xl text-zinc-400 font-light leading-relaxed mb-12 italic tracking-wide">
-                    {sanitizeText(room.description) || `Elegance and comfort uniquely tailored for up to ${room.maxGuests} distinguished guests.`}
-                  </p>
-
-                  <div className="grid grid-cols-2 gap-y-6 gap-x-12 mb-16 text-sm tracking-widest uppercase text-zinc-300 font-sans">
-                    <span className="flex items-center gap-4 border-b border-white/10 pb-4">
-                      <Users className="w-5 h-5 text-amber-200/60" /> Up to {room.maxGuests}
-                    </span>
-                    {room.amenities.slice(0, 3).map((a) => (
-                      <span key={a} className="flex items-center gap-4 border-b border-white/10 pb-4">
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-200/60" /> {getAmenityLabel(a)}
-                      </span>
-                    ))}
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-12 mt-4 font-sans">
-                    <div className="flex flex-col">
-                      <span className="text-xs tracking-[0.2em] text-zinc-500 uppercase mb-2">Per Night</span>
-                      <span className="text-4xl tracking-wider font-serif">₹{room.basePriceDaily.toLocaleString('en-IN')}</span>
-                    </div>
-                    
-                    <Link href={`/rooms/${room.id}`} className="inline-flex items-center gap-6 px-10 py-5 bg-white/5 hover:bg-white/10 backdrop-blur-md border border-white/20 transition-all duration-500 text-sm tracking-[0.2em] uppercase origin-left hover:scale-105">
-                      Reserve <ArrowRight className="w-5 h-5" />
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {activeRooms.map((room: any, i: number) => (
+            <RoomCard key={room.id} room={room} primary={primary} index={i} />
+          ))}
         </div>
       </div>
     </section>

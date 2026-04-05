@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { Star, MapPin, Shield, Award } from 'lucide-react';
+import { Star, MapPin, ArrowDown } from 'lucide-react';
 import { sanitizeColor, sanitizeImageUrl, sanitizeText } from '@/lib/security/sanitize';
 import type { HeroSectionProps } from '../types';
 import { SearchWidget } from '../shared/search-widget';
@@ -11,66 +11,82 @@ export function ModernMinimalHero({
   checkIn, checkOut, guests,
   onCheckInChange, onCheckOutChange, onGuestsChange,
 }: HeroSectionProps) {
+  const primary = sanitizeColor(theme.primaryColor, '#2563eb');
   const heroImg = sanitizeImageUrl(hotel.heroImageUrl);
 
   return (
     <>
-      <section className="relative w-full min-h-screen bg-black text-white flex flex-col justify-end pt-32 pb-24 px-8 md:px-16 lg:px-32">
-        <div className="absolute inset-x-0 top-0 h-[60vh] md:h-[70vh] bg-zinc-900 border-b-8 border-white">
-          {heroImg && (
+      <section className="relative w-full min-h-screen flex items-center overflow-hidden">
+        {/* Background image */}
+        <div className="absolute inset-0">
+          {heroImg ? (
             <Image
               src={heroImg}
               alt={sanitizeText(hotel.name)}
               fill
-              className="object-cover grayscale contrast-125 rounded-none"
+              className="object-cover"
               priority
             />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200" />
           )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10" />
         </div>
-        
-        <div className="relative z-10 w-full mt-[50vh] md:mt-[60vh] bg-black p-8 md:p-16 border-l-8 border-white">
-          {hotel.isVerified && (
-            <div className="mb-8 inline-block bg-white text-black px-4 py-2 text-2xl font-bold tracking-tighter uppercase rounded-none">
-              <Shield className="inline w-6 h-6 mr-2" /> Verified
-            </div>
-          )}
 
-          <h1 className="text-6xl md:text-8xl lg:text-9xl font-black tracking-tighter uppercase leading-none mb-8 break-words rounded-none">
-            {sanitizeText(hotel.name)}
-          </h1>
-
-          {hotel.tagline && (
-            <p className="text-2xl md:text-4xl font-bold tracking-tighter text-zinc-400 mb-12 uppercase max-w-4xl rounded-none">
-              {sanitizeText(hotel.tagline)}
-            </p>
-          )}
-
-          <div className="flex flex-col md:flex-row md:items-center gap-8 text-xl font-bold tracking-tighter uppercase rounded-none">
-            <div className="flex items-center gap-2 bg-white text-black px-4 py-2 rounded-none">
-              <Star className="w-6 h-6 fill-black" /> {hotel.starRating} STARS
-            </div>
-            {hotel.averageRating && (
-              <span className="flex items-center gap-2 border-2 border-white px-4 py-2 rounded-none">
-                <Award className="w-6 h-6" />
-                {hotel.averageRating.toFixed(1)} / {hotel.reviewCount} REVS
-              </span>
+        {/* Content */}
+        <div className="relative z-10 w-full max-w-6xl mx-auto px-6 md:px-12 py-32">
+          <div className="max-w-2xl" style={{ animation: 'slide-up 0.8s ease-out 0.2s both' }}>
+            {hotel.starRating > 0 && (
+              <div className="flex items-center gap-1.5 mb-6">
+                {Array.from({ length: hotel.starRating }).map((_, i) => (
+                  <Star key={i} className="w-4 h-4 fill-white/80 text-white/80" />
+                ))}
+              </div>
             )}
-            <span className="flex items-center gap-2 border-2 border-white px-4 py-2 rounded-none">
-              <MapPin className="w-6 h-6" />
-              {sanitizeText(hotel.city)}
-            </span>
-          </div>
 
-          {hotel.startingPrice && (
-            <div className="mt-16 text-5xl md:text-7xl font-black tracking-tighter rounded-none">
-              ₹{hotel.startingPrice.toLocaleString('en-IN')} <span className="text-2xl text-zinc-500 uppercase">/ night</span>
+            <h1 className="text-5xl md:text-7xl font-light text-white tracking-tight leading-[1.1] mb-6">
+              {sanitizeText(hotel.name)}
+            </h1>
+
+            {hotel.tagline && (
+              <p className="text-lg md:text-xl text-white/70 font-light mb-8 max-w-lg">
+                {sanitizeText(hotel.tagline)}
+              </p>
+            )}
+
+            <div className="flex flex-wrap items-center gap-4 text-sm text-white/60">
+              {hotel.averageRating && (
+                <span className="flex items-center gap-1.5 bg-white/10 backdrop-blur-sm rounded-full px-3 py-1.5">
+                  <Star className="w-3.5 h-3.5 fill-white/80 text-white/80" />
+                  {hotel.averageRating.toFixed(1)} ({hotel.reviewCount})
+                </span>
+              )}
+              <span className="flex items-center gap-1.5 bg-white/10 backdrop-blur-sm rounded-full px-3 py-1.5">
+                <MapPin className="w-3.5 h-3.5" />
+                {sanitizeText(hotel.city)}
+              </span>
             </div>
-          )}
+
+            {hotel.startingPrice && (
+              <div className="mt-10 inline-flex items-baseline gap-2 bg-white/10 backdrop-blur-sm rounded-2xl px-6 py-4">
+                <span className="text-3xl md:text-4xl font-light text-white">
+                  ₹{hotel.startingPrice.toLocaleString('en-IN')}
+                </span>
+                <span className="text-white/50 text-sm">/ night</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Scroll indicator */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10" style={{ animation: 'slide-up 0.8s ease-out 1s both' }}>
+          <ArrowDown className="w-5 h-5 text-white/40 animate-bounce" />
         </div>
       </section>
 
-      <section className="w-full bg-white text-black border-t-8 border-black p-8 md:p-16 relative z-20 rounded-none">
-        <div className="max-w-7xl mx-auto rounded-none">
+      {/* Search widget */}
+      <section className="relative z-20 -mt-12 max-w-5xl mx-auto px-6">
+        <div style={{ animation: 'slide-up 0.6s ease-out 0.8s both' }}>
           <SearchWidget
             theme={theme}
             checkIn={checkIn}

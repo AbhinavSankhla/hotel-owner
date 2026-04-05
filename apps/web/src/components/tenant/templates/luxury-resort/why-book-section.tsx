@@ -2,6 +2,7 @@
 
 import { Shield, Award, Heart } from 'lucide-react';
 import { sanitizeColor } from '@/lib/security/sanitize';
+import { useScrollReveal } from '../shared/use-scroll-reveal';
 import type { WhyBookSectionProps } from '../types';
 
 const VALUE_PROPS = [
@@ -11,13 +12,14 @@ const VALUE_PROPS = [
 ];
 
 export function LuxuryResortWhyBook({ theme }: WhyBookSectionProps) {
-  const accent = sanitizeColor(theme.accentColor, '#d4a574');
+  const primary = sanitizeColor(theme.primaryColor, '#d4a574');
+  const { ref, isVisible } = useScrollReveal();
 
   return (
-    <section className="py-20 bg-stone-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-14">
-          <div className="w-12 h-px mx-auto mb-4" style={{ backgroundColor: accent }} />
+    <section className="py-24 bg-stone-50" ref={ref}>
+      <div className="max-w-7xl mx-auto px-6 md:px-12">
+        <div className="text-center mb-16">
+          <div className="w-12 h-px mx-auto mb-6" style={{ backgroundColor: primary }} />
           <h2
             className="text-3xl text-gray-900 mb-3"
             style={{ fontFamily: "'Playfair Display', serif", fontWeight: 400 }}
@@ -27,15 +29,19 @@ export function LuxuryResortWhyBook({ theme }: WhyBookSectionProps) {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {VALUE_PROPS.map((item, i) => (
-            <div key={i} className="text-center p-8 bg-white border border-gray-100">
+            <div
+              key={i}
+              className="text-center p-10 bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-500 opacity-0"
+              style={isVisible ? { animation: `slide-up 0.6s ease-out ${i * 0.15}s both` } : undefined}
+            >
               <div
-                className="w-14 h-14 rounded-full border flex items-center justify-center mx-auto mb-5"
-                style={{ borderColor: accent, color: accent }}
+                className="w-14 h-14 rounded-full border flex items-center justify-center mx-auto mb-6 transition-transform duration-300 hover:scale-110"
+                style={{ borderColor: primary, color: primary }}
               >
                 <item.icon className="w-6 h-6" />
               </div>
               <h3
-                className="text-lg text-gray-900 mb-2"
+                className="text-lg text-gray-900 mb-3"
                 style={{ fontFamily: "'Playfair Display', serif" }}
               >
                 {item.title}

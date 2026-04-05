@@ -2,10 +2,10 @@
 
 /**
  * Admin Branding & Theme Page - Hotel Manager
- * Customize hotel white-label appearance: colors, fonts, header style
+ * Simplified: pick a theme preset OR a single brand color + template
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation } from '@apollo/client/react';
 import { useAuth } from '@/lib/auth/auth-context';
 import { GET_HOTEL_BY_ID } from '@/lib/graphql/queries/hotels';
@@ -18,11 +18,10 @@ import {
   AlertCircle,
   CheckCircle,
   Save,
-  Type,
-  Layout,
   Eye,
   LayoutTemplate,
   Check,
+  Star,
 } from 'lucide-react';
 import { TEMPLATE_CATALOG, type TemplateMeta } from '@/components/tenant/templates/registry';
 import type { HotelTemplateName } from '@/lib/tenant/tenant-context';
@@ -32,42 +31,39 @@ interface ThemeConfig {
   secondaryColor: string;
   accentColor: string;
   fontFamily: string;
-  headerStyle: 'light' | 'dark' | 'transparent';
-  heroStyle: 'full' | 'split' | 'minimal';
+  headerStyle: 'transparent';
+  heroStyle: 'full';
 }
 
-const DEFAULT_THEME: ThemeConfig = {
-  primaryColor: '#2563eb',
-  secondaryColor: '#1e40af',
-  accentColor: '#f59e0b',
-  fontFamily: 'Inter',
-  headerStyle: 'transparent',
-  heroStyle: 'full',
-};
+/** Generate a harmonious secondary (darker) and accent (warm complement) from a single brand color */
+function deriveColors(hex: string) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  const dr = Math.round(r * 0.8);
+  const dg = Math.round(g * 0.8);
+  const db = Math.round(b * 0.8);
+  const secondary = `#${dr.toString(16).padStart(2, '0')}${dg.toString(16).padStart(2, '0')}${db.toString(16).padStart(2, '0')}`;
+  const accent = '#f59e0b';
+  return { secondary, accent };
+}
 
-const FONT_OPTIONS = [
-  { value: 'Inter', label: 'Inter (Modern)' },
-  { value: 'Playfair Display', label: 'Playfair Display (Elegant)' },
-  { value: 'Poppins', label: 'Poppins (Clean)' },
-  { value: 'Lora', label: 'Lora (Classic)' },
-  { value: 'Montserrat', label: 'Montserrat (Bold)' },
-  { value: 'Merriweather', label: 'Merriweather (Traditional)' },
-];
-
-const PRESET_THEMES = [
-  { name: 'Hotel Manager Default', primary: '#2563eb', secondary: '#1e40af', accent: '#f59e0b' },
-  { name: 'Emerald Resort', primary: '#059669', secondary: '#047857', accent: '#fbbf24' },
-  { name: 'Royal Purple', primary: '#7c3aed', secondary: '#6d28d9', accent: '#f97316' },
-  { name: 'Crimson Luxury', primary: '#dc2626', secondary: '#b91c1c', accent: '#eab308' },
-  { name: 'Ocean Teal', primary: '#0891b2', secondary: '#0e7490', accent: '#f59e0b' },
-  { name: 'Midnight Gold', primary: '#1f2937', secondary: '#111827', accent: '#d97706' },
+const THEME_PRESETS = [
+  { name: 'Classic Blue', color: '#2563eb', desc: 'Professional & trustworthy' },
+  { name: 'Emerald Green', color: '#059669', desc: 'Fresh & natural' },
+  { name: 'Royal Purple', color: '#7c3aed', desc: 'Luxurious & bold' },
+  { name: 'Crimson Red', color: '#dc2626', desc: 'Vibrant & energetic' },
+  { name: 'Ocean Teal', color: '#0891b2', desc: 'Calm & coastal' },
+  { name: 'Midnight', color: '#1f2937', desc: 'Sleek & modern' },
+  { name: 'Amber Warm', color: '#d97706', desc: 'Warm & inviting' },
+  { name: 'Rose', color: '#e11d48', desc: 'Elegant & romantic' },
 ];
 
 export default function AdminBrandingPage() {
   const { user } = useAuth();
   const hotelId = user?.hotelId;
   const [saved, setSaved] = useState(false);
-  const [theme, setTheme] = useState<ThemeConfig>(DEFAULT_THEME);
+  const [brandColor, setBrandColor] = useState('#2563eb');
   const [selectedTemplate, setSelectedTemplate] = useState<HotelTemplateName>('STARTER');
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -84,15 +80,25 @@ export default function AdminBrandingPage() {
   });
 
   useEffect(() => {
-    if (hotelData?.hotel?.themeConfig) {
-      setTheme({ ...DEFAULT_THEME, ...hotelData.hotel.themeConfig });
+    if (hotelData?.hotel?.themeConfig?.primaryColor) {
+      setBrandColor(hotelData.hotel.themeConfig.primaryColor);
     }
     if (hotelData?.hotel?.template) {
       setSelectedTemplate(hotelData.hotel.template);
     }
   }, [hotelData]);
 
+  const derived = useMemo(() => deriveColors(brandColor), [brandColor]);
+
   const handleSave = async () => {
+    const theme: ThemeConfig = {
+      primaryColor: brandColor,
+      secondaryColor: derived.secondary,
+      accentColor: derived.accent,
+      fontFamily: 'Inter',
+      headerStyle: 'transparent',
+      heroStyle: 'full',
+    };
     await updateHotel({
       variables: {
         input: {
@@ -104,14 +110,7 @@ export default function AdminBrandingPage() {
     });
   };
 
-  const applyPreset = (preset: typeof PRESET_THEMES[0]) => {
-    setTheme((prev) => ({
-      ...prev,
-      primaryColor: preset.primary,
-      secondaryColor: preset.secondary,
-      accentColor: preset.accent,
-    }));
-  };
+  const hotelName = hotelData?.hotel?.name || 'Your Hotel';
 
   if (!hotelId) {
     return (
@@ -135,13 +134,13 @@ export default function AdminBrandingPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Branding & Theme</h1>
-          <p className="text-gray-500 mt-1">Customize your hotel&apos;s white-label appearance</p>
+          <p className="text-gray-500 mt-1">Choose your brand color and website template</p>
         </div>
         <div className="flex items-center gap-3">
           {saved && (
             <div className="flex items-center gap-2 text-green-600 text-sm font-medium">
               <CheckCircle className="w-4 h-4" />
-              Saved
+              Saved!
             </div>
           )}
           <Button onClick={handleSave} disabled={saving}>
@@ -151,17 +150,85 @@ export default function AdminBrandingPage() {
         </div>
       </div>
 
-      {/* ======= TEMPLATE SELECTOR ======= */}
+      {/* ======= STEP 1: BRAND COLOR ======= */}
+      <Card className="border-0 shadow-sm">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Palette className="w-4 h-4 text-brand-600" />
+            Step 1 — Brand Color
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-gray-500">
+            Pick your hotel&apos;s brand color. We&apos;ll automatically generate matching tones for the entire site.
+          </p>
+
+          {/* Preset swatches */}
+          <div className="grid grid-cols-4 sm:grid-cols-8 gap-3">
+            {THEME_PRESETS.map((preset) => {
+              const isActive = brandColor === preset.color;
+              return (
+                <button
+                  key={preset.color}
+                  onClick={() => setBrandColor(preset.color)}
+                  className="group flex flex-col items-center gap-1.5"
+                  title={preset.desc}
+                >
+                  <div
+                    className={`w-12 h-12 rounded-xl shadow-sm transition-all duration-200 flex items-center justify-center ${
+                      isActive ? 'ring-2 ring-offset-2 ring-gray-900 scale-110' : 'hover:scale-105'
+                    }`}
+                    style={{ backgroundColor: preset.color }}
+                  >
+                    {isActive && <Check className="w-5 h-5 text-white drop-shadow" />}
+                  </div>
+                  <span className="text-[10px] text-gray-500 group-hover:text-gray-700 text-center leading-tight">
+                    {preset.name}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Custom color picker */}
+          <div className="flex items-center gap-3 pt-2 border-t border-gray-100">
+            <span className="text-sm font-medium text-gray-700">Custom:</span>
+            <input
+              type="color"
+              value={brandColor}
+              onChange={(e) => setBrandColor(e.target.value)}
+              className="w-10 h-10 rounded-lg cursor-pointer border border-gray-200"
+            />
+            <input
+              type="text"
+              value={brandColor}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (/^#[0-9a-fA-F]{6}$/.test(val)) setBrandColor(val);
+              }}
+              className="w-28 px-3 py-2 border border-gray-200 rounded-lg text-sm font-mono"
+              placeholder="#2563eb"
+            />
+            <div className="flex rounded-lg overflow-hidden shadow-sm ml-2">
+              <div className="w-8 h-8" style={{ backgroundColor: brandColor }} title="Brand" />
+              <div className="w-8 h-8" style={{ backgroundColor: derived.secondary }} title="Dark" />
+              <div className="w-8 h-8" style={{ backgroundColor: derived.accent }} title="Accent" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ======= STEP 2: TEMPLATE ======= */}
       <Card className="border-0 shadow-sm">
         <CardHeader className="pb-4">
           <CardTitle className="text-base flex items-center gap-2">
             <LayoutTemplate className="w-4 h-4 text-brand-600" />
-            Website Template
+            Step 2 — Website Template
           </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-gray-500 mb-4">
-            Choose a design template for your hotel website. Each template has a distinct layout and visual identity.
+            Each template applies your brand color with a unique design style.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {TEMPLATE_CATALOG.map((tpl: TemplateMeta) => {
@@ -170,22 +237,22 @@ export default function AdminBrandingPage() {
                 <button
                   key={tpl.id}
                   onClick={() => setSelectedTemplate(tpl.id)}
-                  className={`relative text-left p-4 rounded-xl border-2 transition-all duration-200 ${
+                  className={`relative text-left rounded-xl border-2 overflow-hidden transition-all duration-200 ${
                     isSelected
-                      ? 'border-brand-500 bg-brand-50 ring-2 ring-brand-200'
-                      : 'border-gray-200 hover:border-gray-300 bg-white'
+                      ? 'border-gray-900 ring-2 ring-gray-200'
+                      : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
                   {isSelected && (
-                    <div className="absolute top-3 right-3 w-5 h-5 bg-brand-600 rounded-full flex items-center justify-center">
-                      <Check className="w-3 h-3 text-white" />
+                    <div className="absolute top-3 right-3 z-10 w-6 h-6 bg-gray-900 rounded-full flex items-center justify-center shadow">
+                      <Check className="w-3.5 h-3.5 text-white" />
                     </div>
                   )}
-                  {/* Gradient preview swatch */}
-                  <div className={`h-20 rounded-lg mb-3 bg-gradient-to-br ${tpl.preview}`} />
-                  <h3 className="font-semibold text-gray-900 text-sm mb-1">{tpl.name}</h3>
-                  <p className="text-xs text-gray-500 leading-relaxed mb-2">{tpl.description}</p>
-                  <span className="text-xs text-gray-400">Font: {tpl.fontHint}</span>
+                  <TemplatePreview template={tpl.id as HotelTemplateName} brandColor={brandColor} hotelName={hotelName} />
+                  <div className="p-4">
+                    <h3 className="font-semibold text-gray-900 text-sm mb-0.5">{tpl.name}</h3>
+                    <p className="text-xs text-gray-500 leading-relaxed">{tpl.description}</p>
+                  </div>
                 </button>
               );
             })}
@@ -193,307 +260,202 @@ export default function AdminBrandingPage() {
         </CardContent>
       </Card>
 
-      {/* Live Preview */}
+      {/* ======= LIVE PREVIEW ======= */}
       <Card className="border-0 shadow-sm overflow-hidden">
         <CardHeader className="pb-2">
           <CardTitle className="text-base flex items-center gap-2">
             <Eye className="w-4 h-4 text-brand-600" />
-            Live Preview
+            Full Preview
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="rounded-lg overflow-hidden border border-gray-200">
-            {selectedTemplate === 'MODERN_MINIMAL' ? (
-              /* Modern Minimal — clean split layout with dark nav */
-              <>
-                <div className="px-6 py-3 bg-white flex items-center justify-between border-b border-gray-100">
-                  <span className="text-sm font-light tracking-widest uppercase text-gray-900" style={{ fontFamily: 'Inter' }}>
-                    {hotelData?.hotel?.name || 'Your Hotel'}
-                  </span>
-                  <div className="flex gap-5 text-xs tracking-wide text-gray-500 uppercase">
-                    <span>Rooms</span><span>Experience</span><span>Contact</span>
-                  </div>
-                </div>
-                <div className="flex">
-                  <div className="w-1/2 bg-gray-100 py-10 px-6 flex flex-col justify-center">
-                    <p className="text-xs uppercase tracking-widest text-gray-400 mb-2">Welcome to</p>
-                    <h2 className="text-xl font-light text-gray-900 mb-3" style={{ fontFamily: 'Inter' }}>
-                      {hotelData?.hotel?.name || 'Your Hotel'}
-                    </h2>
-                    <button className="self-start px-5 py-2 bg-gray-900 text-white text-xs uppercase tracking-wider rounded-none hover:bg-gray-800">
-                      Book Now
-                    </button>
-                  </div>
-                  <div className="w-1/2 bg-gradient-to-br from-gray-300 to-gray-400 py-16 flex items-center justify-center">
-                    <span className="text-gray-500 text-xs">Hero Image</span>
-                  </div>
-                </div>
-              </>
-            ) : selectedTemplate === 'LUXURY_RESORT' ? (
-              /* Luxury Resort — cinematic dark full-width */
-              <>
-                <div className="px-6 py-3 bg-stone-900 flex items-center justify-between">
-                  <span className="text-sm font-semibold text-amber-200 tracking-wide" style={{ fontFamily: 'Playfair Display, serif' }}>
-                    {hotelData?.hotel?.name || 'Your Hotel'}
-                  </span>
-                  <div className="flex gap-5 text-xs tracking-wide text-stone-400">
-                    <span>Suites</span><span>Dining</span><span>Spa</span>
-                  </div>
-                </div>
-                <div
-                  className="px-6 py-14 text-center"
-                  style={{ background: 'linear-gradient(135deg, #1c1917ee, #78350fee)' }}
-                >
-                  <p className="text-xs uppercase tracking-[0.3em] text-amber-300/70 mb-3">An Exquisite Escape</p>
-                  <h2 className="text-2xl font-bold text-white mb-3" style={{ fontFamily: 'Playfair Display, serif' }}>
-                    {hotelData?.hotel?.name || 'Your Hotel'}
-                  </h2>
-                  <button className="px-6 py-2 border border-amber-400 text-amber-200 text-xs uppercase tracking-widest hover:bg-amber-400/10">
-                    Reserve Your Suite
-                  </button>
-                </div>
-              </>
-            ) : selectedTemplate === 'HERITAGE_BOUTIQUE' ? (
-              /* Heritage Boutique — warm sepia tones with ornamental style */
-              <>
-                <div className="px-6 py-3 flex items-center justify-between" style={{ backgroundColor: '#f5f0e8' }}>
-                  <span className="text-sm font-semibold text-amber-900" style={{ fontFamily: 'Lora, serif' }}>
-                    ◇ {hotelData?.hotel?.name || 'Your Hotel'} ◇
-                  </span>
-                  <div className="flex gap-5 text-xs text-amber-800/70">
-                    <span>Heritage</span><span>Rooms</span><span>Stories</span>
-                  </div>
-                </div>
-                <div
-                  className="px-6 py-14 text-center"
-                  style={{ background: 'linear-gradient(135deg, #92400eee, #78716cee)' }}
-                >
-                  <div className="text-amber-200/50 text-xs mb-2">◈ ◇ ◈</div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-amber-200/70 mb-2">Est. Since 1920</p>
-                  <h2 className="text-2xl font-bold text-white mb-3" style={{ fontFamily: 'Playfair Display, serif' }}>
-                    {hotelData?.hotel?.name || 'Your Hotel'}
-                  </h2>
-                  <button className="px-6 py-2 bg-amber-800 text-amber-100 text-xs uppercase tracking-wider rounded-sm hover:bg-amber-700">
-                    Explore Our Heritage
-                  </button>
-                </div>
-              </>
-            ) : (
-              /* STARTER — default Hotel Manager classic layout */
-              <>
-                <div
-                  className="px-6 py-4 flex items-center justify-between"
-                  style={{
-                    backgroundColor: theme.headerStyle === 'dark' ? theme.primaryColor :
-                                     theme.headerStyle === 'light' ? '#ffffff' : 'transparent',
-                    background: theme.headerStyle === 'transparent'
-                      ? `linear-gradient(135deg, ${theme.primaryColor}, ${theme.secondaryColor})`
-                      : undefined,
-                  }}
-                >
-                  <span
-                    className="font-bold text-lg"
-                    style={{
-                      color: theme.headerStyle === 'light' ? theme.primaryColor : '#ffffff',
-                      fontFamily: theme.fontFamily,
-                    }}
-                  >
-                    {hotelData?.hotel?.name || 'Your Hotel'}
-                  </span>
-                  <div className="flex gap-4 text-sm" style={{ color: theme.headerStyle === 'light' ? '#6b7280' : '#ffffffcc' }}>
-                    <span>Rooms</span><span>Gallery</span><span>Contact</span>
-                  </div>
-                </div>
-                <div
-                  className="px-6 py-12 text-center"
-                  style={{ background: `linear-gradient(135deg, ${theme.primaryColor}ee, ${theme.secondaryColor}ee)` }}
-                >
-                  <h2 className="text-2xl font-bold text-white mb-2" style={{ fontFamily: theme.fontFamily }}>
-                    Welcome to {hotelData?.hotel?.name || 'Your Hotel'}
-                  </h2>
-                  <p className="text-white/80 mb-4" style={{ fontFamily: theme.fontFamily }}>Your perfect stay awaits</p>
-                  <button className="px-6 py-2 rounded-lg font-medium text-sm" style={{ backgroundColor: theme.accentColor, color: '#ffffff' }}>
-                    Book Now
-                  </button>
-                </div>
-              </>
-            )}
+          <div className="rounded-xl overflow-hidden border border-gray-200 shadow-sm">
+            <FullPreview template={selectedTemplate} brandColor={brandColor} hotelName={hotelName} />
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Preset Themes */}
-      <Card className="border-0 shadow-sm">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Palette className="w-4 h-4 text-brand-600" />
-            Theme Presets
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {PRESET_THEMES.map((preset) => (
-              <button
-                key={preset.name}
-                onClick={() => applyPreset(preset)}
-                className="text-left p-3 rounded-lg border border-gray-200 hover:border-gray-400 transition-colors group"
-              >
-                <div className="flex gap-1.5 mb-2">
-                  <div className="w-6 h-6 rounded-full" style={{ backgroundColor: preset.primary }} />
-                  <div className="w-6 h-6 rounded-full" style={{ backgroundColor: preset.secondary }} />
-                  <div className="w-6 h-6 rounded-full" style={{ backgroundColor: preset.accent }} />
-                </div>
-                <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900">
-                  {preset.name}
-                </span>
-              </button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Custom Colors */}
-      <Card className="border-0 shadow-sm">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Palette className="w-4 h-4 text-brand-600" />
-            Custom Colors
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Primary Color</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="color"
-                  value={theme.primaryColor}
-                  onChange={(e) => setTheme((prev) => ({ ...prev, primaryColor: e.target.value }))}
-                  className="w-10 h-10 rounded cursor-pointer border border-gray-200"
-                />
-                <input
-                  type="text"
-                  value={theme.primaryColor}
-                  onChange={(e) => setTheme((prev) => ({ ...prev, primaryColor: e.target.value }))}
-                  className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm font-mono"
-                  placeholder="#2563eb"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Secondary Color</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="color"
-                  value={theme.secondaryColor}
-                  onChange={(e) => setTheme((prev) => ({ ...prev, secondaryColor: e.target.value }))}
-                  className="w-10 h-10 rounded cursor-pointer border border-gray-200"
-                />
-                <input
-                  type="text"
-                  value={theme.secondaryColor}
-                  onChange={(e) => setTheme((prev) => ({ ...prev, secondaryColor: e.target.value }))}
-                  className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm font-mono"
-                  placeholder="#1e40af"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Accent Color</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="color"
-                  value={theme.accentColor}
-                  onChange={(e) => setTheme((prev) => ({ ...prev, accentColor: e.target.value }))}
-                  className="w-10 h-10 rounded cursor-pointer border border-gray-200"
-                />
-                <input
-                  type="text"
-                  value={theme.accentColor}
-                  onChange={(e) => setTheme((prev) => ({ ...prev, accentColor: e.target.value }))}
-                  className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm font-mono"
-                  placeholder="#f59e0b"
-                />
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Typography */}
-      <Card className="border-0 shadow-sm">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Type className="w-4 h-4 text-brand-600" />
-            Typography
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Font Family</label>
-          <select
-            value={theme.fontFamily}
-            onChange={(e) => setTheme((prev) => ({ ...prev, fontFamily: e.target.value }))}
-            className="w-full md:w-1/2 px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-brand-500"
-          >
-            {FONT_OPTIONS.map((font) => (
-              <option key={font.value} value={font.value}>
-                {font.label}
-              </option>
-            ))}
-          </select>
-          <p className="text-xs text-gray-500 mt-2">
-            Applied to headings and navigation on your hotel website.
+          <p className="text-xs text-gray-400 mt-3 text-center">
+            This is an approximate preview. Visit your site to see the full experience.
           </p>
         </CardContent>
       </Card>
-
-      {/* Layout Options */}
-      <Card className="border-0 shadow-sm">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Layout className="w-4 h-4 text-brand-600" />
-            Layout Style
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Header Style</label>
-            <div className="flex gap-3">
-              {(['transparent', 'dark', 'light'] as const).map((style) => (
-                <button
-                  key={style}
-                  onClick={() => setTheme((prev) => ({ ...prev, headerStyle: style }))}
-                  className={`px-4 py-2 rounded-lg border text-sm font-medium capitalize transition-colors ${
-                    theme.headerStyle === style
-                      ? 'border-brand-500 bg-brand-50 text-brand-700'
-                      : 'border-gray-200 text-gray-600 hover:border-gray-300'
-                  }`}
-                >
-                  {style}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Hero Section Style</label>
-            <div className="flex gap-3">
-              {(['full', 'split', 'minimal'] as const).map((style) => (
-                <button
-                  key={style}
-                  onClick={() => setTheme((prev) => ({ ...prev, heroStyle: style }))}
-                  className={`px-4 py-2 rounded-lg border text-sm font-medium capitalize transition-colors ${
-                    theme.heroStyle === style
-                      ? 'border-brand-500 bg-brand-50 text-brand-700'
-                      : 'border-gray-200 text-gray-600 hover:border-gray-300'
-                  }`}
-                >
-                  {style}
-                </button>
-              ))}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
+  );
+}
+
+/* ═══════════════════════════════════════════
+   Preview Components
+   ═══════════════════════════════════════════ */
+
+function TemplatePreview({ template, brandColor, hotelName }: { template: HotelTemplateName; brandColor: string; hotelName: string }) {
+  const d = deriveColors(brandColor);
+
+  if (template === 'MODERN_MINIMAL') {
+    return (
+      <div className="h-28 bg-white relative overflow-hidden">
+        <div className="absolute inset-0 flex">
+          <div className="w-1/2 px-4 py-5 flex flex-col justify-center bg-gray-50">
+            <div className="text-[8px] uppercase tracking-widest text-gray-400 mb-1">Welcome to</div>
+            <div className="text-xs font-semibold text-gray-900 truncate mb-2">{hotelName}</div>
+            <div className="w-14 h-4 rounded-sm text-[7px] font-medium flex items-center justify-center text-white" style={{ backgroundColor: brandColor }}>
+              Book Now
+            </div>
+          </div>
+          <div className="w-1/2" style={{ background: `linear-gradient(135deg, ${brandColor}30, ${d.secondary}30)` }} />
+        </div>
+      </div>
+    );
+  }
+
+  if (template === 'LUXURY_RESORT') {
+    return (
+      <div className="h-28 relative overflow-hidden text-center flex flex-col items-center justify-center" style={{ background: `linear-gradient(135deg, ${d.secondary}, ${brandColor})` }}>
+        <div className="text-[7px] uppercase tracking-[0.25em] text-white/50 mb-1">An Exquisite Escape</div>
+        <div className="text-sm font-bold text-white mb-2" style={{ fontFamily: 'serif' }}>{hotelName}</div>
+        <div className="w-20 h-4 border text-[7px] font-medium flex items-center justify-center text-white/80" style={{ borderColor: `${brandColor}88` }}>
+          Reserve Suite
+        </div>
+      </div>
+    );
+  }
+
+  if (template === 'HERITAGE_BOUTIQUE') {
+    return (
+      <div className="h-28 relative overflow-hidden text-center flex flex-col items-center justify-center" style={{ background: `linear-gradient(135deg, ${brandColor}ee, ${d.secondary}cc)` }}>
+        <div className="text-white/40 text-[8px] mb-1">◈ ◇ ◈</div>
+        <div className="text-[7px] uppercase tracking-[0.15em] text-white/60 mb-1">Est. Heritage</div>
+        <div className="text-sm font-bold text-white" style={{ fontFamily: 'serif' }}>{hotelName}</div>
+      </div>
+    );
+  }
+
+  // STARTER
+  return (
+    <div className="h-28 relative overflow-hidden flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${brandColor}, ${d.secondary})` }}>
+      <div className="text-center">
+        <div className="text-[8px] text-white/70 mb-1">Welcome to</div>
+        <div className="text-sm font-bold text-white mb-2">{hotelName}</div>
+        <div className="w-16 h-5 rounded-full text-[7px] font-medium flex items-center justify-center mx-auto" style={{ backgroundColor: d.accent, color: '#fff' }}>
+          Book Now
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FullPreview({ template, brandColor, hotelName }: { template: HotelTemplateName; brandColor: string; hotelName: string }) {
+  const d = deriveColors(brandColor);
+
+  const roomCards = (
+    <div className="grid grid-cols-3 gap-3 py-6 px-6">
+      {['Deluxe Room', 'Ocean Suite', 'Garden Villa'].map((name, i) => (
+        <div key={name} className="rounded-lg border border-gray-100 overflow-hidden">
+          <div className="h-16" style={{ background: `linear-gradient(135deg, ${brandColor}20, ${brandColor}05)` }} />
+          <div className="p-2">
+            <div className="text-[10px] font-semibold text-gray-900">{name}</div>
+            <div className="text-[9px] text-gray-500">₹{(3000 + i * 1500).toLocaleString()}/night</div>
+            <div className="mt-1.5 w-full h-4 rounded text-[7px] font-medium flex items-center justify-center text-white" style={{ backgroundColor: brandColor }}>
+              Book Now
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
+  if (template === 'MODERN_MINIMAL') {
+    return (
+      <>
+        <div className="px-6 py-3 bg-white flex items-center justify-between border-b border-gray-100">
+          <span className="text-xs font-light tracking-widest uppercase text-gray-900">{hotelName}</span>
+          <div className="flex gap-4 text-[10px] tracking-wide text-gray-400 uppercase">
+            <span>Rooms</span><span>About</span><span>Contact</span>
+          </div>
+        </div>
+        <div className="flex h-40">
+          <div className="w-1/2 bg-gray-50 px-6 flex flex-col justify-center">
+            <div className="text-[9px] uppercase tracking-widest text-gray-400 mb-1">Welcome to</div>
+            <div className="text-lg font-light text-gray-900 mb-2">{hotelName}</div>
+            <div className="flex items-center gap-1 mb-3">
+              {[1,2,3,4,5].map((i) => <Star key={i} className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />)}
+            </div>
+            <button className="self-start px-4 py-1.5 text-white text-[9px] uppercase tracking-wider rounded-none" style={{ backgroundColor: brandColor }}>
+              Explore Rooms
+            </button>
+          </div>
+          <div className="w-1/2" style={{ background: `linear-gradient(135deg, ${brandColor}15, ${d.secondary}25)` }}>
+            <div className="w-full h-full flex items-center justify-center text-gray-300 text-[10px]">Hero Image</div>
+          </div>
+        </div>
+        {roomCards}
+      </>
+    );
+  }
+
+  if (template === 'LUXURY_RESORT') {
+    return (
+      <>
+        <div className="px-6 py-3 flex items-center justify-between" style={{ backgroundColor: d.secondary }}>
+          <span className="text-xs font-semibold tracking-wide" style={{ color: `${brandColor}99`, fontFamily: 'serif' }}>{hotelName}</span>
+          <div className="flex gap-4 text-[10px] tracking-wide" style={{ color: `${brandColor}55` }}>
+            <span>Suites</span><span>Dining</span><span>Spa</span>
+          </div>
+        </div>
+        <div className="px-6 py-16 text-center" style={{ background: `linear-gradient(135deg, ${d.secondary}ee, ${brandColor}cc)` }}>
+          <div className="text-[9px] uppercase tracking-[0.3em] mb-2" style={{ color: `${brandColor}88` }}>An Exquisite Escape</div>
+          <div className="text-xl font-bold text-white mb-1" style={{ fontFamily: 'serif' }}>{hotelName}</div>
+          <div className="flex items-center justify-center gap-1 mb-3">
+            {[1,2,3,4,5].map((i) => <Star key={i} className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />)}
+          </div>
+          <button className="px-5 py-1.5 border text-[9px] uppercase tracking-widest text-white/80" style={{ borderColor: `${brandColor}66` }}>
+            Reserve Your Suite
+          </button>
+        </div>
+        {roomCards}
+      </>
+    );
+  }
+
+  if (template === 'HERITAGE_BOUTIQUE') {
+    return (
+      <>
+        <div className="px-6 py-3 flex items-center justify-between" style={{ backgroundColor: '#f5f0e8' }}>
+          <span className="text-xs font-semibold" style={{ color: brandColor, fontFamily: 'serif' }}>◇ {hotelName} ◇</span>
+          <div className="flex gap-4 text-[10px]" style={{ color: `${brandColor}88` }}>
+            <span>Heritage</span><span>Rooms</span><span>Stories</span>
+          </div>
+        </div>
+        <div className="px-6 py-14 text-center" style={{ background: `linear-gradient(135deg, ${brandColor}ee, ${d.secondary}dd)` }}>
+          <div className="text-white/40 text-[10px] mb-1">◈ ◇ ◈</div>
+          <div className="text-[9px] uppercase tracking-[0.2em] text-white/60 mb-2">Est. Since 1920</div>
+          <div className="text-xl font-bold text-white mb-3" style={{ fontFamily: 'serif' }}>{hotelName}</div>
+          <button className="px-5 py-1.5 text-white/90 text-[9px] uppercase tracking-wider rounded-sm" style={{ backgroundColor: brandColor }}>
+            Explore Heritage
+          </button>
+        </div>
+        {roomCards}
+      </>
+    );
+  }
+
+  // STARTER
+  return (
+    <>
+      <div className="px-6 py-3 flex items-center justify-between text-white" style={{ background: `linear-gradient(135deg, ${brandColor}, ${d.secondary})` }}>
+        <span className="font-bold text-sm">{hotelName}</span>
+        <div className="flex gap-4 text-[10px] text-white/70">
+          <span>Rooms</span><span>Gallery</span><span>Contact</span>
+        </div>
+      </div>
+      <div className="px-6 py-14 text-center text-white" style={{ background: `linear-gradient(135deg, ${brandColor}ee, ${d.secondary}ee)` }}>
+        <div className="flex items-center justify-center gap-1 mb-2">
+          {[1,2,3,4,5].map((i) => <Star key={i} className="w-3 h-3 fill-amber-400 text-amber-400" />)}
+        </div>
+        <div className="text-xl font-bold mb-1">{hotelName}</div>
+        <div className="text-white/70 text-xs mb-4">Your perfect stay awaits</div>
+        <button className="px-5 py-1.5 rounded-full font-medium text-[10px] text-white" style={{ backgroundColor: d.accent }}>
+          Book Now
+        </button>
+      </div>
+      {roomCards}
+    </>
   );
 }

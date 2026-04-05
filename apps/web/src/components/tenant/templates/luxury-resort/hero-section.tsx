@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { Star, MapPin, Shield, Award } from 'lucide-react';
+import { Star, MapPin, ArrowDown } from 'lucide-react';
 import { sanitizeColor, sanitizeImageUrl, sanitizeText } from '@/lib/security/sanitize';
 import { SearchWidget } from '../shared/search-widget';
 import type { HeroSectionProps } from '../types';
@@ -11,77 +11,87 @@ export function LuxuryResortHero({
   checkIn, checkOut, guests,
   onCheckInChange, onCheckOutChange, onGuestsChange,
 }: HeroSectionProps) {
-  const accent = sanitizeColor(theme.accentColor, '#d4af37');
+  const primary = sanitizeColor(theme.primaryColor, '#d4a574');
   const heroImg = sanitizeImageUrl(hotel.heroImageUrl);
 
   return (
     <>
-      <section className="relative w-full min-h-screen bg-zinc-950 flex flex-col items-center justify-center font-serif text-amber-50 overflow-hidden">
-        <div className="absolute inset-0 z-0 bg-zinc-950">
-          {heroImg && (
+      <section className="relative w-full min-h-screen flex items-end overflow-hidden bg-gray-950">
+        {/* Background image with cinematic overlay */}
+        <div className="absolute inset-0">
+          {heroImg ? (
             <Image
               src={heroImg}
               alt={sanitizeText(hotel.name)}
               fill
-              className="object-cover opacity-40 scale-105 hover:scale-100 transition-transform duration-[20s] ease-out"
+              className="object-cover opacity-60"
               priority
             />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-gray-900 to-gray-950" />
           )}
-          <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/80 via-zinc-950/20 to-zinc-950" />
+          <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/50 to-transparent" />
         </div>
 
-        <div className="relative z-10 w-full max-w-6xl mx-auto px-6 py-32 flex flex-col items-center text-center backdrop-blur-xl bg-white/5 border border-white/10 shadow-2xl transition-all duration-1000">
-          {hotel.isVerified && (
-            <div className="flex items-center gap-3 mb-12 text-sm md:text-base tracking-[0.4em] uppercase text-amber-200/80 font-light">
-              <Shield className="w-5 h-5" />
-              <span>Verified Exclusive</span>
-            </div>
-          )}
+        {/* Content */}
+        <div className="relative z-10 w-full max-w-6xl mx-auto px-6 md:px-12 pb-32 pt-48">
+          <div style={{ animation: 'fade-in 1s ease-out 0.3s both' }}>
+            <div className="w-12 h-px mb-8" style={{ backgroundColor: primary, animation: 'fade-in 1s ease-out 0.5s both' }} />
 
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-medium tracking-wide leading-tight mb-8" style={{ color: accent, textShadow: '0 4px 24px rgba(0,0,0,0.5)' }}>
-            {sanitizeText(hotel.name)}
-          </h1>
-
-          {hotel.tagline && (
-            <p className="text-xl md:text-3xl text-zinc-300 font-light max-w-3xl mb-16 italic tracking-wider leading-relaxed">
-              {sanitizeText(hotel.tagline)}
-            </p>
-          )}
-
-          <div className="flex flex-col md:flex-row items-center gap-10 md:gap-16 text-lg tracking-widest text-zinc-400 font-light uppercase border-y border-white/10 py-8 mb-16 w-full justify-center">
-            <div className="flex items-center gap-3">
-              <span className="flex">
+            {hotel.starRating > 0 && (
+              <div className="flex items-center gap-1.5 mb-6">
                 {Array.from({ length: hotel.starRating }).map((_, i) => (
-                  <Star key={i} className="w-5 h-5 fill-amber-400 text-amber-400" />
+                  <Star key={i} className="w-4 h-4" style={{ fill: primary, color: primary }} />
                 ))}
-              </span>
-            </div>
-            {hotel.averageRating && (
-              <span className="flex items-center gap-3 hover:text-amber-200 transition-colors">
-                <Award className="w-5 h-5" />
-                {hotel.averageRating.toFixed(1)} <span className="text-zinc-600">({hotel.reviewCount})</span>
-              </span>
-            )}
-            <span className="flex items-center gap-3 hover:text-amber-200 transition-colors">
-              <MapPin className="w-5 h-5" />
-              {sanitizeText(hotel.city)}
-            </span>
-          </div>
-
-          {hotel.startingPrice && (
-            <div className="flex flex-col items-center gap-4">
-              <span className="text-sm tracking-[0.3em] uppercase text-zinc-500">Starting from</span>
-              <div className="text-5xl md:text-6xl font-light tracking-wider" style={{ color: accent }}>
-                ₹{hotel.startingPrice.toLocaleString('en-IN')}
-                <span className="text-xl text-zinc-500 ml-4 font-sans tracking-normal">/ night</span>
               </div>
+            )}
+
+            <h1
+              className="text-5xl md:text-7xl text-white leading-[1.1] mb-6"
+              style={{ fontFamily: "'Playfair Display', serif", fontWeight: 300, animation: 'slide-up 0.8s ease-out 0.4s both' }}
+            >
+              {sanitizeText(hotel.name)}
+            </h1>
+
+            {hotel.tagline && (
+              <p className="text-lg md:text-xl text-white/50 font-light mb-10 max-w-xl" style={{ animation: 'slide-up 0.8s ease-out 0.6s both' }}>
+                {sanitizeText(hotel.tagline)}
+              </p>
+            )}
+
+            <div className="flex flex-wrap items-center gap-6 text-sm text-white/40" style={{ animation: 'fade-in 1s ease-out 0.8s both' }}>
+              {hotel.averageRating && (
+                <span className="flex items-center gap-2">
+                  <Star className="w-3.5 h-3.5" style={{ fill: primary, color: primary }} />
+                  {hotel.averageRating.toFixed(1)} ({hotel.reviewCount} reviews)
+                </span>
+              )}
+              <span className="flex items-center gap-2">
+                <MapPin className="w-3.5 h-3.5" />
+                {sanitizeText(hotel.city)}
+              </span>
             </div>
-          )}
+
+            {hotel.startingPrice && (
+              <div className="mt-12 flex items-baseline gap-2" style={{ animation: 'slide-up 0.8s ease-out 1s both' }}>
+                <span className="text-4xl md:text-5xl text-white font-light" style={{ fontFamily: "'Playfair Display', serif" }}>
+                  ₹{hotel.startingPrice.toLocaleString('en-IN')}
+                </span>
+                <span className="text-white/30 text-sm">per night</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Scroll indicator */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10" style={{ animation: 'fade-in 1s ease-out 1.2s both' }}>
+          <ArrowDown className="w-5 h-5 text-white/20 animate-bounce" />
         </div>
       </section>
 
-      <section className="relative z-20 -mt-24 px-6 mb-32 bg-zinc-950/20">
-        <div className="max-w-5xl mx-auto backdrop-blur-2xl bg-zinc-950/60 border border-white/10 p-2 shadow-2xl">
+      {/* Search widget */}
+      <section className="relative z-20 -mt-12 max-w-5xl mx-auto px-6">
+        <div style={{ animation: 'slide-up 0.6s ease-out 1s both' }}>
           <SearchWidget
             theme={theme}
             checkIn={checkIn}

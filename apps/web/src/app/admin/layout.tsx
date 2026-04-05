@@ -25,17 +25,13 @@ import {
   Loader2,
   IndianRupee,
   CreditCard,
-  FileText,
   Search,
   MessageCircle,
-  Brain,
   Palette,
   ImageIcon,
   UserPlus,
   BookOpen,
   ExternalLink,
-  Key,
-  Users,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -68,11 +64,6 @@ const adminLinks = [
     icon: IndianRupee,
   },
   {
-    label: 'Smart Pricing',
-    href: '/admin/smart-pricing',
-    icon: Brain,
-  },
-  {
     label: 'Analytics',
     href: '/admin/analytics',
     icon: BarChart3,
@@ -81,11 +72,6 @@ const adminLinks = [
     label: 'Reviews',
     href: '/admin/reviews',
     icon: MessageCircle,
-  },
-  {
-    label: 'Content',
-    href: '/admin/content',
-    icon: FileText,
   },
   {
     label: 'Blog',
@@ -111,16 +97,6 @@ const adminLinks = [
     label: 'Branding',
     href: '/admin/branding',
     icon: Palette,
-  },
-  {
-    label: 'API Keys',
-    href: '/admin/api-keys',
-    icon: Key,
-  },
-  {
-    label: 'Staff',
-    href: '/admin/staff',
-    icon: Users,
   },
   {
     label: 'Hotel Settings',
