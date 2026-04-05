@@ -9,7 +9,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { Menu, X, Phone, Mail } from 'lucide-react';
+import { Menu, X, Phone, Mail, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTenant } from '@/lib/tenant/tenant-context';
 import { useAuth } from '@/lib/auth/auth-context';
@@ -27,7 +27,7 @@ const NAV_LINKS = [
 
 export function TenantHeader() {
   const { hotel, theme } = useTenant();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, logout } = useAuth();
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -174,15 +174,27 @@ export function TenantHeader() {
               </Link>
 
               {isAuthenticated ? (
-                <Link
-                  href="/dashboard"
-                  className={cn(
-                    'text-sm font-medium',
-                    isTransparent ? 'text-white/90' : 'text-gray-600'
-                  )}
-                >
-                  My Bookings
-                </Link>
+                <div className="flex items-center gap-2">
+                  <Link
+                    href="/dashboard"
+                    className={cn(
+                      'text-sm font-medium',
+                      isTransparent ? 'text-white/90' : 'text-gray-600'
+                    )}
+                  >
+                    My Bookings
+                  </Link>
+                  <button
+                    onClick={() => logout()}
+                    title="Logout"
+                    className={cn(
+                      'p-1.5 rounded-md hover:bg-black/10 transition-colors',
+                      isTransparent ? 'text-white/90' : 'text-gray-500'
+                    )}
+                  >
+                    <LogOut className="w-4 h-4" />
+                  </button>
+                </div>
               ) : (
                 <Link
                   href="/auth/login"
@@ -233,6 +245,25 @@ export function TenantHeader() {
                 </Link>
               ))}
               <hr className="my-4" />
+              {isAuthenticated && (
+                <>
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="block px-4 py-3 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50 mb-1"
+                  >
+                    My Bookings
+                  </Link>
+                  <button
+                    onClick={() => { logout(); setIsMobileMenuOpen(false); }}
+                    className="w-full flex items-center gap-2 px-4 py-3 rounded-md text-base font-medium text-red-600 hover:bg-red-50 mb-1"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Logout
+                  </button>
+                  <hr className="my-4" />
+                </>
+              )}
               <Link
                 href="/rooms"
                 onClick={() => setIsMobileMenuOpen(false)}
