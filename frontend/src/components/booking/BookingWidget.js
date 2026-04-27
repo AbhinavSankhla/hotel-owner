@@ -123,7 +123,7 @@ export default function BookingWidget({ hotel, roomTypes }) {
             </div>
             <div>
               <label className="label">Phone</label>
-              <input className="input" placeholder="+91 9999999999" {...register('guestPhone', { required: true })} />
+              <input className="input" placeholder="+919999999999" {...register('guestPhone', { required: true })} />
             </div>
             <div>
               <label className="label">Email</label>
@@ -134,15 +134,29 @@ export default function BookingWidget({ hotel, roomTypes }) {
 
         {/* Availability Result */}
         {availability && (
-          <div className={`rounded-lg p-3 text-sm ${availability.isAvailable ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
+          <div className={`rounded-xl p-4 text-sm ${availability.isAvailable ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
             {availability.isAvailable ? (
-              <>
-                <p className="font-semibold">Available!</p>
-                <p>{availability.nights} night(s) × {formatCurrency(availability.pricePerNight)}</p>
-                <p className="font-bold text-base mt-1">Total: {formatCurrency(availability.totalPrice)}</p>
-              </>
+              <div className="text-green-800">
+                <p className="font-semibold text-green-900 mb-2">✓ Available</p>
+                <div className="space-y-1">
+                  <div className="flex justify-between">
+                    <span>{availability.nights} night{availability.nights > 1 ? 's' : ''} × {formatCurrency(availability.pricePerNight)}</span>
+                    <span>{formatCurrency(availability.subtotal ?? availability.totalPrice)}</span>
+                  </div>
+                  {availability.taxAmount > 0 && (
+                    <div className="flex justify-between text-green-700">
+                      <span>GST ({Math.round((availability.taxRate ?? 0.12) * 100)}%)</span>
+                      <span>+{formatCurrency(availability.taxAmount)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between font-bold text-green-900 pt-1 border-t border-green-200 mt-1">
+                    <span>Total</span>
+                    <span>{formatCurrency(availability.totalPrice)}</span>
+                  </div>
+                </div>
+              </div>
             ) : (
-              <p>Not available for selected dates.</p>
+              <p className="text-red-700">❌ Not available for selected dates.</p>
             )}
           </div>
         )}

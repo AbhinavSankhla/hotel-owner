@@ -75,13 +75,22 @@ class RoomService {
 
     const isAvailable = !isClosed && minAvailable >= numRooms;
     const pricePerNight = this._getEffectivePrice(dailyPrices, roomType.basePriceDaily);
-    const totalPrice = pricePerNight * nights * numRooms;
+    const subtotal = pricePerNight * nights * numRooms;
+
+    // Fetch hotel gstRate for tax breakdown
+    const hotel = await Hotel.findByPk(roomType.hotelId, { attributes: ['gstRate'] }).catch(() => null);
+    const taxRate = hotel?.gstRate ?? 0.12;
+    const taxAmount = Math.round(subtotal * taxRate);
+    const totalPrice = subtotal + taxAmount;
 
     const result = {
       isAvailable,
       availableRooms: minAvailable,
       nights,
       pricePerNight,
+      subtotal,
+      taxRate,
+      taxAmount,
       totalPrice,
       currency: 'INR',
       dailyPrices,

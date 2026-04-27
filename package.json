@@ -2,7 +2,7 @@
   "name": "grand-horizon-hotel",
   "version": "1.0.0",
   "private": true,
-  "description": "Grand Horizon Hotel — full-stack booking platform (backend + frontend)",
+  "description": "Grand Horizon Hotel ï¿½ full-stack booking platform (backend + frontend)",
   "scripts": {
     "dev:backend": "cd backend && node server.js",
     "dev:frontend": "cd frontend && npm run dev",

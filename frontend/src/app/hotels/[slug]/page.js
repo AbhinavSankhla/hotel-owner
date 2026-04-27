@@ -1,6 +1,7 @@
 import { serverHotelsApi, serverReviewsApi } from '@/lib/serverApi';
 import { notFound } from 'next/navigation';
 import BookingWidget from '@/components/booking/BookingWidget';
+import MobileBookingBar from '@/components/booking/MobileBookingBar';
 import RoomImageSlideshow from '@/components/rooms/RoomImageSlideshow';
 
 const FALLBACK_IMG = 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&q=80';
@@ -48,7 +49,7 @@ export default async function HotelDetailPage({ params }) {
   const roomTypes = hotel.roomTypes || [];
 
   return (
-    <main>
+    <main className="pb-24 lg:pb-0">
       {/* ── Hero Image ───────────────────────────────────────────────── */}
       <div className="relative h-[50vh] min-h-[320px] overflow-hidden">
         <img
@@ -194,11 +195,17 @@ export default async function HotelDetailPage({ params }) {
           </div>
 
           {/* ── Right Column — Booking Widget ───────────────────────── */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1" id="booking-widget">
             <BookingWidget hotel={hotel} roomTypes={roomTypes} />
           </div>
         </div>
       </div>
+
+      {/* Mobile sticky booking bar — scrolls to widget */}
+      <MobileBookingBar
+        minPrice={roomTypes.length > 0 ? Math.min(...roomTypes.map((rt) => rt.basePriceDaily || Infinity)) : null}
+        hotelName={hotel.name}
+      />
     </main>
   );
 }

@@ -125,6 +125,11 @@ module.exports = (sequelize) => {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
       },
+      gstRate: {
+        type: DataTypes.FLOAT,
+        defaultValue: 0.12,
+        comment: 'GST/tax rate as a decimal (e.g. 0.12 = 12%)',
+      },
     },
     {
       tableName: 'Hotels',

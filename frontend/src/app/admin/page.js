@@ -45,7 +45,8 @@ export default function AdminDashboardPage() {
         <div className="flex gap-3">
           <Link href="/admin/rooms" className="btn-secondary text-sm">Manage Rooms</Link>
           <Link href="/admin/bookings" className="btn-secondary text-sm">Bookings</Link>
-          <Link href="/admin/analytics" className="btn-primary text-sm">Analytics</Link>
+          <Link href="/admin/analytics" className="btn-secondary text-sm">Analytics</Link>
+          <Link href="/admin/settings" className="btn-primary text-sm">Settings</Link>
         </div>
       </div>
 

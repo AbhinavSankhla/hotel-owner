@@ -9,11 +9,11 @@ const register = [
     .normalizeEmail(),
   body('phone')
     .optional({ nullable: true })
-    .isMobilePhone().withMessage('Valid phone number required'),
+    .matches(/^\+?[0-9]{7,15}$/).withMessage('Phone must be 7-15 digits (e.g. +919876543210)'),
   body('password')
     .optional({ nullable: true })
     .isLength({ min: 8 }).withMessage('Password must be at least 8 characters')
-    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/).withMessage('Password must contain uppercase, lowercase, and number'),
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/).withMessage('Password must have uppercase, lowercase, and a number (e.g. Pass@123)'),
   body('name')
     .notEmpty().withMessage('Name is required')
     .isLength({ max: 255 }).withMessage('Name too long'),
@@ -26,7 +26,7 @@ const login = [
     .normalizeEmail(),
   body('phone')
     .optional({ nullable: true })
-    .isMobilePhone().withMessage('Valid phone required'),
+    .matches(/^\+?[0-9]{7,15}$/).withMessage('Phone must be 7-15 digits'),
   body('password')
     .notEmpty().withMessage('Password is required'),
 ];
@@ -34,13 +34,13 @@ const login = [
 const requestOTP = [
   body('phone')
     .notEmpty().withMessage('Phone number is required')
-    .isMobilePhone().withMessage('Valid phone number required'),
+    .matches(/^\+?[0-9]{7,15}$/).withMessage('Phone must be 7-15 digits (e.g. +919876543210)'),
 ];
 
 const verifyOTP = [
   body('phone')
     .notEmpty().withMessage('Phone number is required')
-    .isMobilePhone().withMessage('Valid phone number required'),
+    .matches(/^\+?[0-9]{7,15}$/).withMessage('Phone must be 7-15 digits'),
   body('otp')
     .notEmpty().withMessage('OTP is required')
     .isLength({ min: 6, max: 6 }).withMessage('OTP must be 6 digits')

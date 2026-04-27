@@ -10,7 +10,8 @@ const { generate: generateBookingNumber } = require('../utils/bookingNumber');
 const { createError } = require('../middlewares/errorHandler.middleware');
 const { paginate } = require('../utils/pagination');
 
-const TAX_RATE = 0.12; // 12% GST
+// Default tax rate fallback if hotel doesn't have gstRate set
+const DEFAULT_TAX_RATE = 0.12;
 
 class BookingService {
   // ── Create Daily Booking ────────────────────────────────────────────────
@@ -22,9 +23,14 @@ class BookingService {
     if (!lockValue) throw createError('Room is currently being booked — please try again', 409);
 
     try {
-      const roomType = await RoomType.findByPk(roomTypeId);
+      const [roomType, hotel] = await Promise.all([
+        RoomType.findByPk(roomTypeId),
+        Hotel.findByPk(hotelId, { attributes: ['id', 'gstRate'] }),
+      ]);
       if (!roomType) throw createError('Room type not found', 404);
+      if (!hotel) throw createError('Hotel not found', 404);
 
+      const taxRate = hotel.gstRate ?? DEFAULT_TAX_RATE;
       const dates = roomService._getDateRange(checkInDate, checkOutDate);
       const nights = dates.length;
       if (nights < 1) throw createError('Check-out must be after check-in', 400);
@@ -33,7 +39,7 @@ class BookingService {
       const availability = await roomService.checkDailyAvailability({ roomTypeId, checkInDate, checkOutDate, numRooms });
       if (!availability.isAvailable) throw createError('Rooms not available for selected dates', 409);
 
-      const pricing = this._calculateDailyTotal(roomType, nights, numRooms, numExtraGuests, availability.pricePerNight);
+      const pricing = this._calculateDailyTotal(roomType, nights, numRooms, numExtraGuests, availability.pricePerNight, taxRate);
 
       const booking = await Booking.create({
         bookingNumber: generateBookingNumber(),
@@ -253,11 +259,11 @@ class BookingService {
   }
 
   // ── Private helpers ──────────────────────────────────────────────────────
-  _calculateDailyTotal(roomType, nights, numRooms, numExtraGuests, pricePerNight) {
+  _calculateDailyTotal(roomType, nights, numRooms, numExtraGuests, pricePerNight, taxRate = DEFAULT_TAX_RATE) {
     const roomTotal = pricePerNight * nights * numRooms;
     const extraGuestTotal = (roomType.extraGuestCharge || 0) * numExtraGuests * nights;
     const subtotal = roomTotal + extraGuestTotal;
-    const taxes = Math.round(subtotal * TAX_RATE);
+    const taxes = Math.round(subtotal * taxRate);
     const totalAmount = subtotal + taxes;
     return { roomTotal, extraGuestTotal, taxes, discountAmount: 0, totalAmount };
   }

@@ -103,31 +103,40 @@ export default function BookingDetailPage() {
 
         {/* Pricing */}
         <div className="border-t pt-4">
-          <div className="flex justify-between text-sm mb-1">
-            <span className="text-gray-500">Room charges</span>
-            <span>{formatCurrency(booking.roomTotal)}</span>
-          </div>
-          {booking.extraGuestTotal > 0 && (
-            <div className="flex justify-between text-sm mb-1">
-              <span className="text-gray-500">Extra guest charges</span>
-              <span>{formatCurrency(booking.extraGuestTotal)}</span>
+          <h3 className="font-semibold text-gray-900 mb-3">Price Breakdown</h3>
+          <div className="space-y-1.5">
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-500">Room charges</span>
+              <span className="font-medium">{formatCurrency(booking.roomTotal)}</span>
             </div>
-          )}
-          <div className="flex justify-between text-sm mb-1">
-            <span className="text-gray-500">Taxes & fees</span>
-            <span>{formatCurrency(booking.taxes)}</span>
-          </div>
-          {booking.discountAmount > 0 && (
-            <div className="flex justify-between text-sm mb-1 text-green-600">
-              <span>Discount</span>
-              <span>-{formatCurrency(booking.discountAmount)}</span>
+            {booking.extraGuestTotal > 0 && (
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Extra guest charges</span>
+                <span className="font-medium">{formatCurrency(booking.extraGuestTotal)}</span>
+              </div>
+            )}
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-500">GST & taxes</span>
+              <span className="font-medium">{formatCurrency(booking.taxes)}</span>
             </div>
-          )}
-          <div className="flex justify-between font-bold text-base mt-2 pt-2 border-t">
-            <span>Total</span>
-            <span>{formatCurrency(booking.totalAmount)}</span>
+            {booking.discountAmount > 0 && (
+              <div className="flex justify-between text-sm text-green-600">
+                <span>Discount applied</span>
+                <span>−{formatCurrency(booking.discountAmount)}</span>
+              </div>
+            )}
+            <div className="flex justify-between font-bold text-base pt-2 mt-1 border-t border-gray-200">
+              <span>Total Paid</span>
+              <span className="text-primary-700">{formatCurrency(booking.totalAmount)}</span>
+            </div>
           </div>
-          <p className="text-xs text-gray-400 mt-1">Payment: {booking.paymentStatus}</p>
+          <div className={`inline-flex items-center gap-1.5 mt-3 text-xs px-2.5 py-1 rounded-full font-medium ${
+            booking.paymentStatus === 'PAID' ? 'bg-green-100 text-green-700' :
+            booking.paymentStatus === 'PENDING' ? 'bg-yellow-100 text-yellow-700' :
+            'bg-gray-100 text-gray-500'
+          }`}>
+            {booking.paymentStatus === 'PAID' ? '✓' : '○'} Payment: {booking.paymentStatus}
+          </div>
         </div>
 
         {/* Actions */}
