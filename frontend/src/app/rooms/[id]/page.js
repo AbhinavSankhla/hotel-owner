@@ -51,7 +51,7 @@ export default async function RoomDetailPage({ params }) {
         <div className="absolute top-4 left-4 z-20 flex items-center gap-2 text-sm text-white/90 bg-black/40 backdrop-blur px-3 py-1.5 rounded-full">
           <Link href="/" className="hover:text-white">Home</Link>
           <span>/</span>
-          {hotel && <Link href="/hotel/book" className="hover:text-white">{hotel.name}</Link>}
+          {hotel && <span className="hover:text-white">{hotel.name}</span>}
           {hotel && <span>/</span>}
           <span className="font-medium">{roomType.name}</span>
         </div>
@@ -71,9 +71,7 @@ export default async function RoomDetailPage({ params }) {
                   {hotel && (
                     <p className="text-gray-500 mt-1 flex items-center gap-1">
                       <span>📍</span>
-                      <Link href="/hotel/book" className="hover:text-primary-600 transition">
-                        {hotel.name}
-                      </Link>
+                      <span>{hotel.name}</span>
                     </p>
                   )}
                 </div>

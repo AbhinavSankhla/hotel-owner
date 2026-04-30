@@ -174,12 +174,22 @@ class RoomService {
 
   // ── Decrement availability ───────────────────────────────────────────────
   async decrementAvailability(roomTypeId, dates, numRooms) {
+    const roomType = await RoomType.findByPk(roomTypeId);
+    if (!roomType) return;
     for (const date of dates) {
+      // Ensure the inventory record exists before decrementing
+      await RoomInventory.findOrCreate({
+        where: { roomTypeId, date },
+        defaults: { roomTypeId, date, availableCount: roomType.totalRooms, isClosed: false },
+      });
       await RoomInventory.decrement('availableCount', {
         by: numRooms,
         where: { roomTypeId, date },
       });
     }
+    // Invalidate availability cache for this room type
+    const keys = await redis.keys(`avail:daily:${roomTypeId}:*`).catch(() => []);
+    if (keys.length > 0) await redis.del(...keys).catch(() => {});
   }
 
   // ── Restore availability (on cancel) ────────────────────────────────────

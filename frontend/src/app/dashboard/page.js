@@ -48,7 +48,7 @@ export default function DashboardPage() {
       {/* Quick Links */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
         {[
-          { href: '/hotels', label: '🏨 Browse Hotels' },
+          { href: '/', label: '🏨 Browse Rooms' },
           { href: '/bookings', label: '📋 My Bookings' },
           { href: '/user/profile', label: '👤 Profile' },
           user.role === 'HOTEL_ADMIN' ? { href: '/admin', label: '⚙️ Admin Panel' } : null,
@@ -72,7 +72,7 @@ export default function DashboardPage() {
           <div className="card p-8 text-center text-gray-400">
             <p className="text-2xl mb-2">🗓️</p>
             <p>No bookings yet</p>
-            <Link href="/hotels" className="btn-primary mt-4 text-sm">Book a room</Link>
+            <Link href="/" className="btn-primary mt-4 text-sm">Browse Rooms</Link>
           </div>
         ) : (
           <div className="space-y-3">

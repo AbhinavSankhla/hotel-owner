@@ -30,6 +30,12 @@ class BookingService {
       if (!roomType) throw createError('Room type not found', 404);
       if (!hotel) throw createError('Hotel not found', 404);
 
+      // Enforce guest limit
+      const maxAllowed = roomType.maxGuests * numRooms;
+      if (numGuests > maxAllowed) {
+        throw createError(`Max ${maxAllowed} guest(s) allowed for ${numRooms} room(s) of this type`, 400);
+      }
+
       const taxRate = hotel.gstRate ?? DEFAULT_TAX_RATE;
       const dates = roomService._getDateRange(checkInDate, checkOutDate);
       const nights = dates.length;
@@ -225,6 +231,13 @@ class BookingService {
     }
 
     await booking.update({ status });
+
+    // Restore inventory when checked out
+    if (status === 'CHECKED_OUT' && booking.bookingType === 'DAILY' && booking.checkInDate && booking.checkOutDate) {
+      const dates = roomService._getDateRange(booking.checkInDate, booking.checkOutDate);
+      await roomService.restoreAvailability(booking.roomTypeId, dates, booking.numRooms);
+    }
+
     return this._getBookingById(bookingId);
   }
 
@@ -252,6 +265,18 @@ class BookingService {
       const nights = roomService._getDateRange(checkIn, checkOut).length;
       const pricing = this._calculateDailyTotal(booking.roomType, nights, rooms, extraGuests, booking.roomType.basePriceDaily);
       Object.assign(updateData, pricing);
+
+      // Adjust inventory: restore old dates, decrement new dates
+      const oldDates = roomService._getDateRange(booking.checkInDate, booking.checkOutDate);
+      const newDates = roomService._getDateRange(checkIn, checkOut);
+      const oldSet = new Set(oldDates);
+      const newSet = new Set(newDates);
+      // Dates removed from booking — restore availability
+      const removed = oldDates.filter((d) => !newSet.has(d));
+      if (removed.length > 0) await roomService.restoreAvailability(booking.roomTypeId, removed, rooms);
+      // New dates added to booking — decrement availability
+      const added = newDates.filter((d) => !oldSet.has(d));
+      if (added.length > 0) await roomService.decrementAvailability(booking.roomTypeId, added, rooms);
     }
 
     await booking.update(updateData);

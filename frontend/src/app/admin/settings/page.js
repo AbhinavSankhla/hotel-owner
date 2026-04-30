@@ -13,8 +13,9 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http:/
 
 function resolveImg(url) {
   if (!url) return null;
-  if (url.startsWith('http')) return url;
-  return `${API_BASE}${url}`;
+  // /uploads/... paths are proxied through Next.js rewrites
+  if (url.startsWith('/uploads/') || url.startsWith('http')) return url;
+  return null;
 }
 
 function ImageUploadField({ label, value, onChange, hint }) {

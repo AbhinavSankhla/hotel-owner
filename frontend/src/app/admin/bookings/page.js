@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { adminApi } from '@/lib/api';
+import { adminApi, bookingsApi } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import { formatCurrency } from '@/lib/utils';
 import dayjs from 'dayjs';
@@ -27,6 +27,10 @@ export default function AdminBookingsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [statusFilter, setStatusFilter] = useState('');
   const [updatingId, setUpdatingId] = useState(null);
+  // Extend stay modal state
+  const [extendBooking, setExtendBooking] = useState(null);
+  const [extendDate, setExtendDate] = useState('');
+  const [extending, setExtending] = useState(false);
 
   useEffect(() => {
     if (!loading && (!isAuthenticated || user?.role !== 'HOTEL_ADMIN')) {
@@ -58,6 +62,30 @@ export default function AdminBookingsPage() {
       toast.error(err.response?.data?.message || 'Update failed');
     } finally {
       setUpdatingId(null);
+    }
+  };
+
+  const openExtend = (booking) => {
+    setExtendBooking(booking);
+    setExtendDate(dayjs(booking.checkOutDate).add(1, 'day').format('YYYY-MM-DD'));
+  };
+
+  const confirmExtend = async () => {
+    if (!extendBooking || !extendDate) return;
+    if (dayjs(extendDate).isBefore(dayjs(extendBooking.checkOutDate).add(1, 'day'))) {
+      toast.error('New checkout must be after current checkout');
+      return;
+    }
+    setExtending(true);
+    try {
+      await bookingsApi.modify(extendBooking.id, { checkOutDate: extendDate });
+      setBookings((prev) => prev.map((b) => b.id === extendBooking.id ? { ...b, checkOutDate: extendDate } : b));
+      toast.success('Stay extended!');
+      setExtendBooking(null);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to extend stay');
+    } finally {
+      setExtending(false);
     }
   };
 
@@ -105,14 +133,25 @@ export default function AdminBookingsPage() {
                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[b.status] || 'bg-gray-100'}`}>{b.status}</span>
                   </td>
                   <td className="px-4 py-3">
-                    <select
-                      disabled={updatingId === b.id}
-                      value={b.status}
-                      onChange={(e) => updateStatus(b.id, e.target.value)}
-                      className="text-xs border rounded px-2 py-1"
-                    >
-                      {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
-                    </select>
+                    <div className="flex flex-col gap-1">
+                      <select
+                        disabled={updatingId === b.id}
+                        value={b.status}
+                        onChange={(e) => updateStatus(b.id, e.target.value)}
+                        className="text-xs border rounded px-2 py-1"
+                      >
+                        {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                      {['CONFIRMED', 'CHECKED_IN'].includes(b.status) && b.bookingType !== 'HOURLY' && (
+                        <button
+                          type="button"
+                          onClick={() => openExtend(b)}
+                          className="text-xs px-2 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded hover:bg-blue-100"
+                        >
+                          ⏳ Extend Stay
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -126,6 +165,33 @@ export default function AdminBookingsPage() {
           <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="btn-secondary text-sm px-3 py-1.5">← Prev</button>
           <span className="text-sm text-gray-500 py-1.5">Page {page} of {totalPages}</span>
           <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="btn-secondary text-sm px-3 py-1.5">Next →</button>
+        </div>
+      )}
+
+      {/* ── Extend Stay Modal ─────────────────────────────────────────────── */}
+      {extendBooking && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
+            <h2 className="text-lg font-bold text-gray-900 mb-1">Extend Stay</h2>
+            <p className="text-sm text-gray-500 mb-4">
+              {extendBooking.guestName} — {extendBooking.roomType?.name}<br />
+              Current checkout: <span className="font-medium">{dayjs(extendBooking.checkOutDate).format('DD MMM YYYY')}</span>
+            </p>
+            <label className="label">New Checkout Date</label>
+            <input
+              type="date"
+              className="input mb-4"
+              value={extendDate}
+              min={dayjs(extendBooking.checkOutDate).add(1, 'day').format('YYYY-MM-DD')}
+              onChange={(e) => setExtendDate(e.target.value)}
+            />
+            <div className="flex gap-3">
+              <button type="button" onClick={() => setExtendBooking(null)} className="flex-1 btn-secondary">Cancel</button>
+              <button type="button" onClick={confirmExtend} disabled={extending} className="flex-1 btn-primary">
+                {extending ? 'Saving…' : 'Confirm Extension'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </main>

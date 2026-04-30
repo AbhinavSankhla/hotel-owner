@@ -2,12 +2,11 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:4000';
-
 function resolveImg(url) {
   if (!url) return null;
-  if (url.startsWith('http')) return url;
-  return `${API_BASE}${url}`;
+  // /uploads/... paths are proxied through Next.js rewrites — use as-is
+  if (url.startsWith('/uploads/') || url.startsWith('http')) return url;
+  return null;
 }
 
 /** Small inline slideshow used inside room cards */

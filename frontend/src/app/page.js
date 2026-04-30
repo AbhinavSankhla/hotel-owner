@@ -10,12 +10,11 @@ const FALLBACK_ROOM_IMGS = [
   'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&q=80',
 ];
 
-// Resolve /uploads/... URLs to full backend URL so <img> can load them
-const API_BASE = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:4000';
+// /uploads/... paths are proxied through Next.js rewrites (next.config.js)
 function resolveImg(url) {
   if (!url) return null;
-  if (url.startsWith('http')) return url;
-  return `${API_BASE}${url}`;
+  if (url.startsWith('/uploads/') || url.startsWith('http')) return url;
+  return null;
 }
 
 async function getHotelData() {

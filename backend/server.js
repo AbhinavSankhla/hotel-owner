@@ -46,11 +46,12 @@ app.use(
         'http://localhost:3000',
         'http://127.0.0.1:3000',
       ];
-      // Allow any GitHub Codespaces preview URL
+      // Allow any GitHub Codespaces or VS Code Dev Tunnels preview URL
       if (
         allowed.includes(origin) ||
         /^https:\/\/[^.]+-(3000|4000)\.app\.github\.dev$/.test(origin) ||
-        /^https:\/\/[^.]+-(3000|4000)\.preview\.app\.github\.dev$/.test(origin)
+        /^https:\/\/[^.]+-(3000|4000)\.preview\.app\.github\.dev$/.test(origin) ||
+        /^https:\/\/[^.]+-(3000|4000)\.[^.]+\.devtunnels\.ms$/.test(origin)
       ) {
         return callback(null, true);
       }
@@ -120,6 +121,37 @@ app.use((_req, res) => {
 app.use(errorHandler);
 
 // ── Bootstrap ────────────────────────────────────────────────────────────────
+
+// Auto-release: mark overdue CHECKED_IN bookings as CHECKED_OUT and restore inventory
+async function autoReleaseOverdueBookings() {
+  try {
+    const { Booking } = require('./models');
+    const roomService = require('./services/room.service');
+    const { Op } = require('sequelize');
+    const today = new Date().toISOString().split('T')[0];
+
+    const overdue = await Booking.findAll({
+      where: {
+        status: 'CHECKED_IN',
+        bookingType: 'DAILY',
+        checkOutDate: { [Op.lt]: today },
+      },
+    });
+
+    for (const booking of overdue) {
+      await booking.update({ status: 'CHECKED_OUT' });
+      const dates = roomService._getDateRange(booking.checkInDate, booking.checkOutDate);
+      await roomService.restoreAvailability(booking.roomTypeId, dates, booking.numRooms);
+    }
+
+    if (overdue.length > 0) {
+      console.log(`[AutoRelease] Released ${overdue.length} overdue booking(s)`);
+    }
+  } catch (err) {
+    console.error('[AutoRelease] Error:', err.message);
+  }
+}
+
 async function bootstrap() {
   try {
     // Connect DB first (may fall back to pg-mem in dev)
@@ -135,6 +167,10 @@ async function bootstrap() {
       console.log(`[Server] Environment: ${env.NODE_ENV}`);
       console.log(`[Server] Health: http://localhost:${env.PORT}/health`);
     });
+
+    // Run auto-release on startup, then every hour
+    autoReleaseOverdueBookings();
+    setInterval(autoReleaseOverdueBookings, 60 * 60 * 1000);
 
     const shutdown = (signal) => {
       console.log(`\n[Server] ${signal} received — shutting down gracefully`);
