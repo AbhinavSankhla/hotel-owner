@@ -21,7 +21,12 @@ router.get('/dashboard', ctrl.getDashboard);
 
 // Bookings management
 router.get('/bookings', ctrl.listBookings);
+router.post('/bookings/offline', ctrl.createOfflineBooking);
 router.put('/bookings/:id/status', ctrl.updateBookingStatus);
+
+// Guests
+router.get('/guests', ctrl.listGuests);
+router.get('/guests/:id', ctrl.getGuestDetail);
 
 // Hotel settings (admin only)
 router.put('/hotel', requireRoles('HOTEL_ADMIN'), updateHotelValidator, validate, ctrl.updateHotel);

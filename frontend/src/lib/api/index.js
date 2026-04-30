@@ -74,6 +74,10 @@ export const adminApi = {
   // Bookings
   listBookings: (params) => executeApi.get('/admin/bookings', { params }),
   updateBookingStatus: (id, data) => executeApi.put(`/admin/bookings/${id}/status`, data),
+  createOfflineBooking: (data) => executeApi.post('/admin/bookings/offline', data),
+  // Guests
+  listGuests: (params) => executeApi.get('/admin/guests', { params }),
+  getGuestDetail: (id) => executeApi.get(`/admin/guests/${id}`),
   // Room Types
   listRoomTypes: (params) => executeApi.get('/admin/room-types', { params }),
   createRoomType: (data) => executeApi.post('/admin/room-types', data),

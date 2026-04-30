@@ -1,6 +1,58 @@
 # Hotel Manager — Standalone Hotel Booking Platform
 
-A full-stack, production-grade hotel reservation system for independent hotels. Features a direct booking website, admin dashboard, daily + hourly bookings, Razorpay payments, and lightweight deployment (runs on a ₹300/month VPS).
+A full-stack, production-grade hotel reservation system built for **single hotel owners**. Features a direct booking website, fully-featured admin dashboard, offline/walk-in counter booking, guest management, inventory calendar, dynamic branding, daily + hourly room bookings, Razorpay payments, and lightweight deployment (runs on a ₹300/month VPS).
+
+---
+
+## Features
+
+### Guest-Facing Website
+- **Homepage** — Hero with dynamic hotel cover image & logo, room type grid with live pricing
+- **Room Detail Pages** — `/rooms/[id]` — full gallery, amenities, policies, inline booking widget
+- **Online Booking** — Daily and hourly booking with real-time price preview and Razorpay checkout
+- **Booking Confirmation** — Email-style confirmation with booking number
+
+### Admin Dashboard (`/admin`)
+- **Overview** — Quick-navigation grid (walk-in, bookings, guests, inventory, rooms, analytics, settings)
+- **Stats** — Month revenue, occupancy rate, today's check-ins/check-outs, pending bookings
+- **Recent Bookings** — Live table with status badges
+
+### Walk-in / Offline Booking (`/admin/offline-booking`)
+- Create counter bookings for walk-in guests without requiring online payment
+- Supports **DAILY** and **HOURLY** booking types
+- Guest lookup by phone/email — auto-fills existing guest info
+- Payment method: **Cash, UPI, Card, Bank Transfer, Other**
+- Real-time price preview with GST breakdown
+- Booking confirmation banner with booking number
+
+### Guest Management (`/admin/guests`)
+- Searchable table of all guests who have stayed at the hotel
+- Filter by name, email, or phone
+- Guest detail modal — booking history, total spent, total stays
+- Quick "New Booking for Guest" action
+
+### Inventory & Availability Calendar (`/admin/inventory`)
+- Monthly calendar grid per room type — colour-coded availability
+- Bulk update date ranges: set available count, price override, or mark closed
+- Legend: Available / Sold Out / Closed / Price Override
+- Navigate between months
+
+### Room Type Management (`/admin/rooms`)
+- Create / edit / delete room types with images, amenities, pricing
+- Set total room count (affects inventory availability)
+
+### Hotel Settings (`/admin/settings`)
+| Tab | Fields |
+|-----|--------|
+| 🖼️ Branding | Cover/hero image, hotel logo, gallery images (upload or URL) |
+| 🏨 General | Name, description, star rating, booking model (daily/hourly/both), social links |
+| ✨ Amenities | Toggle amenities shown on hotel page |
+| 💰 Tax & GST | GST rate percentage |
+| 🕐 Timings | Check-in / check-out times |
+| 📞 Contact | Phone, email, address, city, state, pincode |
+
+### Analytics (`/admin/analytics`)
+- Revenue charts, occupancy trends, top room types
 
 ---
 
@@ -8,9 +60,10 @@ A full-stack, production-grade hotel reservation system for independent hotels. 
 
 ### Prerequisites
 - **Node.js 20+** — [Download here](https://nodejs.org/)
-- **Docker & Docker Compose** — [Download here](https://www.docker.com/products/docker-desktop/)
+- No database setup needed for dev — uses in-memory pg-mem
 
 ### Setup
+
 ```bash
 # 1. Install dependencies
 npm install

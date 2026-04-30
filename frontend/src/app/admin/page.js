@@ -38,17 +38,34 @@ export default function AdminDashboardPage() {
 
   if (loading || !user) return null;
 
+  const quickLinks = [
+    { href: '/admin/offline-booking', icon: '🏷️', label: 'Walk-in Booking', desc: 'Counter / offline booking', color: 'bg-amber-50 border-amber-200 hover:bg-amber-100' },
+    { href: '/admin/bookings', icon: '📋', label: 'All Bookings', desc: 'View & manage bookings', color: 'bg-blue-50 border-blue-200 hover:bg-blue-100' },
+    { href: '/admin/guests', icon: '👥', label: 'Guests', desc: 'Guest profiles & history', color: 'bg-purple-50 border-purple-200 hover:bg-purple-100' },
+    { href: '/admin/inventory', icon: '📅', label: 'Inventory', desc: 'Room availability calendar', color: 'bg-green-50 border-green-200 hover:bg-green-100' },
+    { href: '/admin/rooms', icon: '🛏️', label: 'Room Types', desc: 'Manage room categories', color: 'bg-teal-50 border-teal-200 hover:bg-teal-100' },
+    { href: '/admin/analytics', icon: '📊', label: 'Analytics', desc: 'Revenue & occupancy', color: 'bg-indigo-50 border-indigo-200 hover:bg-indigo-100' },
+    { href: '/admin/settings', icon: '⚙️', label: 'Settings', desc: 'Hotel info, branding, GST', color: 'bg-gray-50 border-gray-200 hover:bg-gray-100' },
+  ];
+
   return (
     <main className="max-w-7xl mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-        <div className="flex gap-3">
-          <Link href="/admin/rooms" className="btn-secondary text-sm">Manage Rooms</Link>
-          <Link href="/admin/bookings" className="btn-secondary text-sm">Bookings</Link>
-          <Link href="/admin/analytics" className="btn-secondary text-sm">Analytics</Link>
-          <Link href="/admin/settings" className="btn-primary text-sm">Settings</Link>
-        </div>
+        <Link href="/admin/offline-booking" className="btn-primary text-sm">+ Walk-in Booking</Link>
       </div>
+
+      {/* Quick Navigation Grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-8">
+        {quickLinks.map((l) => (
+          <Link key={l.href} href={l.href} className={`border rounded-xl p-4 transition ${l.color}`}>
+            <span className="text-2xl">{l.icon}</span>
+            <p className="font-semibold text-gray-900 mt-2 text-sm">{l.label}</p>
+            <p className="text-xs text-gray-500 mt-0.5">{l.desc}</p>
+          </Link>
+        ))}
+      </div>
+
 
       {loadingStats ? (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

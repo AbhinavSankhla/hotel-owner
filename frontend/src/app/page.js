@@ -10,26 +10,19 @@ const FALLBACK_ROOM_IMGS = [
   'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&q=80',
 ];
 
-async function getFeaturedHotels() {
+async function getHotelData() {
   try {
-    const res = await serverHotelsApi.getFeatured(6);
+    const res = await serverHotelsApi.getFeatured(1);
     const data = res.data ?? res ?? [];
-    return Array.isArray(data) ? data : [];
+    const arr = Array.isArray(data) ? data : [];
+    return arr[0] || null;
   } catch {
-    return [];
+    return null;
   }
 }
 
-const amenityIcons = {
-  'Free WiFi': '📶', 'Rooftop Pool': '🏊', 'Spa & Wellness': '💆', 'Fine Dining': '🍽️',
-  'Fitness Center': '🏋️', 'Business Center': '💼', 'Conference Rooms': '🤝',
-  'Valet Parking': '🅿️', 'Airport Transfer': '✈️', '24h Room Service': '🛎️',
-  'Bar & Lounge': '🍸', 'Kids Play Area': '🎠',
-};
-
 export default async function HomePage() {
-  const featured = await getFeaturedHotels();
-  const firstHotel = featured[0] || null;
+  const firstHotel = await getHotelData();
   const roomTypes = firstHotel?.roomTypes || [];
 
   return (
@@ -68,10 +61,11 @@ export default async function HomePage() {
                 <Link href={`/hotels/${firstHotel.slug}`} className="bg-primary-600 hover:bg-primary-700 text-white font-semibold px-8 py-4 rounded-xl transition text-lg shadow-lg">
                   Explore &amp; Book
                 </Link>
-              ) : null}
-              <Link href="/hotels" className="bg-white/10 hover:bg-white/20 backdrop-blur border border-white/30 text-white font-semibold px-8 py-4 rounded-xl transition text-lg">
-                Browse All Hotels
-              </Link>
+              ) : (
+                <Link href="/auth/register" className="bg-primary-600 hover:bg-primary-700 text-white font-semibold px-8 py-4 rounded-xl transition text-lg shadow-lg">
+                  Book Now
+                </Link>
+              )}
             </div>
 
             {/* Quick Stats */}
@@ -97,113 +91,35 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── Amenities Strip ──────────────────────────────────────────── */}
-      {firstHotel?.amenities?.length > 0 && (
-        <section className="bg-primary-700 text-white py-4 overflow-hidden">
-          <div className="max-w-7xl mx-auto px-4">
-            <div className="flex gap-8 overflow-x-auto scrollbar-hide pb-1">
-              {firstHotel.amenities.map((a) => (
-                <div key={a} className="flex items-center gap-2 whitespace-nowrap text-sm">
-                  <span>{amenityIcons[a] || '✓'}</span>
-                  <span>{a}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
       {/* ── Room Types ───────────────────────────────────────────────── */}
       {roomTypes.length > 0 && (
         <section className="max-w-7xl mx-auto px-4 py-16">
           <div className="text-center mb-10">
-            <h2 className="text-4xl font-bold text-gray-900 mb-3">Our Room Types</h2>
+            <h2 className="text-4xl font-bold text-gray-900 mb-3">Our Booking Types</h2>
             <p className="text-gray-500 text-lg">Choose your perfect accommodation from our curated selection</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {roomTypes.map((rt, i) => {
               const img = rt.images?.[0] || FALLBACK_ROOM_IMGS[i % FALLBACK_ROOM_IMGS.length];
               return (
-                <Link key={rt.id} href={firstHotel ? `/hotels/${firstHotel.slug}` : '/hotels'} className="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all overflow-hidden border border-gray-100">
+                <Link key={rt.id} href={`/rooms/${rt.id}`} className="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all overflow-hidden border border-gray-100">
                   <div className="h-52 overflow-hidden">
                     <img src={img} alt={rt.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                   </div>
                   <div className="p-5">
                     <h3 className="font-bold text-gray-900 text-lg">{rt.name}</h3>
+                    <p className="text-gray-500 text-sm mt-1 line-clamp-2">{rt.description || `Sleeps up to ${rt.maxGuests} guests`}</p>
                     <div className="flex justify-between items-center mt-3">
                       <div>
                         <span className="text-primary-600 font-bold text-xl">₹{rt.basePriceDaily?.toLocaleString()}</span>
                         <span className="text-gray-400 text-sm">/night</span>
                       </div>
-                      <span className="text-xs bg-primary-50 text-primary-700 px-3 py-1 rounded-full font-medium">Book Now</span>
+                      <span className="text-xs bg-primary-50 text-primary-700 px-3 py-1 rounded-full font-medium">View Details</span>
                     </div>
                   </div>
                 </Link>
               );
             })}
-          </div>
-        </section>
-      )}
-
-      {/* ── Hotel Cards Grid ─────────────────────────────────────────── */}
-      {featured.length > 0 && (
-        <section className="bg-gray-50 py-16">
-          <div className="max-w-7xl mx-auto px-4">
-            <div className="text-center mb-10">
-              <h2 className="text-4xl font-bold text-gray-900 mb-3">Featured Hotels</h2>
-              <p className="text-gray-500 text-lg">Handpicked properties for an exceptional stay</p>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-              {featured.map((hotel) => (
-                <Link key={hotel.id} href={`/hotels/${hotel.slug}`} className="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all overflow-hidden">
-                  <div className="h-56 overflow-hidden relative">
-                    <img
-                      src={hotel.coverImageUrl || FALLBACK_HOTEL_IMG}
-                      alt={hotel.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    <div className="absolute top-3 left-3">
-                      <span className="bg-black/50 backdrop-blur text-white text-xs px-2 py-1 rounded-full">
-                        {'★'.repeat(hotel.starRating || 4)}
-                      </span>
-                    </div>
-                    {hotel.avgRating && (
-                      <div className="absolute top-3 right-3">
-                        <span className="bg-green-500 text-white text-xs px-2 py-1 rounded-full font-semibold">⭐ {hotel.avgRating}</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-5">
-                    <h3 className="font-bold text-gray-900 text-xl mb-1">{hotel.name}</h3>
-                    <p className="text-gray-500 text-sm flex items-center gap-1">
-                      <span>📍</span> {hotel.city}, {hotel.state}
-                    </p>
-                    {hotel.amenities?.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 mt-3">
-                        {hotel.amenities.slice(0, 3).map((a) => (
-                          <span key={a} className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">{a}</span>
-                        ))}
-                        {hotel.amenities.length > 3 && (
-                          <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">+{hotel.amenities.length - 3} more</span>
-                        )}
-                      </div>
-                    )}
-                    <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-100">
-                      <div>
-                        <p className="text-gray-400 text-xs">Starting from</p>
-                        <p className="text-primary-600 font-bold text-lg">
-                          {hotel.startingPrice ? `₹${hotel.startingPrice.toLocaleString()}` : 'Contact us'}
-                          {hotel.startingPrice && <span className="text-gray-400 text-xs font-normal">/night</span>}
-                        </p>
-                      </div>
-                      <span className="bg-primary-600 hover:bg-primary-700 text-white text-sm px-4 py-2 rounded-xl font-medium transition">
-                        View Hotel →
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
           </div>
         </section>
       )}

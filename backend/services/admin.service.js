@@ -247,6 +247,146 @@ class AdminService {
     return booking;
   }
 
+  // ── Offline / Walk-in Booking (counter booking by staff) ─────────────────
+  async createOfflineBooking(hotelId, staffId, data) {
+    const {
+      roomTypeId, bookingType = 'DAILY',
+      checkInDate, checkOutDate, checkInTime, checkOutTime, numHours,
+      numRooms = 1, numGuests = 1, numExtraGuests = 0,
+      guestName, guestEmail, guestPhone,
+      paymentMethod = 'CASH', notes,
+    } = data;
+
+    const roomType = await RoomType.findOne({ where: { id: roomTypeId, hotelId } });
+    if (!roomType) throw createError('Room type not found', 404);
+
+    const hotel = await Hotel.findByPk(hotelId, { attributes: ['id', 'gstRate'] });
+    const taxRate = hotel?.gstRate ?? 0.12;
+
+    let subtotal = 0;
+    let nights = 0;
+    let hours = 0;
+
+    if (bookingType === 'DAILY') {
+      const ciDay = dayjs(checkInDate);
+      const coDay = dayjs(checkOutDate);
+      nights = coDay.diff(ciDay, 'day');
+      if (nights < 1) throw createError('Check-out must be after check-in', 400);
+      subtotal = (roomType.basePriceDaily || 0) * nights * numRooms;
+    } else {
+      hours = parseInt(numHours) || 1;
+      subtotal = (roomType.basePriceHourly || roomType.basePriceDaily / 12) * hours * numRooms;
+    }
+
+    const extraCharge = (roomType.extraGuestCharge || 0) * (numExtraGuests || 0) * (bookingType === 'DAILY' ? nights : hours);
+    const taxAmount = Math.round((subtotal + extraCharge) * taxRate);
+    const totalAmount = subtotal + extraCharge + taxAmount;
+
+    // Find or create a walk-in guest user
+    let guestUser = null;
+    if (guestEmail) {
+      guestUser = await User.findOne({ where: { email: guestEmail } });
+    }
+    if (!guestUser && guestPhone) {
+      guestUser = await User.findOne({ where: { phone: guestPhone } });
+    }
+    if (!guestUser) {
+      guestUser = await User.create({
+        name: guestName || 'Walk-in Guest',
+        email: guestEmail || null,
+        phone: guestPhone || null,
+        role: 'GUEST',
+        isActive: true,
+        emailVerified: false,
+      });
+    }
+
+    const { generate: generateBookingNumber } = require('../utils/bookingNumber');
+    const booking = await Booking.create({
+      bookingNumber: generateBookingNumber(),
+      hotelId,
+      guestId: guestUser.id,
+      roomTypeId,
+      bookingType,
+      source: 'WALK_IN',
+      checkInDate: bookingType === 'DAILY' ? checkInDate : null,
+      checkOutDate: bookingType === 'DAILY' ? checkOutDate : null,
+      checkInTime: bookingType === 'HOURLY' ? checkInTime : null,
+      checkOutTime: bookingType === 'HOURLY' ? checkOutTime : null,
+      numHours: bookingType === 'HOURLY' ? hours : null,
+      numRooms,
+      numGuests,
+      numExtraGuests,
+      guestName,
+      guestEmail,
+      guestPhone,
+      specialRequests: notes || null,
+      subtotal,
+      taxAmount,
+      totalAmount,
+      status: 'CONFIRMED',
+      paymentStatus: paymentMethod === 'CASH' ? 'PAID' : 'PENDING',
+      paymentMethod: paymentMethod || 'CASH',
+    });
+
+    return booking;
+  }
+
+  // ── Guest Management ──────────────────────────────────────────────────────
+  async listGuests(hotelId, { page = 1, limit = 20, search } = {}) {
+    const offset = (parseInt(page) - 1) * parseInt(limit);
+    // Get unique guest IDs that have booked at this hotel
+    const bookingWhere = { hotelId };
+
+    const guestIdRows = await Booking.findAll({
+      where: bookingWhere,
+      attributes: [[sequelize.fn('DISTINCT', sequelize.col('guestId')), 'guestId']],
+      raw: true,
+    });
+
+    const guestIds = guestIdRows.map((r) => r.guestId).filter(Boolean);
+
+    const userWhere = { id: { [Op.in]: guestIds }, role: 'GUEST' };
+    if (search) {
+      userWhere[Op.or] = [
+        { name: { [Op.iLike]: `%${search}%` } },
+        { email: { [Op.iLike]: `%${search}%` } },
+        { phone: { [Op.iLike]: `%${search}%` } },
+      ];
+    }
+
+    const { count, rows } = await User.findAndCountAll({
+      where: userWhere,
+      attributes: { exclude: ['password'] },
+      order: [['createdAt', 'DESC']],
+      limit: parseInt(limit),
+      offset,
+    });
+
+    return { data: rows, total: count, pages: Math.ceil(count / parseInt(limit)), page: parseInt(page) };
+  }
+
+  async getGuestDetail(guestId, hotelId) {
+    const guest = await User.findOne({
+      where: { id: guestId, role: 'GUEST' },
+      attributes: { exclude: ['password'] },
+    });
+    if (!guest) throw createError('Guest not found', 404);
+
+    const bookings = await Booking.findAll({
+      where: { hotelId, guestId },
+      include: [{ model: RoomType, as: 'roomType', attributes: ['id', 'name'] }],
+      order: [['createdAt', 'DESC']],
+      limit: 10,
+    });
+
+    const totalSpent = bookings
+      .filter((b) => b.paymentStatus === 'PAID')
+      .reduce((sum, b) => sum + parseFloat(b.totalAmount || 0), 0);
+
+    return { guest, bookings, totalSpent, totalBookings: bookings.length };
+  }
+
   async listRoomTypes(hotelId) {
     return RoomType.findAll({ where: { hotelId }, order: [['createdAt', 'ASC']] });
   }

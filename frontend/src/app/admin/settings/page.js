@@ -1,28 +1,81 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { adminApi, hotelsApi } from '@/lib/api';
+import { adminApi, hotelsApi, uploadApi } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 
 const HOTEL_ID = '11111111-1111-1111-1111-111111111111';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:4000';
+
+function resolveImg(url) {
+  if (!url) return null;
+  if (url.startsWith('http')) return url;
+  return `${API_BASE}${url}`;
+}
+
+function ImageUploadField({ label, value, onChange, hint }) {
+  const ref = useRef(null);
+  const [uploading, setUploading] = useState(false);
+
+  const handleUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const res = await uploadApi.uploadMultiple([file]);
+      const url = res.data.data?.files?.[0]?.url;
+      if (url) { onChange(url); toast.success('Image uploaded'); }
+    } catch { toast.error('Upload failed'); }
+    finally { setUploading(false); e.target.value = ''; }
+  };
+
+  return (
+    <div>
+      <label className="label">{label}</label>
+      <div className="flex items-start gap-3">
+        {resolveImg(value) && (
+          <img src={resolveImg(value)} alt={label} className="w-24 h-16 object-cover rounded-lg border flex-shrink-0" onError={(e) => (e.target.style.display = 'none')} />
+        )}
+        <div className="flex-1 space-y-2">
+          <input type="text" className="input text-sm" placeholder="Paste image URL or upload a file" value={value || ''} onChange={(e) => onChange(e.target.value)} />
+          <div className="flex gap-2">
+            <button type="button" onClick={() => ref.current?.click()} disabled={uploading} className="text-xs px-3 py-1.5 bg-primary-600 text-white rounded hover:bg-primary-700 disabled:opacity-50">
+              {uploading ? 'Uploading…' : '📁 Upload File'}
+            </button>
+            {value && <button type="button" onClick={() => onChange('')} className="text-xs px-3 py-1.5 border text-red-600 border-red-200 rounded hover:bg-red-50">Remove</button>}
+          </div>
+          {hint && <p className="text-xs text-gray-400">{hint}</p>}
+          <input ref={ref} type="file" accept="image/*" className="hidden" onChange={handleUpload} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const AMENITY_OPTIONS = [
+  'Free WiFi', 'Rooftop Pool', 'Spa & Wellness', 'Fine Dining', 'Fitness Center',
+  'Business Center', 'Conference Rooms', 'Valet Parking', 'Airport Transfer',
+  '24h Room Service', 'Bar & Lounge', 'Kids Play Area', 'Laundry Service', 'Concierge',
+];
 
 export default function AdminSettingsPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const [hotel, setHotel] = useState(null);
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState('tax');
+  const [activeTab, setActiveTab] = useState('branding');
+  const [coverImageUrl, setCoverImageUrl] = useState('');
+  const [logoUrl, setLogoUrl] = useState('');
+  const [heroImages, setHeroImages] = useState([]);
+  const [selectedAmenities, setSelectedAmenities] = useState([]);
 
-  const { register, handleSubmit, reset, formState: { errors, isDirty } } = useForm();
+  const { register, handleSubmit, reset, formState: { errors } } = useForm();
 
   useEffect(() => {
-    if (!loading && (!user || user.role !== 'HOTEL_ADMIN')) {
-      router.replace('/dashboard');
-    }
+    if (!loading && (!user || user.role !== 'HOTEL_ADMIN')) router.replace('/dashboard');
   }, [user, loading, router]);
 
   useEffect(() => {
@@ -30,7 +83,10 @@ export default function AdminSettingsPage() {
     hotelsApi.getById(HOTEL_ID)
       .then((res) => {
         const h = res.data.data;
-        setHotel(h);
+        setCoverImageUrl(h.coverImageUrl || '');
+        setLogoUrl(h.logoUrl || '');
+        setHeroImages(h.heroImages || []);
+        setSelectedAmenities(h.amenities || []);
         reset({
           gstRate: ((h.gstRate ?? 0.12) * 100).toFixed(0),
           checkInTime: h.checkInTime || '14:00',
@@ -42,6 +98,12 @@ export default function AdminSettingsPage() {
           city: h.city || '',
           state: h.state || '',
           pincode: h.pincode || '',
+          description: h.description || '',
+          starRating: h.starRating || 5,
+          bookingModel: h.bookingModel || 'DAILY',
+          website: h.website || '',
+          instagram: h.instagram || '',
+          facebook: h.facebook || '',
         });
       })
       .catch(() => toast.error('Failed to load hotel settings'));
@@ -51,160 +113,158 @@ export default function AdminSettingsPage() {
     setSaving(true);
     try {
       const gstRate = parseFloat(data.gstRate) / 100;
-      if (isNaN(gstRate) || gstRate < 0 || gstRate > 1) {
-        toast.error('GST rate must be between 0 and 100');
-        setSaving(false);
-        return;
-      }
-      await adminApi.updateHotel({ ...data, gstRate });
+      if (isNaN(gstRate) || gstRate < 0 || gstRate > 1) { toast.error('GST must be 0–100'); setSaving(false); return; }
+      await adminApi.updateHotel({ ...data, gstRate, coverImageUrl, logoUrl, heroImages, amenities: selectedAmenities });
       toast.success('Settings saved!');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to save settings');
-    } finally {
-      setSaving(false);
-    }
+      toast.error(err.response?.data?.message || 'Failed to save');
+    } finally { setSaving(false); }
   };
+
+  const toggleAmenity = (a) =>
+    setSelectedAmenities((prev) => prev.includes(a) ? prev.filter((x) => x !== a) : [...prev, a]);
 
   if (loading || !user) return null;
 
   const tabs = [
+    { id: 'branding', label: '🖼️ Branding' },
+    { id: 'general', label: '🏨 General' },
+    { id: 'amenities', label: '✨ Amenities' },
     { id: 'tax', label: '💰 Tax & GST' },
-    { id: 'timing', label: '🕐 Check-in Times' },
-    { id: 'contact', label: '📞 Contact Info' },
+    { id: 'timing', label: '🕐 Timings' },
+    { id: 'contact', label: '📞 Contact' },
   ];
 
   return (
-    <main className="max-w-3xl mx-auto px-4 py-8">
+    <main className="max-w-4xl mx-auto px-4 py-8">
       <div className="flex items-center gap-4 mb-6">
         <Link href="/admin" className="text-gray-400 hover:text-gray-600 transition-colors">← Admin</Link>
         <h1 className="text-2xl font-bold text-gray-900">Hotel Settings</h1>
       </div>
 
-      {/* Tab Bar */}
-      <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-6">
+      <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-6 overflow-x-auto">
         {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
+          <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+            className={`flex-shrink-0 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
               activeTab === tab.id ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
+            }`}>
             {tab.label}
           </button>
         ))}
       </div>
 
       <form onSubmit={handleSubmit(onSave)}>
-        {/* Tax & GST */}
-        {activeTab === 'tax' && (
+        {activeTab === 'branding' && (
           <div className="card p-6 space-y-6">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900 mb-1">GST / Tax Settings</h2>
-              <p className="text-sm text-gray-500 mb-4">
-                This rate is applied to all bookings. Current rate affects new bookings only — existing bookings retain their original tax.
-              </p>
-
-              <div>
-                <label className="label">GST Rate (%)</label>
-                <div className="flex items-center gap-3">
-                  <div className="relative flex-1 max-w-xs">
-                    <input
-                      type="number"
-                      step="0.1"
-                      min="0"
-                      max="100"
-                      className="input pr-8"
-                      placeholder="12"
-                      {...register('gstRate', {
-                        required: 'GST rate is required',
-                        min: { value: 0, message: 'Cannot be negative' },
-                        max: { value: 100, message: 'Cannot exceed 100%' },
-                      })}
-                    />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">%</span>
-                  </div>
-                  <span className="text-sm text-gray-500">e.g. 12 for 12% GST</span>
-                </div>
-                {errors.gstRate && <p className="error-message">{errors.gstRate.message}</p>}
+              <h2 className="text-lg font-semibold text-gray-900 mb-1">Branding & Images</h2>
+              <p className="text-sm text-gray-500 mb-5">These images appear on the homepage hero, booking pages and confirmations.</p>
+            </div>
+            <ImageUploadField label="Cover / Hero Image" value={coverImageUrl} onChange={setCoverImageUrl} hint="Recommended: 1920×1080px landscape. Full-page hero background." />
+            <ImageUploadField label="Hotel Logo" value={logoUrl} onChange={setLogoUrl} hint="Recommended: square or landscape PNG with transparent background." />
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="label mb-0">Gallery Images</label>
+                <button type="button" onClick={() => setHeroImages((p) => [...p, ''])} className="text-xs px-3 py-1.5 border border-gray-300 rounded hover:bg-gray-50">+ Add Image</button>
               </div>
-
-              {/* Preview */}
-              <div className="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-100 text-sm">
-                <p className="font-semibold text-blue-900 mb-2">📊 Example for ₹3,500/night booking (2 nights)</p>
-                <div className="space-y-1 text-blue-800">
-                  <div className="flex justify-between">
-                    <span>Room charges (2 nights)</span>
-                    <span>₹7,000</span>
+              {heroImages.length === 0 && <p className="text-xs text-gray-400 italic">No gallery images yet.</p>}
+              <div className="space-y-2">
+                {heroImages.map((url, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    {resolveImg(url) && <img src={resolveImg(url)} alt="" className="w-12 h-10 object-cover rounded border flex-shrink-0" onError={(e) => (e.target.style.display = 'none')} />}
+                    <input type="text" className="input flex-1 text-sm" placeholder="Image URL" value={url}
+                      onChange={(e) => { const n = [...heroImages]; n[i] = e.target.value; setHeroImages(n); }} />
+                    <button type="button" onClick={() => setHeroImages((h) => h.filter((_, idx) => idx !== i))} className="text-red-500 hover:text-red-700 text-xl leading-none">×</button>
                   </div>
-                  <div className="flex justify-between">
-                    <span>GST (12%)</span>
-                    <span>₹840</span>
-                  </div>
-                  <div className="flex justify-between font-bold border-t border-blue-200 pt-1 mt-1">
-                    <span>Total</span>
-                    <span>₹7,840</span>
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
           </div>
         )}
 
-        {/* Check-in Times */}
+        {activeTab === 'general' && (
+          <div className="card p-6 space-y-4">
+            <h2 className="text-lg font-semibold text-gray-900 mb-1">General Info</h2>
+            <div><label className="label">Hotel Name</label><input className="input" {...register('name', { required: true })} /></div>
+            <div><label className="label">Description</label><textarea className="input h-28 resize-none" {...register('description')} /></div>
+            <div className="grid grid-cols-2 gap-4">
+              <div><label className="label">Star Rating</label>
+                <select className="input" {...register('starRating')}>
+                  {[1,2,3,4,5].map((s) => <option key={s} value={s}>{s} Star{s>1?'s':''}</option>)}
+                </select>
+              </div>
+              <div><label className="label">Booking Model</label>
+                <select className="input" {...register('bookingModel')}>
+                  <option value="DAILY">Daily Only</option>
+                  <option value="HOURLY">Hourly Only</option>
+                  <option value="BOTH">Daily + Hourly</option>
+                </select>
+              </div>
+            </div>
+            <div className="pt-2 border-t">
+              <h3 className="font-medium text-gray-800 mb-3">Social Links</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <div><label className="label text-xs">Website</label><input className="input" placeholder="https://yourhotel.com" {...register('website')} /></div>
+                <div><label className="label text-xs">Instagram</label><input className="input" placeholder="@yourhotel" {...register('instagram')} /></div>
+                <div><label className="label text-xs">Facebook</label><input className="input" placeholder="facebook.com/…" {...register('facebook')} /></div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'amenities' && (
+          <div className="card p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-1">Hotel Amenities</h2>
+            <p className="text-sm text-gray-500 mb-4">Selected amenities display on the hotel page and in search results.</p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {AMENITY_OPTIONS.map((a) => (
+                <label key={a} className="flex items-center gap-2 cursor-pointer p-2.5 rounded-lg hover:bg-gray-50 has-[:checked]:bg-primary-50 transition">
+                  <input type="checkbox" checked={selectedAmenities.includes(a)} onChange={() => toggleAmenity(a)} />
+                  <span className="text-sm">{a}</span>
+                </label>
+              ))}
+            </div>
+            <p className="text-xs text-gray-400 mt-3">{selectedAmenities.length} selected</p>
+          </div>
+        )}
+
+        {activeTab === 'tax' && (
+          <div className="card p-6 space-y-4">
+            <h2 className="text-lg font-semibold text-gray-900 mb-1">GST / Tax Settings</h2>
+            <p className="text-sm text-gray-500">Applied to all new bookings. Existing bookings keep their original rate.</p>
+            <div className="flex items-center gap-3">
+              <div className="relative flex-1 max-w-xs">
+                <input type="number" step="0.1" min="0" max="100" className="input pr-8" placeholder="12"
+                  {...register('gstRate', { required: true, min: 0, max: 100 })} />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">%</span>
+              </div>
+              <span className="text-sm text-gray-500">e.g. 12 for 12% GST</span>
+            </div>
+          </div>
+        )}
+
         {activeTab === 'timing' && (
           <div className="card p-6 space-y-4">
             <h2 className="text-lg font-semibold text-gray-900 mb-1">Check-in / Check-out Times</h2>
-            <p className="text-sm text-gray-500 mb-4">These times are shown to guests on booking confirmation.</p>
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="label">Check-in Time</label>
-                <input type="time" className="input" {...register('checkInTime')} />
-              </div>
-              <div>
-                <label className="label">Check-out Time</label>
-                <input type="time" className="input" {...register('checkOutTime')} />
-              </div>
+              <div><label className="label">Check-in Time</label><input type="time" className="input" {...register('checkInTime')} /></div>
+              <div><label className="label">Check-out Time</label><input type="time" className="input" {...register('checkOutTime')} /></div>
             </div>
           </div>
         )}
 
-        {/* Contact Info */}
         {activeTab === 'contact' && (
           <div className="card p-6 space-y-4">
-            <h2 className="text-lg font-semibold text-gray-900 mb-1">Hotel Contact Information</h2>
-            <div>
-              <label className="label">Hotel Name</label>
-              <input className="input" {...register('name', { required: 'Name is required' })} />
-              {errors.name && <p className="error-message">{errors.name.message}</p>}
-            </div>
+            <h2 className="text-lg font-semibold text-gray-900 mb-1">Contact Information</h2>
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="label">Phone</label>
-                <input className="input" placeholder="+910000000000" {...register('phone')} />
-              </div>
-              <div>
-                <label className="label">Email</label>
-                <input type="email" className="input" placeholder="hotel@example.com" {...register('email')} />
-              </div>
+              <div><label className="label">Phone</label><input className="input" placeholder="+910000000000" {...register('phone')} /></div>
+              <div><label className="label">Email</label><input type="email" className="input" {...register('email')} /></div>
             </div>
-            <div>
-              <label className="label">Address</label>
-              <input className="input" {...register('address')} />
-            </div>
+            <div><label className="label">Address</label><input className="input" {...register('address')} /></div>
             <div className="grid grid-cols-3 gap-3">
-              <div>
-                <label className="label">City</label>
-                <input className="input" {...register('city')} />
-              </div>
-              <div>
-                <label className="label">State</label>
-                <input className="input" {...register('state')} />
-              </div>
-              <div>
-                <label className="label">Pincode</label>
-                <input className="input" {...register('pincode')} />
-              </div>
+              <div><label className="label">City</label><input className="input" {...register('city')} /></div>
+              <div><label className="label">State</label><input className="input" {...register('state')} /></div>
+              <div><label className="label">Pincode</label><input className="input" {...register('pincode')} /></div>
             </div>
           </div>
         )}

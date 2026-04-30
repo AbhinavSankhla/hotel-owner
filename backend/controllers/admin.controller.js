@@ -25,6 +25,23 @@ exports.updateBookingStatus = asyncHandler(async (req, res) => {
   return success(res, 'Booking status updated', data);
 });
 
+// ── Offline / Walk-in Booking ─────────────────────────────────────────────
+exports.createOfflineBooking = asyncHandler(async (req, res) => {
+  const data = await adminService.createOfflineBooking(req.user.hotelId, req.user.id, req.body);
+  return success(res, 'Offline booking created', data, 201);
+});
+
+// ── Guest Management ──────────────────────────────────────────────────────
+exports.listGuests = asyncHandler(async (req, res) => {
+  const data = await adminService.listGuests(req.user.hotelId, req.query);
+  return success(res, 'Guests fetched', data);
+});
+
+exports.getGuestDetail = asyncHandler(async (req, res) => {
+  const data = await adminService.getGuestDetail(req.params.id, req.user.hotelId);
+  return success(res, 'Guest detail fetched', data);
+});
+
 // ── Room Types ────────────────────────────────────────────────────────────
 exports.listRoomTypes = asyncHandler(async (req, res) => {
   const data = await adminService.listRoomTypes(req.user.hotelId);

@@ -41,6 +41,7 @@ export const serverBlogApi = {
 // ── Rooms ─────────────────────────────────────────────────────────────────────
 export const serverRoomsApi = {
   getTypes: (hotelId) => apiFetch(`/rooms/hotel/${hotelId}`),
+  getTypeById: (id) => apiFetch(`/rooms/types/${id}`),
 };
 
 // ── Reviews ───────────────────────────────────────────────────────────────────
