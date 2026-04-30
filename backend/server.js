@@ -38,7 +38,24 @@ app.use(
 
 app.use(
   cors({
-    origin: [env.FRONTEND_URL, 'http://localhost:3000'],
+    origin: (origin, callback) => {
+      // Allow no-origin requests (server-to-server, curl)
+      if (!origin) return callback(null, true);
+      const allowed = [
+        env.FRONTEND_URL,
+        'http://localhost:3000',
+        'http://127.0.0.1:3000',
+      ];
+      // Allow any GitHub Codespaces preview URL
+      if (
+        allowed.includes(origin) ||
+        /^https:\/\/[^.]+-(3000|4000)\.app\.github\.dev$/.test(origin) ||
+        /^https:\/\/[^.]+-(3000|4000)\.preview\.app\.github\.dev$/.test(origin)
+      ) {
+        return callback(null, true);
+      }
+      callback(new Error(`CORS: origin not allowed — ${origin}`));
+    },
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'x-hotel-id', 'x-api-key'],
     credentials: true,

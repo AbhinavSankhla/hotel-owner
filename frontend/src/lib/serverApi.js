@@ -1,9 +1,18 @@
 /**
  * Server-side data fetching helper for Next.js Server Components.
  * Uses native fetch (not localStorage-dependent).
+ *
+ * In Codespaces the public NEXT_PUBLIC_API_URL is an external https URL that
+ * the browser needs, but the Next.js server process runs inside the same
+ * container and can always reach the backend directly via localhost.
+ * INTERNAL_API_URL lets us override the URL for server-side fetches only.
  */
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+// Server-side: prefer internal URL (localhost) so SSR works inside Codespaces
+const API_URL =
+  process.env.INTERNAL_API_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  'http://localhost:4000/api';
 
 async function apiFetch(path, options = {}) {
   const url = `${API_URL}${path}`;

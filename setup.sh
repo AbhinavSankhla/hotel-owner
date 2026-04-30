@@ -73,21 +73,45 @@ fi
 step "Setting up frontend environment..."
 cd "../frontend" 2>/dev/null || { fail "frontend/ directory not found"; exit 1; }
 
+# ── Detect GitHub Codespaces and build correct URLs ──────────────────────────
+if [ -n "$CODESPACES" ] && [ -n "$CODESPACE_NAME" ]; then
+  # Codespaces: ports are exposed as https://NAME-PORT.DOMAIN
+  CS_DOMAIN="${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN:-app.github.dev}"
+  BACKEND_URL="https://${CODESPACE_NAME}-4000.${CS_DOMAIN}/api"
+  FRONTEND_ORIGIN="https://${CODESPACE_NAME}-3000.${CS_DOMAIN}"
+  ok "Codespaces detected: backend → ${BACKEND_URL}"
+else
+  BACKEND_URL="http://localhost:4000/api"
+  FRONTEND_ORIGIN="http://localhost:3000"
+fi
+
 if [ ! -f .env.local ]; then
-  if [ -f .env.example ]; then
-    cp .env.example .env.local
-    ok "Created frontend/.env.local"
-  else
-    cat > .env.local <<'ENVEOF'
-NEXT_PUBLIC_API_URL=http://localhost:4000/api
+  cat > .env.local <<ENVEOF
+NEXT_PUBLIC_API_URL=${BACKEND_URL}
 # Optional: Add Razorpay test key for payment testing
 # NEXT_PUBLIC_RAZORPAY_KEY_ID=rzp_test_xxxxxxxxxx
 ENVEOF
-    ok "Created frontend/.env.local"
-  fi
+  ok "Created frontend/.env.local (API → ${BACKEND_URL})"
 else
-  ok "frontend/.env.local already exists"
+  # Update existing .env.local with the correct API URL
+  if grep -q "NEXT_PUBLIC_API_URL" .env.local; then
+    sed -i "s|NEXT_PUBLIC_API_URL=.*|NEXT_PUBLIC_API_URL=${BACKEND_URL}|" .env.local
+  else
+    echo "NEXT_PUBLIC_API_URL=${BACKEND_URL}" >> .env.local
+  fi
+  ok "frontend/.env.local updated (API → ${BACKEND_URL})"
 fi
+
+# Update backend FRONTEND_URL for CORS
+cd "../backend"
+if grep -q "FRONTEND_URL" .env; then
+  sed -i "s|FRONTEND_URL=.*|FRONTEND_URL=${FRONTEND_ORIGIN}|" .env
+else
+  echo "FRONTEND_URL=${FRONTEND_ORIGIN}" >> .env
+fi
+ok "backend/.env FRONTEND_URL → ${FRONTEND_ORIGIN}"
+cd "../frontend"
+
 cd ..
 
 # ── 5. Install backend dependencies ─────────────────────────────────────────
