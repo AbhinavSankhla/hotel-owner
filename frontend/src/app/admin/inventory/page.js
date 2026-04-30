@@ -55,7 +55,7 @@ export default function AdminInventoryPage() {
     const startDate = viewMonth.format('YYYY-MM-DD');
     const endDate = viewMonth.endOf('month').format('YYYY-MM-DD');
     roomsApi.getInventoryCalendar(selectedRoom.id, { startDate, endDate })
-      .then((res) => setCalendar(res.data.data || []))
+      .then((res) => setCalendar(res.data.data?.calendar || []))
       .catch(() => setCalendar([]))
       .finally(() => setLoadingCalendar(false));
   }, [selectedRoom, viewMonth]);
@@ -79,7 +79,7 @@ export default function AdminInventoryPage() {
       const startDate = viewMonth.format('YYYY-MM-DD');
       const endDate = viewMonth.endOf('month').format('YYYY-MM-DD');
       roomsApi.getInventoryCalendar(selectedRoom.id, { startDate, endDate })
-        .then((r) => setCalendar(r.data.data || []))
+        .then((r) => setCalendar(r.data.data?.calendar || []))
         .catch(() => {});
     } catch (err) {
       toast.error(err.response?.data?.message || 'Update failed');

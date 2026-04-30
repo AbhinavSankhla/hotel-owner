@@ -18,9 +18,13 @@ export default function LoginPage() {
   const onSubmit = async (data) => {
     setLoading(true);
     try {
-      await login(data);
+      const userData = await login(data);
       toast.success('Welcome back!');
-      router.push('/dashboard');
+      if (['HOTEL_ADMIN', 'HOTEL_STAFF'].includes(userData?.role)) {
+        router.push('/admin');
+      } else {
+        router.push('/');
+      }
     } catch (err) {
       const apiErrors = err.response?.data?.errors;
       if (apiErrors?.length) {

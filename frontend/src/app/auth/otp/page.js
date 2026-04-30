@@ -36,9 +36,13 @@ export default function OTPLoginPage() {
     if (!otp) return;
     setLoading(true);
     try {
-      await verifyOTP({ phone, otp, name });
+      const userData = await verifyOTP({ phone, otp, name });
       toast.success('Logged in!');
-      router.push('/dashboard');
+      if (['HOTEL_ADMIN', 'HOTEL_STAFF'].includes(userData?.role)) {
+        router.push('/admin');
+      } else {
+        router.push('/');
+      }
     } catch (err) {
       toast.error(err.response?.data?.message || 'Invalid OTP');
     } finally {

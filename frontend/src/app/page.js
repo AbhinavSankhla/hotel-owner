@@ -10,6 +10,14 @@ const FALLBACK_ROOM_IMGS = [
   'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&q=80',
 ];
 
+// Resolve /uploads/... URLs to full backend URL so <img> can load them
+const API_BASE = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:4000';
+function resolveImg(url) {
+  if (!url) return null;
+  if (url.startsWith('http')) return url;
+  return `${API_BASE}${url}`;
+}
+
 async function getHotelData() {
   try {
     const res = await serverHotelsApi.getFeatured(1);
@@ -39,7 +47,7 @@ export default async function HomePage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {roomTypes.map((rt, i) => {
-              const img = rt.images?.[0] || FALLBACK_ROOM_IMGS[i % FALLBACK_ROOM_IMGS.length];
+              const img = resolveImg(rt.images?.[0]) || FALLBACK_ROOM_IMGS[i % FALLBACK_ROOM_IMGS.length];
               return (
                 <Link key={rt.id} href={`/rooms/${rt.id}`} className="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all overflow-hidden border border-gray-100">
                   <div className="h-52 overflow-hidden">

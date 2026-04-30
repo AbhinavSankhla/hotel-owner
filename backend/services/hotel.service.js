@@ -89,7 +89,7 @@ class HotelService {
     const hotels = await Hotel.findAll({
       where: { isActive: true },
       include: [
-        { model: RoomType, as: 'roomTypes', where: { isActive: true }, required: false, attributes: ['id', 'name', 'basePriceDaily', 'images'] },
+        { model: RoomType, as: 'roomTypes', where: { isActive: true }, required: false, attributes: ['id', 'name', 'description', 'basePriceDaily', 'maxGuests', 'images'] },
         { model: Review, as: 'reviews', where: { isPublished: true }, required: false, attributes: ['rating'] },
       ],
       order: [['createdAt', 'DESC']],

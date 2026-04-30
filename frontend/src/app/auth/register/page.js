@@ -24,7 +24,7 @@ export default function RegisterPage() {
       const { confirmPassword, ...payload } = data;
       await registerUser(payload);
       toast.success('Account created!');
-      router.push('/dashboard');
+      router.push('/');
     } catch (err) {
       const apiErrors = err.response?.data?.errors;
       if (apiErrors?.length) {

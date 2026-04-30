@@ -3,7 +3,7 @@
 const { body, query } = require('express-validator');
 
 const createDailyBooking = [
-  body('roomTypeId').notEmpty().isString().trim().withMessage('Valid roomTypeId required'),
+  body('roomTypeId').notEmpty().isInt({ min: 1 }).toInt().withMessage('Valid roomTypeId required'),
   body('hotelId').notEmpty().isString().trim().withMessage('Valid hotelId required'),
   body('checkInDate')
     .notEmpty().withMessage('Check-in date required')
@@ -21,7 +21,7 @@ const createDailyBooking = [
 ];
 
 const createHourlyBooking = [
-  body('roomTypeId').notEmpty().isString().trim().withMessage('Valid roomTypeId required'),
+  body('roomTypeId').notEmpty().isInt({ min: 1 }).toInt().withMessage('Valid roomTypeId required'),
   body('hotelId').notEmpty().isString().trim().withMessage('Valid hotelId required'),
   body('date')
     .notEmpty().withMessage('Date required')
@@ -58,14 +58,14 @@ const updateStatus = [
 ];
 
 const checkDailyAvailability = [
-  query('roomTypeId').notEmpty().isString().trim().withMessage('Valid roomTypeId required'),
+  query('roomTypeId').notEmpty().isInt({ min: 1 }).toInt().withMessage('Valid roomTypeId required'),
   query('checkInDate').notEmpty().isDate({ format: 'YYYY-MM-DD' }),
   query('checkOutDate').notEmpty().isDate({ format: 'YYYY-MM-DD' }),
   query('numRooms').optional().isInt({ min: 1 }),
 ];
 
 const checkHourlyAvailability = [
-  query('roomTypeId').notEmpty().isString().trim().withMessage('Valid roomTypeId required'),
+  query('roomTypeId').notEmpty().isInt({ min: 1 }).toInt().withMessage('Valid roomTypeId required'),
   query('date').notEmpty().isDate({ format: 'YYYY-MM-DD' }),
   query('numHours').optional().isInt({ min: 1 }),
 ];
