@@ -83,6 +83,11 @@ module.exports = (sequelize) => {
       amenities: {
         type: DataTypes.ARRAY(DataTypes.STRING),
         defaultValue: [],
+        get() {
+          const raw = this.getDataValue('amenities');
+          if (typeof raw === 'string') { try { return JSON.parse(raw); } catch { return []; } }
+          return Array.isArray(raw) ? raw : [];
+        },
       },
       starRating: {
         type: DataTypes.INTEGER,
@@ -112,6 +117,11 @@ module.exports = (sequelize) => {
       themeConfig: {
         type: DataTypes.JSONB,
         defaultValue: {},
+        get() {
+          const raw = this.getDataValue('themeConfig');
+          if (typeof raw === 'string') { try { return JSON.parse(raw); } catch { return {}; } }
+          return raw || {};
+        },
       },
       template: {
         type: DataTypes.ENUM('CLASSIC', 'MODERN', 'LUXURY', 'BUDGET', 'BOUTIQUE'),

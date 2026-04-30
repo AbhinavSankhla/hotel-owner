@@ -7,8 +7,8 @@ module.exports = (sequelize) => {
     'RoomType',
     {
       id: {
-        type: DataTypes.UUID,
-        defaultValue: DataTypes.UUIDV4,
+        type: DataTypes.INTEGER,
+        autoIncrement: true,
         primaryKey: true,
       },
       hotelId: {
@@ -56,10 +56,20 @@ module.exports = (sequelize) => {
       amenities: {
         type: DataTypes.ARRAY(DataTypes.STRING),
         defaultValue: [],
+        get() {
+          const raw = this.getDataValue('amenities');
+          if (typeof raw === 'string') { try { return JSON.parse(raw); } catch { return []; } }
+          return Array.isArray(raw) ? raw : [];
+        },
       },
       images: {
         type: DataTypes.ARRAY(DataTypes.STRING),
         defaultValue: [],
+        get() {
+          const raw = this.getDataValue('images');
+          if (typeof raw === 'string') { try { return JSON.parse(raw); } catch { return []; } }
+          return Array.isArray(raw) ? raw : [];
+        },
       },
       bookingModelOverride: {
         type: DataTypes.ENUM('DAILY', 'HOURLY', 'BOTH'),

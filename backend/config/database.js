@@ -135,17 +135,9 @@ async function connectDatabase() {
     await _seedDevDb();
   } else if (usingSqlite) {
     console.log('[DB] SQLite authenticated — syncing schema...');
-    // Use force:false + alter:false for existing DBs to avoid recreating tables
-    // with corrupt unique constraints. Only force-create on a brand new DB.
-    const { DataTypes: DT } = require('sequelize');
-    const SqliteQ = sequelize.getQueryInterface();
-    const existingTables = await SqliteQ.showAllTables().catch(() => []);
-    if (existingTables.length === 0) {
-      await sequelize.sync({ force: false });
-    } else {
-      // Only add missing columns — do NOT alter existing indexes/constraints
-      await sequelize.sync({ alter: { drop: false } });
-    }
+    // Never use alter on SQLite — it creates _old shadow tables with stale FK triggers.
+    // force:false just creates missing tables without touching existing ones.
+    await sequelize.sync({ force: false });
     console.log('[DB] SQLite schema up-to-date');
     // Seed if Hotel OR RoomType tables are empty
     const models = require('../models');
@@ -229,10 +221,10 @@ async function _seedDevDb() {
 
     // ── Room Types ──────────────────────────────────────────────────────────
     // Use raw SQL to bypass Sequelize unique-constraint issues with SQLite sync
-    const RT_DELUXE_ID   = '00000001-0000-4000-8000-000000000001';
-    const RT_SUPERIOR_ID = '00000002-0000-4000-8000-000000000002';
-    const RT_SUITE_ID    = '00000003-0000-4000-8000-000000000003';
-    const RT_PRES_ID     = '00000004-0000-4000-8000-000000000004';
+    const RT_DELUXE_ID   = 1;
+    const RT_SUPERIOR_ID = 2;
+    const RT_SUITE_ID    = 3;
+    const RT_PRES_ID     = 4;
     const nowISO = new Date().toISOString();
 
     const rtRows = [

@@ -58,14 +58,14 @@ const updateStatus = [
 ];
 
 const checkDailyAvailability = [
-  query('roomTypeId').notEmpty().isUUID().withMessage('Valid roomTypeId required'),
+  query('roomTypeId').notEmpty().isString().trim().withMessage('Valid roomTypeId required'),
   query('checkInDate').notEmpty().isDate({ format: 'YYYY-MM-DD' }),
   query('checkOutDate').notEmpty().isDate({ format: 'YYYY-MM-DD' }),
   query('numRooms').optional().isInt({ min: 1 }),
 ];
 
 const checkHourlyAvailability = [
-  query('roomTypeId').notEmpty().isUUID().withMessage('Valid roomTypeId required'),
+  query('roomTypeId').notEmpty().isString().trim().withMessage('Valid roomTypeId required'),
   query('date').notEmpty().isDate({ format: 'YYYY-MM-DD' }),
   query('numHours').optional().isInt({ min: 1 }),
 ];
