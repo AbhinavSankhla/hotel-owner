@@ -66,7 +66,7 @@ export default async function RoomDetailPage({ params }) {
         <div className="absolute top-4 left-4 flex items-center gap-2 text-sm text-white/90 bg-black/40 backdrop-blur px-3 py-1.5 rounded-full">
           <Link href="/" className="hover:text-white">Home</Link>
           <span>/</span>
-          {hotel && <Link href={`/hotels/${hotel.slug}`} className="hover:text-white">{hotel.name}</Link>}
+          {hotel && <Link href="/hotel/book" className="hover:text-white">{hotel.name}</Link>}
           {hotel && <span>/</span>}
           <span className="font-medium">{roomType.name}</span>
         </div>
@@ -86,7 +86,7 @@ export default async function RoomDetailPage({ params }) {
                   {hotel && (
                     <p className="text-gray-500 mt-1 flex items-center gap-1">
                       <span>📍</span>
-                      <Link href={`/hotels/${hotel.slug}`} className="hover:text-primary-600 transition">
+                      <Link href="/hotel/book" className="hover:text-primary-600 transition">
                         {hotel.name}
                       </Link>
                     </p>
@@ -185,11 +185,11 @@ export default async function RoomDetailPage({ params }) {
           <div className="hidden lg:block">
             <div className="sticky top-6">
               {hotel ? (
-                <BookingWidget hotel={hotel} roomType={roomType} />
+                <BookingWidget hotel={hotel} roomTypes={[roomType]} />
               ) : (
                 <div className="card p-6">
                   <p className="text-lg font-bold text-gray-900 mb-2">₹{roomType.basePriceDaily?.toLocaleString()}<span className="text-sm font-normal text-gray-400">/night</span></p>
-                  <Link href={`/hotels/${hotel?.slug || ''}`} className="btn-primary w-full text-center block mt-4">
+                  <Link href="/hotel/book" className="btn-primary w-full text-center block mt-4">
                     Book This Room
                   </Link>
                 </div>
@@ -200,7 +200,7 @@ export default async function RoomDetailPage({ params }) {
       </div>
 
       {/* Mobile Sticky Bar */}
-      {hotel && <MobileBookingBar hotel={hotel} roomType={roomType} />}
+      <MobileBookingBar minPrice={roomType.basePriceDaily} hotelName={hotel?.name} />
     </main>
   );
 }

@@ -58,7 +58,7 @@ export default async function HomePage() {
             </p>
             <div className="flex flex-wrap gap-4">
               {firstHotel ? (
-                <Link href={`/hotels/${firstHotel.slug}`} className="bg-primary-600 hover:bg-primary-700 text-white font-semibold px-8 py-4 rounded-xl transition text-lg shadow-lg">
+                <Link href="/hotel/book" className="bg-primary-600 hover:bg-primary-700 text-white font-semibold px-8 py-4 rounded-xl transition text-lg shadow-lg">
                   Explore &amp; Book
                 </Link>
               ) : (
@@ -153,7 +153,7 @@ export default async function HomePage() {
           <p className="text-primary-100 text-lg mb-8">Book now and experience unparalleled luxury at Grand Horizon Hotel</p>
           <div className="flex gap-4 justify-center flex-wrap">
             {firstHotel && (
-              <Link href={`/hotels/${firstHotel.slug}`} className="bg-white text-primary-700 hover:bg-primary-50 font-bold px-8 py-4 rounded-xl text-lg transition shadow-lg">
+              <Link href="/hotel/book" className="bg-white text-primary-700 hover:bg-primary-50 font-bold px-8 py-4 rounded-xl text-lg transition shadow-lg">
                 Book Now
               </Link>
             )}

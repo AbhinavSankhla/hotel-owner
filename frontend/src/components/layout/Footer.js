@@ -17,7 +17,7 @@ export default function Footer() {
           <h4 className="text-white font-medium mb-3">Explore</h4>
           <ul className="space-y-2 text-sm">
             <li><Link href="/hotels" className="hover:text-white transition-colors">All Hotels</Link></li>
-            <li><Link href="/hotels/grand-horizon-hotel" className="hover:text-white transition-colors">Grand Horizon Hotel</Link></li>
+            <li><Link href="/hotel/book" className="hover:text-white transition-colors">Rooms &amp; Booking</Link></li>
             <li><Link href="/auth/register" className="hover:text-white transition-colors">Create Account</Link></li>
             <li><Link href="/auth/login" className="hover:text-white transition-colors">Sign In</Link></li>
           </ul>

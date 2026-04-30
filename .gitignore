@@ -53,3 +53,6 @@ nginx/certs/*.pem
 # Standalone exports
 radhika-resort/
 hotel-booking-standalone*
+
+backend/data/*.sqlite
+

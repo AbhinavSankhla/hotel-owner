@@ -37,6 +37,7 @@ const pgAvailable = isPgAvailable();
 
 let sequelize;
 let usingMemDb = false;
+let usingSqlite = false;
 
 if (pgAvailable) {
   sequelize = new Sequelize(env.DB_NAME, env.DB_USER, env.DB_PASSWORD, {
@@ -49,46 +50,76 @@ if (pgAvailable) {
     define: sharedDefine,
   });
 } else {
-  usingMemDb = true;
-  console.warn('[DB] PostgreSQL not reachable — using pg-mem (in-memory) for development');
-  const { newDb } = require('pg-mem');
-  const { v4: uuidv4 } = require('uuid');
-  const db = newDb();
-  db.public.registerFunction({ name: 'gen_random_uuid', returns: 'text', implementation: uuidv4 });
-  db.public.registerFunction({ name: 'uuid_generate_v4', returns: 'text', implementation: uuidv4 });
-  const pgAdapter = db.adapters.createPg();
-  sequelize = new Sequelize(env.DB_NAME, env.DB_USER, env.DB_PASSWORD, {
-    dialect: 'postgres',
-    dialectModule: pgAdapter,
-    logging: false,
-    define: sharedDefine,
-  });
-  // pg-mem does not support pg_catalog.pg_enum queries that Sequelize uses in
-  // ensureEnums(). Override to CREATE TYPE directly (pg-mem supports this DDL).
-  const { DataTypes } = require('sequelize');
-  const qi = sequelize.dialect.queryInterface;
-  qi.ensureEnums = async function (tableName, attributes) {
-    const tblName = typeof tableName === 'string' ? tableName : tableName.tableName;
-    for (const [key, attribute] of Object.entries(attributes)) {
-      const type = attribute.type;
-      const isEnum = type instanceof DataTypes.ENUM;
-      const isArrayEnum = type instanceof DataTypes.ARRAY && type.type instanceof DataTypes.ENUM;
-      if (!isEnum && !isArrayEnum) continue;
-      const enumType = isArrayEnum ? type.type : type;
-      const values = attribute.values || enumType.values || [];
-      const fieldName = attribute.field || key;
-      const typeName = `enum_${tblName}_${fieldName}`;
-      const valsSql = values.map((v) => `'${v.replace(/'/g, "''")}'`).join(', ');
-      try {
-        await sequelize.query(`CREATE TYPE "${typeName}" AS ENUM (${valsSql});`);
-      } catch (e) {
-        if (!e.message.toLowerCase().includes('already exists') &&
-            !e.message.toLowerCase().includes('duplicate')) {
-          // Ignore — likely already exists
+  // Try SQLite (persistent) first, fall back to pg-mem (ephemeral)
+  let sqliteAvailable = false;
+  try {
+    require('sqlite3');
+    sqliteAvailable = true;
+  } catch { /* not installed */ }
+
+  if (sqliteAvailable) {
+    const path = require('path');
+    const fs = require('fs');
+    const { DataTypes } = require('sequelize');
+    usingSqlite = true;
+    const dataDir = path.resolve(__dirname, '../data');
+    if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+    const sqlitePath = path.join(dataDir, 'dev.sqlite');
+    console.warn(`[DB] PostgreSQL not reachable — using SQLite (persistent) at ${sqlitePath}`);
+    sequelize = new Sequelize({
+      dialect: 'sqlite',
+      storage: sqlitePath,
+      logging: false,
+      define: sharedDefine,
+    });
+    // SQLite does not support PostgreSQL ARRAY type.
+    // Override DataTypes.ARRAY to use JSON (stored as text) for dev compatibility.
+    const _origArray = DataTypes.ARRAY;
+    DataTypes.ARRAY = function patchedArray() { return DataTypes.JSON; };
+    DataTypes.ARRAY.prototype = _origArray.prototype;
+  } else {
+    usingMemDb = true;
+    console.warn('[DB] PostgreSQL not reachable — using pg-mem (in-memory) for development');
+    console.warn('[DB] Install better-sqlite3 for persistent dev storage: npm install --save-dev better-sqlite3');
+    const { newDb } = require('pg-mem');
+    const { v4: uuidv4 } = require('uuid');
+    const db = newDb();
+    db.public.registerFunction({ name: 'gen_random_uuid', returns: 'text', implementation: uuidv4 });
+    db.public.registerFunction({ name: 'uuid_generate_v4', returns: 'text', implementation: uuidv4 });
+    const pgAdapter = db.adapters.createPg();
+    sequelize = new Sequelize(env.DB_NAME, env.DB_USER, env.DB_PASSWORD, {
+      dialect: 'postgres',
+      dialectModule: pgAdapter,
+      logging: false,
+      define: sharedDefine,
+    });
+    // pg-mem does not support pg_catalog.pg_enum queries that Sequelize uses in
+    // ensureEnums(). Override to CREATE TYPE directly (pg-mem supports this DDL).
+    const { DataTypes } = require('sequelize');
+    const qi = sequelize.dialect.queryInterface;
+    qi.ensureEnums = async function (tableName, attributes) {
+      const tblName = typeof tableName === 'string' ? tableName : tableName.tableName;
+      for (const [key, attribute] of Object.entries(attributes)) {
+        const type = attribute.type;
+        const isEnum = type instanceof DataTypes.ENUM;
+        const isArrayEnum = type instanceof DataTypes.ARRAY && type.type instanceof DataTypes.ENUM;
+        if (!isEnum && !isArrayEnum) continue;
+        const enumType = isArrayEnum ? type.type : type;
+        const values = attribute.values || enumType.values || [];
+        const fieldName = attribute.field || key;
+        const typeName = `enum_${tblName}_${fieldName}`;
+        const valsSql = values.map((v) => `'${v.replace(/'/g, "''")}'`).join(', ');
+        try {
+          await sequelize.query(`CREATE TYPE "${typeName}" AS ENUM (${valsSql});`);
+        } catch (e) {
+          if (!e.message.toLowerCase().includes('already exists') &&
+              !e.message.toLowerCase().includes('duplicate')) {
+            // Ignore — likely already exists
+          }
         }
       }
-    }
-  };
+    };
+  }
 }
 
 // ── connectDatabase — called in bootstrap() ──────────────────────────────────
@@ -97,16 +128,29 @@ async function connectDatabase() {
 
   if (usingMemDb) {
     console.log('[DB] pg-mem authenticated — syncing tables...');
-    // Sync all models and seed demo data
     await sequelize.sync({ force: true });
     console.log('[DB] Tables created in pg-mem');
-    await _seedMemDb();
+    await _seedDevDb();
+  } else if (usingSqlite) {
+    console.log('[DB] SQLite authenticated — syncing schema...');
+    // alter:true adds new columns without dropping existing data
+    await sequelize.sync({ alter: true });
+    console.log('[DB] SQLite schema up-to-date');
+    // Only seed if the Hotel table is empty
+    const models = require('../models');
+    const count = await models.Hotel.count().catch(() => 0);
+    if (count === 0) {
+      console.log('[DB] SQLite is empty — seeding demo data...');
+      await _seedDevDb();
+    } else {
+      console.log(`[DB] SQLite has ${count} hotel record(s) — skipping seed`);
+    }
   } else {
     console.log('[DB] PostgreSQL connected successfully');
   }
 }
 
-async function _seedMemDb() {
+async function _seedDevDb() {
   try {
     const models = require('../models');
     const bcrypt = require('bcryptjs');
@@ -340,6 +384,6 @@ async function _seedMemDb() {
   }
 }
 
-module.exports = { sequelize, usingMemDb, connectDatabase };
+module.exports = { sequelize, usingMemDb, usingSqlite, connectDatabase };
 
 

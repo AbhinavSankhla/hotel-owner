@@ -19,7 +19,7 @@ export default function Navbar() {
 
         {/* Desktop Nav */}
         <div className="hidden md:flex items-center gap-6 text-sm">
-          <Link href="/hotels" className="text-gray-600 hover:text-primary-600 transition-colors">Hotels</Link>
+          <Link href="/hotel/book" className="text-gray-600 hover:text-primary-600 transition-colors">Rooms &amp; Booking</Link>
           {isAuthenticated ? (
             <>
               <Link href="/dashboard" className="text-gray-600 hover:text-primary-600 transition-colors">Dashboard</Link>
@@ -85,7 +85,7 @@ export default function Navbar() {
       {/* Mobile Menu */}
       {menuOpen && (
         <div className="md:hidden border-t bg-white px-4 py-3 space-y-1 text-sm shadow-lg">
-          <Link href="/hotels" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 px-3 py-2.5 text-gray-700 rounded-lg hover:bg-gray-50">🏨 Hotels</Link>
+          <Link href="/hotel/book" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 px-3 py-2.5 text-gray-700 rounded-lg hover:bg-gray-50">🏨 Rooms &amp; Booking</Link>
           {isAuthenticated ? (
             <>
               <div className="px-3 py-2 bg-gray-50 rounded-lg mb-2">
