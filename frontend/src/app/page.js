@@ -1,9 +1,9 @@
 import Link from 'next/link';
 import { serverHotelsApi } from '@/lib/serverApi';
+import HeroSlideshow from '@/components/ui/HeroSlideshow';
 
 export const metadata = { title: 'Grand Horizon Hotel — Luxury Stays in Bangalore', description: 'Book your perfect stay at Grand Horizon Hotel. Luxury rooms, world-class amenities, and unbeatable hospitality in the heart of Bangalore.' };
 
-const FALLBACK_HOTEL_IMG = 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80';
 const FALLBACK_ROOM_IMGS = [
   'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&q=80',
   'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=800&q=80',
@@ -27,69 +27,8 @@ export default async function HomePage() {
 
   return (
     <main>
-      {/* ── Hero ─────────────────────────────────────────────────────── */}
-      <section className="relative min-h-[85vh] flex items-center overflow-hidden">
-        <div className="absolute inset-0 z-0">
-          <img
-            src={firstHotel?.coverImageUrl || FALLBACK_HOTEL_IMG}
-            alt="Grand Horizon Hotel"
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />
-        </div>
-
-        <div className="relative z-10 max-w-7xl mx-auto px-4 py-20 sm:px-8">
-          <div className="max-w-2xl text-white">
-            {firstHotel?.starRating && (
-              <div className="flex gap-1 mb-4">
-                {Array.from({ length: firstHotel.starRating }).map((_, i) => (
-                  <span key={i} className="text-yellow-400 text-xl">★</span>
-                ))}
-              </div>
-            )}
-            <h1 className="text-5xl md:text-7xl font-bold leading-tight mb-4">
-              {firstHotel?.name || 'Grand Horizon Hotel'}
-            </h1>
-            <p className="text-xl md:text-2xl text-white/80 mb-3 font-light">
-              {firstHotel?.city ? `${firstHotel.city}, ${firstHotel.state}` : 'Bangalore, Karnataka'}
-            </p>
-            <p className="text-base text-white/70 mb-8 leading-relaxed max-w-lg">
-              {firstHotel?.description?.slice(0, 160) + '...' || 'Experience luxury hospitality at its finest.'}
-            </p>
-            <div className="flex flex-wrap gap-4">
-              {firstHotel ? (
-                <Link href="/hotel/book" className="bg-primary-600 hover:bg-primary-700 text-white font-semibold px-8 py-4 rounded-xl transition text-lg shadow-lg">
-                  Explore &amp; Book
-                </Link>
-              ) : (
-                <Link href="/auth/register" className="bg-primary-600 hover:bg-primary-700 text-white font-semibold px-8 py-4 rounded-xl transition text-lg shadow-lg">
-                  Book Now
-                </Link>
-              )}
-            </div>
-
-            {/* Quick Stats */}
-            {firstHotel && (
-              <div className="flex gap-8 mt-10 pt-8 border-t border-white/20">
-                <div className="text-center">
-                  <p className="text-3xl font-bold text-white">{firstHotel.starRating}★</p>
-                  <p className="text-white/60 text-sm mt-0.5">Star Hotel</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-3xl font-bold text-white">{roomTypes.length}</p>
-                  <p className="text-white/60 text-sm mt-0.5">Room Types</p>
-                </div>
-                {firstHotel.startingPrice && (
-                  <div className="text-center">
-                    <p className="text-3xl font-bold text-white">₹{firstHotel.startingPrice.toLocaleString()}</p>
-                    <p className="text-white/60 text-sm mt-0.5">Starting/Night</p>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
+      {/* ── Hero Slideshow ───────────────────────────────────────────── */}
+      <HeroSlideshow hotel={firstHotel} roomTypes={roomTypes} />
 
       {/* ── Room Types ───────────────────────────────────────────────── */}
       {roomTypes.length > 0 && (

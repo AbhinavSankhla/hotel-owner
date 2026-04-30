@@ -17,15 +17,15 @@ const apiLimiter = rateLimit({
   skip: (req) => env.NODE_ENV === 'test',
 });
 
-/** Auth limiter: 5 attempts per 15 minutes (prevents brute force) */
+/** Auth limiter: 5 attempts per 15 minutes in prod, 100/min in dev */
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 5,
+  windowMs: env.NODE_ENV === 'production' ? 15 * 60 * 1000 : 60 * 1000,
+  max: env.NODE_ENV === 'production' ? 5 : 100,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
     success: false,
-    message: 'Too many authentication attempts — try again in 15 minutes.',
+    message: 'Too many authentication attempts — try again later.',
     data: null,
   },
   skip: (req) => env.NODE_ENV === 'test',

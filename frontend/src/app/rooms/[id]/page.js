@@ -1,10 +1,9 @@
-import { serverRoomsApi, serverHotelsApi } from '@/lib/serverApi';
+import { serverRoomsApi } from '@/lib/serverApi';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import BookingWidget from '@/components/booking/BookingWidget';
 import MobileBookingBar from '@/components/booking/MobileBookingBar';
-
-const FALLBACK_IMG = 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=1200&q=80';
+import RoomImageSlideshow from '@/components/rooms/RoomImageSlideshow';
 
 const amenityIcons = {
   'Free WiFi': '📶', 'Rooftop Pool': '🏊', 'Spa & Wellness': '💆', 'Fine Dining': '🍽️',
@@ -42,28 +41,14 @@ export default async function RoomDetailPage({ params }) {
 
   const hotel = roomType.hotel;
   const images = roomType.images?.filter(Boolean) || [];
-  const mainImg = images[0] || FALLBACK_IMG;
 
   return (
     <main className="pb-24 lg:pb-0">
-      {/* ── Image Gallery ─────────────────────────────────────────── */}
+      {/* ── Image Slideshow ───────────────────────────────────────── */}
       <div className="relative">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-1 max-h-[520px] overflow-hidden">
-          <div className="relative h-64 md:h-auto">
-            <img src={mainImg} alt={roomType.name} className="w-full h-full object-cover" />
-          </div>
-          {images.length > 1 && (
-            <div className="hidden md:grid grid-cols-2 gap-1">
-              {images.slice(1, 5).map((img, i) => (
-                <div key={i} className="overflow-hidden h-[130px]">
-                  <img src={img} alt={`${roomType.name} ${i + 2}`} className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-        {/* Breadcrumb */}
-        <div className="absolute top-4 left-4 flex items-center gap-2 text-sm text-white/90 bg-black/40 backdrop-blur px-3 py-1.5 rounded-full">
+        <RoomImageSlideshow images={images} name={roomType.name} />
+        {/* Breadcrumb overlay */}
+        <div className="absolute top-4 left-4 z-20 flex items-center gap-2 text-sm text-white/90 bg-black/40 backdrop-blur px-3 py-1.5 rounded-full">
           <Link href="/" className="hover:text-white">Home</Link>
           <span>/</span>
           {hotel && <Link href="/hotel/book" className="hover:text-white">{hotel.name}</Link>}
@@ -167,18 +152,6 @@ export default async function RoomDetailPage({ params }) {
             </div>
 
             {/* More images below fold on mobile */}
-            {images.length > 1 && (
-              <div className="md:hidden">
-                <h2 className="text-xl font-semibold text-gray-900 mb-3">More Photos</h2>
-                <div className="grid grid-cols-2 gap-2">
-                  {images.slice(1).map((img, i) => (
-                    <div key={i} className="h-36 overflow-hidden rounded-lg">
-                      <img src={img} alt={`${roomType.name} ${i + 2}`} className="w-full h-full object-cover" />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Right: Booking Widget */}
