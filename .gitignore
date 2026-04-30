@@ -56,3 +56,6 @@ hotel-booking-standalone*
 
 backend/data/*.sqlite
 
+backend/uploads/*
+!backend/uploads/.gitkeep
+

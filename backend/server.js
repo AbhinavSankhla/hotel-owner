@@ -57,7 +57,19 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // ── Static files — serve uploaded images ────────────────────────────────────
-app.use('/uploads', express.static(path.join(__dirname, env.UPLOAD_DIR)));
+// Security headers prevent browsers from executing uploaded files as scripts
+app.use('/uploads', (req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Content-Security-Policy', "default-src 'none'; img-src 'self'");
+  // Block directory traversal in URL
+  if (req.path.includes('..') || req.path.includes('%2e')) {
+    return res.status(400).json({ success: false, message: 'Invalid path' });
+  }
+  next();
+}, express.static(path.join(__dirname, env.UPLOAD_DIR), {
+  index: false,         // no directory listing
+  dotfiles: 'deny',     // no hidden files
+}));
 
 // ── Global rate limiting ─────────────────────────────────────────────────────
 app.use('/api', apiLimiter);

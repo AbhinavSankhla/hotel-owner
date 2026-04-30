@@ -5,7 +5,7 @@ const { body } = require('express-validator');
 const updateHotel = [
   body('name').optional().isLength({ min: 2, max: 255 }).withMessage('Hotel name must be 2-255 characters'),
   body('description').optional().isLength({ max: 5000 }).withMessage('Description too long'),
-  body('phone').optional().isMobilePhone().withMessage('Valid phone required'),
+  body('phone').optional({ nullable: true, checkFalsy: true }).isMobilePhone().withMessage('Valid phone required'),
   body('email').optional().isEmail().normalizeEmail(),
   body('address').optional().isLength({ max: 500 }),
   body('city').optional().isLength({ max: 100 }),
@@ -37,6 +37,7 @@ const updateRoomType = [
   body('maxGuests').optional().isInt({ min: 1 }),
   body('totalRooms').optional().isInt({ min: 1 }),
   body('amenities').optional().isArray(),
+  body('images').optional().isArray(),
   body('isActive').optional().isBoolean(),
 ];
 

@@ -151,7 +151,9 @@ export default function AdminRoomsPage() {
       setModalOpen(false);
       fetchRooms();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Save failed');
+      const apiErr = err.response?.data;
+      const fieldErrors = apiErr?.errors?.map((e) => `${e.field}: ${e.message}`).join(', ');
+      toast.error(fieldErrors || apiErr?.message || 'Save failed');
     }
   };
 
@@ -219,15 +221,15 @@ export default function AdminRoomsPage() {
           <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="label">Price per Night (₹)</label>
-              <input type="number" className="input" {...register('basePriceDaily', { required: true, min: 1 })} />
+              <input type="number" className="input" {...register('basePriceDaily', { required: true, min: 1, valueAsNumber: true })} />
             </div>
             <div>
               <label className="label">Max Guests</label>
-              <input type="number" className="input" {...register('maxGuests', { required: true, min: 1 })} />
+              <input type="number" className="input" {...register('maxGuests', { required: true, min: 1, valueAsNumber: true })} />
             </div>
             <div>
               <label className="label">Total Rooms</label>
-              <input type="number" className="input" {...register('totalRooms', { required: true, min: 1 })} />
+              <input type="number" className="input" {...register('totalRooms', { required: true, min: 1, valueAsNumber: true })} />
             </div>
           </div>
 

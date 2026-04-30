@@ -148,6 +148,17 @@ export const uploadApi = {
     files.forEach((f) => form.append('files', f));
     return executeApi.post('/uploads/multiple', form, { headers: { 'Content-Type': 'multipart/form-data' } });
   },
+  // Alias used in admin pages
+  uploadMultiple: (files) => {
+    const form = new FormData();
+    files.forEach((f) => form.append('files', f));
+    return executeApi.post('/uploads/multiple', form, { headers: { 'Content-Type': 'multipart/form-data' } });
+  },
+  uploadSingle: (file) => {
+    const form = new FormData();
+    form.append('file', file);
+    return executeApi.post('/uploads/single', form, { headers: { 'Content-Type': 'multipart/form-data' } });
+  },
   delete: (filename) => executeApi.delete(`/uploads/${filename}`),
 };
 

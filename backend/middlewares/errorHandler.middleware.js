@@ -62,6 +62,28 @@ function errorHandler(err, req, res, next) { // eslint-disable-line no-unused-va
     return res.status(401).json({ success: false, message: 'Invalid token', data: null });
   }
 
+  // ── Multer Errors (file upload) ──────────────────────────────────────────
+  if (err.name === 'MulterError') {
+    const msgs = {
+      LIMIT_FILE_SIZE: `File too large. Maximum size is ${process.env.MAX_FILE_SIZE_MB || 5}MB`,
+      LIMIT_FILE_COUNT: 'Too many files uploaded at once',
+      LIMIT_UNEXPECTED_FILE: 'Unexpected file field',
+    };
+    return res.status(400).json({
+      success: false,
+      message: msgs[err.code] || `Upload error: ${err.message}`,
+      data: null,
+    });
+  }
+
+  // Upload validation errors (from service.verifyUploadedFile or fileFilter)
+  if (err.status === 422 || (err.message && err.message.includes('not a valid image'))) {
+    return res.status(422).json({ success: false, message: err.message, data: null });
+  }
+  if (err.message && (err.message.includes('image files') || err.message.includes('extension'))) {
+    return res.status(400).json({ success: false, message: err.message, data: null });
+  }
+
   // ── Custom application errors with statusCode ────────────────────────────
   if (err.statusCode) {
     return res.status(err.statusCode).json({

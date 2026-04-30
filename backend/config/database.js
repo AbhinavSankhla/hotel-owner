@@ -72,11 +72,13 @@ if (pgAvailable) {
       logging: false,
       define: sharedDefine,
     });
-    // SQLite does not support PostgreSQL ARRAY type.
-    // Override DataTypes.ARRAY to use JSON (stored as text) for dev compatibility.
+    // SQLite does not support PostgreSQL ARRAY or JSONB types.
+    // Override both to use JSON (stored as text) for dev compatibility.
     const _origArray = DataTypes.ARRAY;
     DataTypes.ARRAY = function patchedArray() { return DataTypes.JSON; };
     DataTypes.ARRAY.prototype = _origArray.prototype;
+    // JSONB is a Postgres extension; map to plain JSON for SQLite
+    DataTypes.JSONB = DataTypes.JSON;
   } else {
     usingMemDb = true;
     console.warn('[DB] PostgreSQL not reachable — using pg-mem (in-memory) for development');
@@ -133,17 +135,27 @@ async function connectDatabase() {
     await _seedDevDb();
   } else if (usingSqlite) {
     console.log('[DB] SQLite authenticated — syncing schema...');
-    // alter:true adds new columns without dropping existing data
-    await sequelize.sync({ alter: true });
+    // Use force:false + alter:false for existing DBs to avoid recreating tables
+    // with corrupt unique constraints. Only force-create on a brand new DB.
+    const { DataTypes: DT } = require('sequelize');
+    const SqliteQ = sequelize.getQueryInterface();
+    const existingTables = await SqliteQ.showAllTables().catch(() => []);
+    if (existingTables.length === 0) {
+      await sequelize.sync({ force: false });
+    } else {
+      // Only add missing columns — do NOT alter existing indexes/constraints
+      await sequelize.sync({ alter: { drop: false } });
+    }
     console.log('[DB] SQLite schema up-to-date');
-    // Only seed if the Hotel table is empty
+    // Seed if Hotel OR RoomType tables are empty
     const models = require('../models');
-    const count = await models.Hotel.count().catch(() => 0);
-    if (count === 0) {
-      console.log('[DB] SQLite is empty — seeding demo data...');
+    const hotelCount = await models.Hotel.count().catch(() => 0);
+    const roomTypeCount = await models.RoomType.count().catch(() => 0);
+    if (hotelCount === 0 || roomTypeCount === 0) {
+      console.log('[DB] SQLite missing data — seeding demo data...');
       await _seedDevDb();
     } else {
-      console.log(`[DB] SQLite has ${count} hotel record(s) — skipping seed`);
+      console.log(`[DB] SQLite has ${hotelCount} hotel(s), ${roomTypeCount} room type(s) — skipping seed`);
     }
   } else {
     console.log('[DB] PostgreSQL connected successfully');
@@ -216,94 +228,48 @@ async function _seedDevDb() {
     });
 
     // ── Room Types ──────────────────────────────────────────────────────────
+    // Use raw SQL to bypass Sequelize unique-constraint issues with SQLite sync
     const RT_DELUXE_ID   = '00000001-0000-4000-8000-000000000001';
     const RT_SUPERIOR_ID = '00000002-0000-4000-8000-000000000002';
     const RT_SUITE_ID    = '00000003-0000-4000-8000-000000000003';
     const RT_PRES_ID     = '00000004-0000-4000-8000-000000000004';
+    const nowISO = new Date().toISOString();
 
-    await upsert(models.RoomType, { id: RT_DELUXE_ID }, {
-      hotelId: HOTEL_ID,
-      name: 'Deluxe Room',
-      slug: 'deluxe-room',
-      description: 'Elegant 32 sqm room with a plush king-size bed, city views, rain shower, and complimentary high-speed Wi-Fi. Perfect for business and leisure travelers.',
-      basePriceDaily: 3500,
-      basePriceHourly: 500,
-      maxGuests: 2,
-      maxExtraGuests: 1,
-      extraGuestCharge: 700,
-      totalRooms: 20,
-      sortOrder: 1,
-      amenities: ['King Bed', 'Free WiFi', 'AC', '55" Smart TV', 'Mini Fridge', 'Tea/Coffee Maker', 'Rain Shower', 'City View', 'Daily Housekeeping', 'Room Service'],
-      images: [
-        'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&q=80',
-        'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=800&q=80',
-        'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800&q=80',
-      ],
-      isActive: true,
-    });
+    const rtRows = [
+      { id: RT_DELUXE_ID, name: 'Deluxe Room', slug: 'deluxe-room',
+        desc: 'Elegant 32 sqm room with a plush king-size bed, city views, rain shower, and complimentary high-speed Wi-Fi.',
+        price: 3500, hourly: 500, guests: 2, extra: 1, charge: 700, rooms: 20, sort: 1,
+        amenities: JSON.stringify(['King Bed','Free WiFi','AC','55" Smart TV','Mini Fridge','Tea/Coffee Maker','Rain Shower','City View','Daily Housekeeping','Room Service']),
+        images: JSON.stringify(['https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&q=80','https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=800&q=80','https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800&q=80']),
+      },
+      { id: RT_SUPERIOR_ID, name: 'Superior Room', slug: 'superior-room',
+        desc: 'Spacious 42 sqm Superior Room featuring a living area, work desk, premium bedding, and stunning panoramic city views.',
+        price: 5500, hourly: 800, guests: 2, extra: 2, charge: 900, rooms: 15, sort: 2,
+        amenities: JSON.stringify(['King Bed','Free WiFi','AC','65" Smart TV','Mini Bar','Sofa Area','Bathtub + Shower','City View','Welcome Drink','Daily Housekeeping','Room Service']),
+        images: JSON.stringify(['https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=800&q=80','https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&q=80','https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=800&q=80']),
+      },
+      { id: RT_SUITE_ID, name: 'Executive Suite', slug: 'executive-suite',
+        desc: 'Our 75 sqm Executive Suite offers a separate bedroom and living room, private jacuzzi, walk-in wardrobe, and dedicated butler service.',
+        price: 9500, hourly: 1500, guests: 3, extra: 2, charge: 1200, rooms: 8, sort: 3,
+        amenities: JSON.stringify(['Super King Bed','Free WiFi','AC','75" Smart TV','Full Mini Bar','Jacuzzi','Separate Living Room','Balcony','Butler Service','Airport Transfer','Complimentary Breakfast']),
+        images: JSON.stringify(['https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&q=80','https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&q=80','https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=800&q=80']),
+      },
+      { id: RT_PRES_ID, name: 'Presidential Suite', slug: 'presidential-suite',
+        desc: 'The crown jewel of Grand Horizon. 150 sqm with two bedrooms, private dining room, rooftop terrace, personal chef, and panoramic views.',
+        price: 22000, hourly: 3500, guests: 4, extra: 2, charge: 2000, rooms: 2, sort: 4,
+        amenities: JSON.stringify(['2 Bedrooms','Private Terrace','Private Pool','Personal Chef','Dedicated Butler','Luxury Spa Access','Private Dining Room','Home Theater','Limousine Service','Complimentary All Meals']),
+        images: JSON.stringify(['https://images.unsplash.com/photo-1615460549969-36fa19521a4f?w=800&q=80','https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&q=80','https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=800&q=80']),
+      },
+    ];
 
-    await upsert(models.RoomType, { id: RT_SUPERIOR_ID }, {
-      hotelId: HOTEL_ID,
-      name: 'Superior Room',
-      slug: 'superior-room',
-      description: 'Spacious 42 sqm Superior Room featuring a living area, work desk, premium bedding, and stunning panoramic city views. Ideal for extended stays.',
-      basePriceDaily: 5500,
-      basePriceHourly: 800,
-      maxGuests: 2,
-      maxExtraGuests: 2,
-      extraGuestCharge: 900,
-      totalRooms: 15,
-      sortOrder: 2,
-      amenities: ['King Bed', 'Free WiFi', 'AC', '65" Smart TV', 'Mini Bar', 'Sofa Area', 'Bathtub + Shower', 'City View', 'Welcome Drink', 'Daily Housekeeping', 'Room Service', 'Pillow Menu'],
-      images: [
-        'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=800&q=80',
-        'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&q=80',
-        'https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=800&q=80',
-      ],
-      isActive: true,
-    });
-
-    await upsert(models.RoomType, { id: RT_SUITE_ID }, {
-      hotelId: HOTEL_ID,
-      name: 'Executive Suite',
-      slug: 'executive-suite',
-      description: 'Our 75 sqm Executive Suite offers a separate bedroom and living room, private jacuzzi, walk-in wardrobe, and dedicated butler service. Experience true luxury.',
-      basePriceDaily: 9500,
-      basePriceHourly: 1500,
-      maxGuests: 3,
-      maxExtraGuests: 2,
-      extraGuestCharge: 1200,
-      totalRooms: 8,
-      sortOrder: 3,
-      amenities: ['Super King Bed', 'Free WiFi', 'AC', '75" Smart TV', 'Full Mini Bar', 'Jacuzzi', 'Separate Living Room', 'Balcony', 'Butler Service', 'Airport Transfer', 'Complimentary Breakfast', 'Evening Turndown', 'Luxury Toiletries'],
-      images: [
-        'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&q=80',
-        'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&q=80',
-        'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=800&q=80',
-      ],
-      isActive: true,
-    });
-
-    await upsert(models.RoomType, { id: RT_PRES_ID }, {
-      hotelId: HOTEL_ID,
-      name: 'Presidential Suite',
-      slug: 'presidential-suite',
-      description: 'The crown jewel of Grand Horizon. Our 150 sqm Presidential Suite features two bedrooms, a private dining room, rooftop terrace, personal chef, and unparalleled panoramic views of Bangalore.',
-      basePriceDaily: 22000,
-      basePriceHourly: 3500,
-      maxGuests: 4,
-      maxExtraGuests: 2,
-      extraGuestCharge: 2000,
-      totalRooms: 2,
-      sortOrder: 4,
-      amenities: ['2 Bedrooms', 'Private Terrace', 'Private Pool', 'Personal Chef', 'Dedicated Butler', 'Luxury Spa Access', 'Private Dining Room', 'Home Theater', 'Free WiFi', 'Limousine Service', 'Complimentary All Meals', 'Premium Bar'],
-      images: [
-        'https://images.unsplash.com/photo-1615460549969-36fa19521a4f?w=800&q=80',
-        'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&q=80',
-        'https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=800&q=80',
-      ],
-      isActive: true,
-    });
+    for (const rt of rtRows) {
+      await sequelize.query(
+        `INSERT OR IGNORE INTO RoomTypes
+          (id,hotelId,name,slug,description,basePriceDaily,basePriceHourly,maxGuests,maxExtraGuests,extraGuestCharge,totalRooms,sortOrder,amenities,images,isActive,createdAt,updatedAt)
+         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,1,?,?)`,
+        { replacements: [rt.id, HOTEL_ID, rt.name, rt.slug, rt.desc, rt.price, rt.hourly, rt.guests, rt.extra, rt.charge, rt.rooms, rt.sort, rt.amenities, rt.images, nowISO, nowISO] }
+      );
+    }
 
     // ── RoomInventory — seed next 60 days for all room types ────────────────
     if (models.RoomInventory) {
