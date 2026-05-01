@@ -119,6 +119,14 @@ class BookingService {
         paymentStatus: 'PENDING',
       });
 
+      const { HourlySlot } = require('../models');
+      const [slotInv] = await HourlySlot.findOrCreate({
+        where: { roomTypeId, date, slotStart },
+        defaults: { roomTypeId, date, slotStart, slotEnd: slotEndTime, availableCount: roomType.totalRooms, isClosed: false }
+      });
+      if (slotInv.availableCount < numRooms) throw createError('Not enough rooms available for this slot', 409);
+      await slotInv.decrement('availableCount', { by: numRooms });
+
       return this._getBookingById(booking.id);
     } finally {
       await releaseLock(redis, lockKey, lockValue);
@@ -232,10 +240,15 @@ class BookingService {
 
     await booking.update({ status });
 
-    // Restore inventory when checked out
+    // Restore inventory when checked out early
     if (status === 'CHECKED_OUT' && booking.bookingType === 'DAILY' && booking.checkInDate && booking.checkOutDate) {
-      const dates = roomService._getDateRange(booking.checkInDate, booking.checkOutDate);
-      await roomService.restoreAvailability(booking.roomTypeId, dates, booking.numRooms);
+      const today = dayjs().format('YYYY-MM-DD');
+      if (dayjs(today).isBefore(dayjs(booking.checkOutDate))) {
+        const dates = roomService._getDateRange(today, booking.checkOutDate);
+        if (dates.length > 0) {
+          await roomService.restoreAvailability(booking.roomTypeId, dates, booking.numRooms);
+        }
+      }
     }
 
     return this._getBookingById(bookingId);

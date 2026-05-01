@@ -46,7 +46,11 @@ export default async function HomePage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {roomTypes.map((rt, i) => {
-              const img = resolveImg(rt.images?.[0]) || FALLBACK_ROOM_IMGS[i % FALLBACK_ROOM_IMGS.length];
+              let imagesArr = rt.images;
+              if (typeof imagesArr === 'string') {
+                try { imagesArr = JSON.parse(imagesArr); } catch(e) {}
+              }
+              const img = resolveImg(Array.isArray(imagesArr) ? imagesArr[0] : null) || FALLBACK_ROOM_IMGS[i % FALLBACK_ROOM_IMGS.length];
               return (
                 <Link key={rt.id} href={`/rooms/${rt.id}`} className="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all overflow-hidden border border-gray-100">
                   <div className="h-52 overflow-hidden">

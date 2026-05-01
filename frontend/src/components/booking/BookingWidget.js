@@ -80,13 +80,14 @@ function DailyBookingForm({ hotel, selectedRT, selectedRoomType }) {
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="label">Rooms</label>
-          <input type="number" min={1} max={selectedRT?.totalRooms || 10} className="input"
-            {...register('numRooms', { min: 1, max: selectedRT?.totalRooms || 10 })} />
+          <input type="number" min={1} max={availability?.availableRooms ?? selectedRT?.totalRooms ?? 10} className="input"
+            {...register('numRooms', { min: 1, max: availability?.availableRooms ?? selectedRT?.totalRooms ?? 10 })} />
         </div>
         <div>
           <label className="label">Guests <span className="text-gray-400 text-xs">(max {maxGuests})</span></label>
           <input type="number" min={1} max={maxGuests} className="input"
-            {...register('numGuests', { min: 1, max: maxGuests })} />
+            {...register('numGuests', { min: 1, max: maxGuests, required: 'Required' })} />
+          {errors.numGuests && <p className="text-red-500 text-xs mt-1">Max {maxGuests} guests allowed</p>}
         </div>
       </div>
 
@@ -238,7 +239,7 @@ export default function BookingWidget({ hotel, roomTypes }) {
   const [bookTab, setBookTab] = useState('daily');
 
   const selectedRT = roomTypes.find((rt) => String(rt.id) === String(selectedRoomType));
-  const bookingModel = hotel?.bookingModel || 'DAILY';
+  const bookingModel = selectedRT?.bookingModelOverride || hotel?.bookingModel || 'DAILY';
   const showDaily = bookingModel === 'DAILY' || bookingModel === 'BOTH';
   const showHourly = bookingModel === 'HOURLY' || bookingModel === 'BOTH';
 
@@ -281,176 +282,6 @@ export default function BookingWidget({ hotel, roomTypes }) {
       {effectiveTab === 'hourly' && showHourly && (
         <HourlyBookingForm hotel={hotel} selectedRT={selectedRT} selectedRoomType={selectedRoomType} />
       )}
-    </div>
-  );
-}
-
-  const router = useRouter();
-  const { isAuthenticated } = useAuth();
-  const [selectedRoomType, setSelectedRoomType] = useState(roomTypes[0]?.id || '');
-  const [availability, setAvailability] = useState(null);
-  const [checking, setChecking] = useState(false);
-  const [booking, setBooking] = useState(false);
-
-  const today = new Date().toISOString().split('T')[0];
-  const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
-
-  const { register, handleSubmit, watch, formState: { errors } } = useForm({
-    defaultValues: { checkInDate: today, checkOutDate: tomorrow, numRooms: 1, numGuests: 1 },
-  });
-
-  const selectedRT = roomTypes.find((rt) => rt.id === selectedRoomType);
-  const bookingModel = hotel.bookingModel || 'DAILY';
-
-  const checkAvailability = async (data) => {
-    if (!selectedRoomType) return;
-    setChecking(true);
-    setAvailability(null);
-    try {
-      const res = await roomsApi.checkDailyAvailability({
-        roomTypeId: selectedRoomType,
-        checkInDate: data.checkInDate,
-        checkOutDate: data.checkOutDate,
-        numRooms: data.numRooms,
-      });
-      setAvailability(res.data.data);
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to check availability');
-    } finally {
-      setChecking(false);
-    }
-  };
-
-  const onBook = async (data) => {
-    if (!isAuthenticated) {
-      toast.error('Please sign in to make a booking');
-      router.push('/auth/login');
-      return;
-    }
-
-    setBooking(true);
-    try {
-      const res = await bookingsApi.createDaily({
-        hotelId: hotel.id,
-        roomTypeId: selectedRoomType,
-        checkInDate: data.checkInDate,
-        checkOutDate: data.checkOutDate,
-        numRooms: parseInt(data.numRooms),
-        numGuests: parseInt(data.numGuests),
-        guestName: data.guestName,
-        guestPhone: data.guestPhone,
-        guestEmail: data.guestEmail,
-      });
-      const bookingId = res.data.data.id;
-      toast.success('Booking created!');
-      router.push(`/bookings/${bookingId}`);
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Booking failed');
-    } finally {
-      setBooking(false);
-    }
-  };
-
-  return (
-    <div className="card p-6 sticky top-4">
-      <h3 className="text-lg font-semibold mb-4">Book Stay Here</h3>
-
-      {/* Room Type Selector */}
-      {roomTypes.length > 1 && (
-        <div className="mb-4">
-          <label className="label">Room Type</label>
-          <select className="input" value={selectedRoomType} onChange={(e) => setSelectedRoomType(e.target.value)}>
-            {roomTypes.map((rt) => (
-              <option key={rt.id} value={rt.id}>{rt.name} — ₹{rt.basePriceDaily}/night</option>
-            ))}
-          </select>
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit(availability ? onBook : checkAvailability)} className="space-y-4">
-        <div>
-          <label className="label">Check-in Date</label>
-          <input type="date" className="input" min={new Date().toISOString().split('T')[0]} {...register('checkInDate', { required: 'Check-in date is required' })} />
-          {errors.checkInDate && <p className="error-message">{errors.checkInDate.message}</p>}
-        </div>
-
-        <div>
-          <label className="label">Check-out Date</label>
-          <input type="date" className="input" min={new Date().toISOString().split('T')[0]} {...register('checkOutDate', { required: 'Check-out date is required' })} />
-          {errors.checkOutDate && <p className="error-message">{errors.checkOutDate.message}</p>}
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="label">Rooms</label>
-            <input type="number" min={1} max={10} className="input" {...register('numRooms', { min: 1, max: 10 })} />
-          </div>
-          <div>
-            <label className="label">Guests</label>
-            <input type="number" min={1} max={20} className="input" {...register('numGuests', { min: 1 })} />
-          </div>
-        </div>
-
-        {availability && (
-          <>
-            <div>
-              <label className="label">Your Name</label>
-              <input className="input" placeholder="Full name" {...register('guestName', { required: true })} />
-            </div>
-            <div>
-              <label className="label">Phone</label>
-              <input className="input" placeholder="+919999999999" {...register('guestPhone', { required: true })} />
-            </div>
-            <div>
-              <label className="label">Email</label>
-              <input type="email" className="input" placeholder="email@example.com" {...register('guestEmail')} />
-            </div>
-          </>
-        )}
-
-        {/* Availability Result */}
-        {availability && (
-          <div className={`rounded-xl p-4 text-sm ${availability.isAvailable ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
-            {availability.isAvailable ? (
-              <div className="text-green-800">
-                <p className="font-semibold text-green-900 mb-2">✓ Available</p>
-                <div className="space-y-1">
-                  <div className="flex justify-between">
-                    <span>{availability.nights} night{availability.nights > 1 ? 's' : ''} × {formatCurrency(availability.pricePerNight)}</span>
-                    <span>{formatCurrency(availability.subtotal ?? availability.totalPrice)}</span>
-                  </div>
-                  {availability.taxAmount > 0 && (
-                    <div className="flex justify-between text-green-700">
-                      <span>GST ({Math.round((availability.taxRate ?? 0.12) * 100)}%)</span>
-                      <span>+{formatCurrency(availability.taxAmount)}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between font-bold text-green-900 pt-1 border-t border-green-200 mt-1">
-                    <span>Total</span>
-                    <span>{formatCurrency(availability.totalPrice)}</span>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <p className="text-red-700">❌ Not available for selected dates.</p>
-            )}
-          </div>
-        )}
-
-        <button
-          type="submit"
-          disabled={checking || booking}
-          className="btn-primary w-full"
-        >
-          {checking ? 'Checking…' : booking ? 'Booking…' : availability?.isAvailable ? 'Confirm Booking' : 'Check Availability'}
-        </button>
-
-        {availability && (
-          <button type="button" onClick={() => setAvailability(null)} className="w-full text-center text-sm text-gray-500 hover:text-gray-700">
-            Change dates
-          </button>
-        )}
-      </form>
     </div>
   );
 }

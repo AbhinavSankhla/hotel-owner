@@ -52,7 +52,7 @@ export default function BookingsListPage() {
         <div className="card p-12 text-center text-gray-400">
           <p className="text-3xl mb-3">🗓️</p>
           <p className="font-medium">No bookings yet</p>
-          <Link href="/hotels" className="btn-primary mt-4 text-sm">Find a hotel</Link>
+          <Link href="/" className="btn-primary mt-4 text-sm">Browse Rooms</Link>
         </div>
       ) : (
         <div className="space-y-3">

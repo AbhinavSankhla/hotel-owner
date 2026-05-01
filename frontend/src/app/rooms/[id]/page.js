@@ -40,7 +40,11 @@ export default async function RoomDetailPage({ params }) {
   if (!roomType) notFound();
 
   const hotel = roomType.hotel;
-  const images = roomType.images?.filter(Boolean) || [];
+  let imagesArr = roomType.images;
+  if (typeof imagesArr === 'string') {
+    try { imagesArr = JSON.parse(imagesArr); } catch(e) {}
+  }
+  const images = Array.isArray(imagesArr) ? imagesArr.filter(Boolean) : [];
 
   return (
     <main className="pb-24 lg:pb-0">

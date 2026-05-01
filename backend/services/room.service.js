@@ -106,10 +106,23 @@ class RoomService {
     const roomType = await RoomType.findByPk(roomTypeId);
     if (!roomType) throw createError('Room type not found', 404);
 
-    const slots = await HourlySlot.findAll({
+    let slots = await HourlySlot.findAll({
       where: { roomTypeId, date, isClosed: false },
       order: [['slotStart', 'ASC']],
     });
+
+    if (slots.length === 0) {
+      for (let i = 0; i < 24; i++) {
+        const start = i.toString().padStart(2, '0') + ':00';
+        const end = (i + 1).toString().padStart(2, '0') + ':00';
+        slots.push({
+          slotStart: start,
+          slotEnd: end === '24:00' ? '00:00' : end,
+          availableCount: roomType.totalRooms,
+          priceOverride: null
+        });
+      }
+    }
 
     const availableSlots = slots
       .filter((s) => s.availableCount >= numRooms)

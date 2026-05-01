@@ -20,8 +20,9 @@ exports.listBookings = asyncHandler(async (req, res) => {
   return success(res, 'Bookings fetched', data);
 });
 
+const bookingService = require('../services/booking.service');
 exports.updateBookingStatus = asyncHandler(async (req, res) => {
-  const data = await adminService.updateBookingStatusAdmin(req.params.id, req.user.hotelId, req.body.status);
+  const data = await bookingService.updateStatus(req.params.id, req.body, req.user.id);
   return success(res, 'Booking status updated', data);
 });
 
