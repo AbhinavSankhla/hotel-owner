@@ -103,7 +103,12 @@ function DailyBookingForm({ hotel, selectedRT, selectedRoomType }) {
         <div className={`rounded-xl p-4 text-sm ${availability.isAvailable ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
           {availability.isAvailable ? (
             <div className="text-green-800">
-              <p className="font-semibold text-green-900 mb-2">✓ Available</p>
+              <div className="flex items-center justify-between mb-2">
+                <p className="font-semibold text-green-900">✓ Available</p>
+                <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full font-medium">
+                  {availability.availableRooms} room{availability.availableRooms !== 1 ? 's' : ''} left
+                </span>
+              </div>
               <div className="space-y-1">
                 <div className="flex justify-between"><span>{availability.nights} night{availability.nights > 1 ? 's' : ''} × {formatCurrency(availability.pricePerNight)}</span><span>{formatCurrency(availability.subtotal ?? availability.totalPrice)}</span></div>
                 {availability.taxAmount > 0 && <div className="flex justify-between text-green-700"><span>GST ({Math.round((availability.taxRate ?? 0.12) * 100)}%)</span><span>+{formatCurrency(availability.taxAmount)}</span></div>}

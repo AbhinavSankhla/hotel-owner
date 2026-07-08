@@ -205,7 +205,7 @@ class RoomService {
     if (keys.length > 0) await redis.del(...keys).catch(() => {});
   }
 
-  // ── Restore availability (on cancel) ────────────────────────────────────
+  // ── Restore availability (on cancel / checkout) ──────────────────────────
   async restoreAvailability(roomTypeId, dates, numRooms) {
     const roomType = await RoomType.findByPk(roomTypeId);
     if (!roomType) return;
@@ -220,6 +220,10 @@ class RoomService {
         },
       });
     }
+
+    // Invalidate availability cache so the next check returns fresh data
+    const keys = await redis.keys(`avail:daily:${roomTypeId}:*`).catch(() => []);
+    if (keys.length > 0) await redis.del(...keys).catch(() => {});
   }
 
   _getDateRange(startDate, endDate) {

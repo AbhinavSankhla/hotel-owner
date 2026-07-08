@@ -5,6 +5,8 @@ import BookingWidget from '@/components/booking/BookingWidget';
 import MobileBookingBar from '@/components/booking/MobileBookingBar';
 import RoomImageSlideshow from '@/components/rooms/RoomImageSlideshow';
 
+
+
 const amenityIcons = {
   'Free WiFi': '📶', 'Rooftop Pool': '🏊', 'Spa & Wellness': '💆', 'Fine Dining': '🍽️',
   'Fitness Center': '🏋️', 'Business Center': '💼', 'Balcony': '🌅', 'King Bed': '🛏️',
@@ -42,7 +44,7 @@ export default async function RoomDetailPage({ params }) {
   const hotel = roomType.hotel;
   let imagesArr = roomType.images;
   if (typeof imagesArr === 'string') {
-    try { imagesArr = JSON.parse(imagesArr); } catch(e) {}
+    try { imagesArr = JSON.parse(imagesArr); } catch (e) { }
   }
   const images = Array.isArray(imagesArr) ? imagesArr.filter(Boolean) : [];
 
@@ -95,7 +97,7 @@ export default async function RoomDetailPage({ params }) {
                 { label: 'Max Guests', value: roomType.maxGuests, icon: '👥' },
                 { label: 'Room Size', value: roomType.areaSqFt ? `${roomType.areaSqFt} sq ft` : 'Spacious', icon: '📐' },
                 { label: 'Bed Type', value: roomType.bedType || 'King/Twin', icon: '🛏️' },
-                { label: 'Rooms Available', value: roomType.totalRooms, icon: '🏠' },
+                { label: 'Total Rooms', value: roomType.totalRooms, icon: '🏠' },
               ].map((f) => (
                 <div key={f.label} className="bg-gray-50 rounded-xl p-4 text-center">
                   <div className="text-2xl mb-1">{f.icon}</div>
