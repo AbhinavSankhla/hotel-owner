@@ -2,10 +2,12 @@
 
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
+import { useTenant } from '@/context/TenantContext';
 import { useState } from 'react';
 
 export default function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
+  const { hotel } = useTenant() || {};
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropOpen, setDropOpen] = useState(false);
 
@@ -14,7 +16,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
         <Link href="/" className="font-bold text-xl text-primary-700 flex items-center gap-2">
           <span className="text-2xl">🏨</span>
-          <span>Grand Horizon</span>
+          <span>{hotel?.name || 'Grand Horizon'}</span>
         </Link>
 
         {/* Desktop Nav */}

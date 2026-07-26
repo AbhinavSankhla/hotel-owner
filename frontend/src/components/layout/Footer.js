@@ -1,16 +1,22 @@
+'use client';
+
 import Link from 'next/link';
+import { useTenant } from '@/context/TenantContext';
 
 export default function Footer() {
+  const { hotel } = useTenant() || {};
+  const hotelName = hotel?.name || 'Grand Horizon';
+
   return (
     <footer className="bg-gray-900 text-gray-300 mt-auto">
       <div className="max-w-7xl mx-auto px-4 py-12 grid grid-cols-2 md:grid-cols-4 gap-8">
         <div>
-          <h3 className="text-white font-bold text-lg mb-3 flex items-center gap-2">🏨 Grand Horizon</h3>
-          <p className="text-sm text-gray-400 leading-relaxed">A premier luxury hotel in the heart of Bangalore. Experience world-class hospitality, fine dining, and unforgettable moments.</p>
+          <h3 className="text-white font-bold text-lg mb-3 flex items-center gap-2">🏨 {hotelName}</h3>
+          <p className="text-sm text-gray-400 leading-relaxed">{hotel?.description?.slice(0, 160) || 'A premier luxury hotel in the heart of Bangalore. Experience world-class hospitality, fine dining, and unforgettable moments.'}</p>
           <div className="mt-4 text-sm text-gray-400 space-y-1">
-            <p>📍 42 MG Road, Bangalore</p>
-            <p>📞 +91 98765 43210</p>
-            <p>✉️ info@grandhorizon.com</p>
+            <p>📍 {hotel?.address ? `${hotel.address}, ${hotel.city || ''}` : '42 MG Road, Bangalore'}</p>
+            <p>📞 {hotel?.phone || '+91 98765 43210'}</p>
+            <p>✉️ {hotel?.email || 'info@grandhorizon.com'}</p>
           </div>
         </div>
         <div>
@@ -43,7 +49,7 @@ export default function Footer() {
         </div>
       </div>
       <div className="border-t border-gray-800 py-4 text-center text-xs text-gray-500">
-        © {new Date().getFullYear()} Grand Horizon Hotel. All rights reserved. | Designed for exceptional hospitality.
+        © {new Date().getFullYear()} {hotelName}. All rights reserved. | Designed for exceptional hospitality.
       </div>
     </footer>
   );
