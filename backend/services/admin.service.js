@@ -35,7 +35,10 @@ class AdminService {
       Booking.count({ where: { hotelId, status: 'PENDING' } }),
       Booking.findAll({
         where: { hotelId },
-        include: [{ model: User, as: 'guest', attributes: ['id', 'name', 'email'] }],
+        include: [
+          { model: User, as: 'guest', attributes: ['id', 'name', 'email'] },
+          { model: RoomType, as: 'roomType', attributes: ['id', 'name'] },
+        ],
         order: [['createdAt', 'DESC']],
         limit: 10,
       }),
@@ -217,9 +220,23 @@ class AdminService {
   }
 
   // ── Booking Management (Admin) ────────────────────────────────────────────
-  async listBookings(hotelId, { page = 1, limit = 20, status } = {}) {
+  async listBookings(hotelId, { page = 1, limit = 10, status, search } = {}) {
     const where = { hotelId };
     if (status) where.status = status;
+
+    if (search && search.trim()) {
+      const term = search.trim();
+      // Case-insensitive substring match on both SQLite (LIKE is case-insensitive
+      // for ASCII by default) and Postgres (iLike). Op.like works on both dialects,
+      // so we use it consistently rather than iLike which only exists on Postgres.
+      const likeTerm = `%${term}%`;
+      where[Op.or] = [
+        { bookingNumber: { [Op.like]: likeTerm } },
+        { guestName: { [Op.like]: likeTerm } },
+        { guestPhone: { [Op.like]: likeTerm } },
+        { guestEmail: { [Op.like]: likeTerm } },
+      ];
+    }
 
     const offset = (parseInt(page) - 1) * parseInt(limit);
     const { count, rows } = await Booking.findAndCountAll({

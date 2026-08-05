@@ -124,6 +124,32 @@ if (pgAvailable) {
   }
 }
 
+// ── ensureColumns — additive schema migration ────────────────────────────────
+// sync({ force: false }) creates missing tables but never ALTERs existing ones,
+// so newly-added model columns must be added manually. This runs idempotently on
+// every startup and is safe for SQLite and PostgreSQL (duplicate-column errors
+// are swallowed). Double-quoted identifiers work on both dialects.
+async function ensureColumns() {
+  const columns = [
+    { table: 'RoomTypes', column: 'maxAdults', type: 'INTEGER DEFAULT 2' },
+    { table: 'RoomTypes', column: 'maxChildren', type: 'INTEGER DEFAULT 0' },
+    { table: 'Bookings', column: 'numAdults', type: 'INTEGER DEFAULT 1' },
+    { table: 'Bookings', column: 'numChildren', type: 'INTEGER DEFAULT 0' },
+  ];
+  for (const c of columns) {
+    try {
+      await sequelize.query(`ALTER TABLE "${c.table}" ADD COLUMN "${c.column}" ${c.type}`);
+      console.log(`[DB] Added column ${c.table}.${c.column}`);
+    } catch (e) {
+      const msg = (e.message || '').toLowerCase();
+      if (!msg.includes('duplicate') && !msg.includes('already exists')) {
+        console.warn(`[DB] ensureColumns ${c.table}.${c.column}: ${e.message}`);
+      }
+      // else: column already exists — nothing to do
+    }
+  }
+}
+
 // ── connectDatabase — called in bootstrap() ──────────────────────────────────
 async function connectDatabase() {
   await sequelize.authenticate();
@@ -132,12 +158,14 @@ async function connectDatabase() {
     console.log('[DB] pg-mem authenticated — syncing tables...');
     await sequelize.sync({ force: true });
     console.log('[DB] Tables created in pg-mem');
+    await ensureColumns();
     await _seedDevDb();
   } else if (usingSqlite) {
     console.log('[DB] SQLite authenticated — syncing schema...');
     // Never use alter on SQLite — it creates _old shadow tables with stale FK triggers.
     // force:false just creates missing tables without touching existing ones.
     await sequelize.sync({ force: false });
+    await ensureColumns();
     console.log('[DB] SQLite schema up-to-date');
     // Seed if Hotel OR RoomType tables are empty
     const models = require('../models');
@@ -151,6 +179,7 @@ async function connectDatabase() {
     }
   } else {
     console.log('[DB] PostgreSQL connected successfully');
+    await ensureColumns();
   }
 }
 
@@ -257,9 +286,9 @@ async function _seedDevDb() {
     for (const rt of rtRows) {
       await sequelize.query(
         `INSERT OR IGNORE INTO RoomTypes
-          (id,hotelId,name,slug,description,basePriceDaily,basePriceHourly,maxGuests,maxExtraGuests,extraGuestCharge,totalRooms,sortOrder,amenities,images,isActive,createdAt,updatedAt)
-         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,1,?,?)`,
-        { replacements: [rt.id, HOTEL_ID, rt.name, rt.slug, rt.desc, rt.price, rt.hourly, rt.guests, rt.extra, rt.charge, rt.rooms, rt.sort, rt.amenities, rt.images, nowISO, nowISO] }
+          (id,hotelId,name,slug,description,basePriceDaily,basePriceHourly,maxGuests,maxAdults,maxChildren,maxExtraGuests,extraGuestCharge,totalRooms,sortOrder,amenities,images,isActive,createdAt,updatedAt)
+         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,1,?,?)`,
+        { replacements: [rt.id, HOTEL_ID, rt.name, rt.slug, rt.desc, rt.price, rt.hourly, rt.guests + rt.extra, rt.guests, rt.extra, rt.extra, rt.charge, rt.rooms, rt.sort, rt.amenities, rt.images, nowISO, nowISO] }
       );
     }
 

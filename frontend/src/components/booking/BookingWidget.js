@@ -20,10 +20,16 @@ function DailyBookingForm({ hotel, selectedRT, selectedRoomType }) {
   const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
 
   const { register, handleSubmit, watch, formState: { errors } } = useForm({
-    defaultValues: { checkInDate: today, checkOutDate: tomorrow, numRooms: 1, numGuests: 1 },
+    defaultValues: { checkInDate: today, checkOutDate: tomorrow, numRooms: 1, numAdults: 1, numChildren: 0 },
   });
   const numRooms = parseInt(watch('numRooms') || 1);
-  const maxGuests = selectedRT?.maxGuests ? selectedRT.maxGuests * numRooms : 20;
+  const maxAdults = (selectedRT?.maxAdults ?? selectedRT?.maxGuests ?? 10) * numRooms;
+  const maxChildren = (selectedRT?.maxChildren ?? 0) * numRooms;
+  const maxOccupancy = (selectedRT?.maxGuests ?? 10) * numRooms;
+  const numAdults = parseInt(watch('numAdults') || 0);
+  const numChildren = parseInt(watch('numChildren') || 0);
+  const totalGuests = numAdults + numChildren;
+  const occupancyError = totalGuests > maxOccupancy;
 
   const checkAvailability = async (data) => {
     setChecking(true);
@@ -47,13 +53,17 @@ function DailyBookingForm({ hotel, selectedRT, selectedRoomType }) {
     if (!isAuthenticated) { toast.error('Please sign in to book'); router.push('/auth/login'); return; }
     setBooking(true);
     try {
+      const adults = parseInt(data.numAdults);
+      const children = parseInt(data.numChildren) || 0;
       const res = await bookingsApi.createDaily({
         hotelId: hotel.id,
         roomTypeId: selectedRoomType,
         checkInDate: data.checkInDate,
         checkOutDate: data.checkOutDate,
         numRooms: parseInt(data.numRooms),
-        numGuests: parseInt(data.numGuests),
+        numAdults: adults,
+        numChildren: children,
+        numGuests: adults + children,
         guestName: data.guestName,
         guestPhone: data.guestPhone,
         guestEmail: data.guestEmail,
@@ -77,19 +87,28 @@ function DailyBookingForm({ hotel, selectedRT, selectedRoomType }) {
         <label className="label">Check-out Date</label>
         <input type="date" className="input" min={today} {...register('checkOutDate', { required: true })} />
       </div>
+      <div>
+        <label className="label">Rooms</label>
+        <input type="number" min={1} max={availability?.availableRooms ?? selectedRT?.totalRooms ?? 10} className="input"
+          {...register('numRooms', { min: 1, max: availability?.availableRooms ?? selectedRT?.totalRooms ?? 10 })} />
+      </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="label">Rooms</label>
-          <input type="number" min={1} max={availability?.availableRooms ?? selectedRT?.totalRooms ?? 10} className="input"
-            {...register('numRooms', { min: 1, max: availability?.availableRooms ?? selectedRT?.totalRooms ?? 10 })} />
+          <label className="label">Adults <span className="text-gray-400 text-xs">(max {maxAdults})</span></label>
+          <input type="number" min={1} max={maxAdults} className="input"
+            {...register('numAdults', { min: 1, max: maxAdults, required: true, valueAsNumber: true })} />
+          {errors.numAdults && <p className="text-red-500 text-xs mt-1">1–{maxAdults} adults allowed</p>}
         </div>
         <div>
-          <label className="label">Guests <span className="text-gray-400 text-xs">(max {maxGuests})</span></label>
-          <input type="number" min={1} max={maxGuests} className="input"
-            {...register('numGuests', { min: 1, max: maxGuests, required: 'Required' })} />
-          {errors.numGuests && <p className="text-red-500 text-xs mt-1">Max {maxGuests} guests allowed</p>}
+          <label className="label">Children <span className="text-gray-400 text-xs">(max {maxChildren})</span></label>
+          <input type="number" min={0} max={maxChildren} className="input"
+            {...register('numChildren', { min: 0, max: maxChildren, valueAsNumber: true })} />
+          {errors.numChildren && <p className="text-red-500 text-xs mt-1">Max {maxChildren} children allowed</p>}
         </div>
       </div>
+      {occupancyError && (
+        <p className="text-red-500 text-xs">Total guests ({totalGuests}) exceed max occupancy of {maxOccupancy}.</p>
+      )}
 
       {availability && (
         <>
@@ -121,7 +140,7 @@ function DailyBookingForm({ hotel, selectedRT, selectedRoomType }) {
         </div>
       )}
 
-      <button type="submit" disabled={checking || booking} className="btn-primary w-full">
+      <button type="submit" disabled={checking || booking || occupancyError} className="btn-primary w-full">
         {checking ? 'Checking…' : booking ? 'Booking…' : availability?.isAvailable ? 'Confirm Booking' : 'Check Availability'}
       </button>
       {availability && <button type="button" onClick={() => setAvailability(null)} className="w-full text-center text-sm text-gray-500 hover:text-gray-700">Change dates</button>}

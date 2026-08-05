@@ -7,8 +7,23 @@ import { useRouter } from 'next/navigation';
 import { formatCurrency } from '@/lib/utils';
 import dayjs from 'dayjs';
 import toast from 'react-hot-toast';
+import BookingDetailsModal from '@/components/admin/BookingDetailsModal';
+import { Eye } from 'lucide-react';
 
 const STATUS_OPTIONS = ['PENDING', 'CONFIRMED', 'CHECKED_IN', 'CHECKED_OUT', 'CANCELLED', 'NO_SHOW'];
+
+// Mirrors the transition rules enforced by backend booking.service.js updateStatus.
+// Used to only offer valid next statuses in the dropdown so the backend never
+// has to reject a selection the UI itself offered.
+const VALID_TRANSITIONS = {
+  PENDING: ['CONFIRMED', 'CANCELLED'],
+  CONFIRMED: ['CHECKED_IN', 'CANCELLED', 'NO_SHOW'],
+  CHECKED_IN: ['CHECKED_OUT'],
+  CHECKED_OUT: [],
+  CANCELLED: [],
+  NO_SHOW: [],
+};
+
 const STATUS_COLORS = {
   PENDING: 'bg-yellow-100 text-yellow-800',
   CONFIRMED: 'bg-blue-100 text-blue-800',
@@ -31,6 +46,11 @@ export default function AdminBookingsPage() {
   const [extendBooking, setExtendBooking] = useState(null);
   const [extendDate, setExtendDate] = useState('');
   const [extending, setExtending] = useState(false);
+  // Search (booking id, guest name, mobile number)
+  const [searchInput, setSearchInput] = useState('');
+  const [search, setSearch] = useState('');
+  // Details modal
+  const [detailsBookingId, setDetailsBookingId] = useState(null);
 
   useEffect(() => {
     if (!loading && (!isAuthenticated || user?.role !== 'HOTEL_ADMIN')) {
@@ -40,7 +60,12 @@ export default function AdminBookingsPage() {
 
   const fetchBookings = () => {
     setLoadingData(true);
-    adminApi.listBookings({ page, limit: 20, ...(statusFilter ? { status: statusFilter } : {}) })
+    adminApi.listBookings({
+      page,
+      limit: 10,
+      ...(statusFilter ? { status: statusFilter } : {}),
+      ...(search ? { search } : {}),
+    })
       .then((res) => {
         const d = res.data.data;
         setBookings(d?.data || []);
@@ -50,7 +75,16 @@ export default function AdminBookingsPage() {
       .finally(() => setLoadingData(false));
   };
 
-  useEffect(() => { if (isAuthenticated) fetchBookings(); }, [isAuthenticated, page, statusFilter]);
+  useEffect(() => { if (isAuthenticated) fetchBookings(); }, [isAuthenticated, page, statusFilter, search]);
+
+  // Debounce search input → search param, and reset to page 1 on new search
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setSearch(searchInput.trim());
+      setPage(1);
+    }, 400);
+    return () => clearTimeout(t);
+  }, [searchInput]);
 
   const updateStatus = async (id, status) => {
     setUpdatingId(id);
@@ -93,14 +127,23 @@ export default function AdminBookingsPage() {
     <main className="max-w-7xl mx-auto px-4 py-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Manage Bookings</h1>
-        <select
-          value={statusFilter}
-          onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-          className="input w-auto"
-        >
-          <option value="">All statuses</option>
-          {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
-        </select>
+        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+          <input
+            type="text"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="Search by booking ID, guest name, or mobile number"
+            className="input w-full sm:w-72 lg:w-[400px]"
+          />
+          <select
+            value={statusFilter}
+            onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+            className="input w-auto"
+          >
+            <option value="">All statuses</option>
+            {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
       </div>
 
       {loadingData ? (
@@ -112,7 +155,7 @@ export default function AdminBookingsPage() {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b">
               <tr>
-                {['Booking #', 'Guest', 'Room', 'Check-in', 'Check-out', 'Amount', 'Status', 'Action'].map((h) => (
+                {['Booking #', 'Guest', 'Room', 'Check-in', 'Check-out', 'Amount', 'Status', 'Action', 'Details'].map((h) => (
                   <th key={h} className="text-left px-4 py-3 text-gray-600 font-medium whitespace-nowrap">{h}</th>
                 ))}
               </tr>
@@ -135,12 +178,13 @@ export default function AdminBookingsPage() {
                   <td className="px-4 py-3">
                     <div className="flex flex-col gap-1">
                       <select
-                        disabled={updatingId === b.id}
+                        disabled={updatingId === b.id || VALID_TRANSITIONS[b.status]?.length === 0}
                         value={b.status}
                         onChange={(e) => updateStatus(b.id, e.target.value)}
-                        className="text-xs border rounded px-2 py-1"
+                        className="text-xs border rounded px-2 py-1 disabled:opacity-60 disabled:cursor-not-allowed"
                       >
-                        {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+                        <option value={b.status}>{b.status}</option>
+                        {(VALID_TRANSITIONS[b.status] || []).map((s) => <option key={s} value={s}>{s}</option>)}
                       </select>
                       {['CONFIRMED', 'CHECKED_IN'].includes(b.status) && b.bookingType !== 'HOURLY' && (
                         <button
@@ -152,6 +196,17 @@ export default function AdminBookingsPage() {
                         </button>
                       )}
                     </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <button
+                      type="button"
+                      onClick={() => setDetailsBookingId(b.id)}
+                      className="ps-2 text-gray-500 hover:text-primary-600 transition-colors"
+                      title="View booking details"
+                      aria-label="View booking details"
+                    >
+                      <Eye size={16} className='m-1'/>
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -194,6 +249,9 @@ export default function AdminBookingsPage() {
           </div>
         </div>
       )}
+
+      {/* ── Booking Details Modal ─────────────────────────────────────────── */}
+      <BookingDetailsModal bookingId={detailsBookingId} onClose={() => setDetailsBookingId(null)} />
     </main>
   );
 }

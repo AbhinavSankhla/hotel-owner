@@ -134,6 +134,8 @@ export default function AdminRoomsPage() {
       description: rt.description,
       basePriceDaily: rt.basePriceDaily,
       maxGuests: rt.maxGuests,
+      maxAdults: rt.maxAdults,
+      maxChildren: rt.maxChildren,
       totalRooms: rt.totalRooms,
     });
     setModalOpen(true);
@@ -225,12 +227,23 @@ export default function AdminRoomsPage() {
               <input type="number" className="input" {...register('basePriceDaily', { required: true, min: 1, valueAsNumber: true })} />
             </div>
             <div>
-              <label className="label">Max Guests</label>
+              <label className="label">Max Occupancy</label>
               <input type="number" className="input" {...register('maxGuests', { required: true, min: 1, valueAsNumber: true })} />
+              <p className="text-xs text-gray-400 mt-1">Total adults + children</p>
             </div>
             <div>
               <label className="label">Total Rooms</label>
               <input type="number" className="input" {...register('totalRooms', { required: true, min: 1, valueAsNumber: true })} />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="label">Max Adults</label>
+              <input type="number" className="input" {...register('maxAdults', { required: true, min: 1, valueAsNumber: true })} />
+            </div>
+            <div>
+              <label className="label">Max Children</label>
+              <input type="number" className="input" {...register('maxChildren', { required: true, min: 0, valueAsNumber: true })} />
             </div>
           </div>
 

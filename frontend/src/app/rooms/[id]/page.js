@@ -148,9 +148,13 @@ export default async function RoomDetailPage({ params }) {
                     <span>Extra guests allowed (+₹{roomType.extraGuestCharge?.toLocaleString()}/person)</span>
                   </div>
                 )}
-                <div className="flex items-center gap-2">
-                  <span>🔞</span>
+                  <div className="flex items-center gap-2">
+                  <span>🚭</span>
                   <span>No smoking on premises</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span>🧑‍🧒‍🧒</span>
+                  <span>Guests aged 18 years and above are considered adults and will be charged as extra guests</span>
                 </div>
               </div>
             </div>

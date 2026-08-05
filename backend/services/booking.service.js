@@ -16,7 +16,13 @@ const DEFAULT_TAX_RATE = 0.12;
 class BookingService {
   // ── Create Daily Booking ────────────────────────────────────────────────
   async createDailyBooking(input, userId) {
-    const { hotelId, roomTypeId, checkInDate, checkOutDate, numRooms = 1, numGuests = 1, numExtraGuests = 0, guestName, guestEmail, guestPhone, specialRequests } = input;
+    const { hotelId, roomTypeId, checkInDate, checkOutDate, numRooms = 1, numExtraGuests = 0, guestName, guestEmail, guestPhone, specialRequests } = input;
+
+    // Guests are captured as adults + children. Fall back to legacy numGuests if
+    // the client sent only a single guest count.
+    const numAdults = parseInt(input.numAdults ?? input.numGuests ?? 1);
+    const numChildren = parseInt(input.numChildren ?? 0);
+    const numGuests = numAdults + numChildren;
 
     const lockKey = `booking_lock:${hotelId}:${roomTypeId}`;
     const lockValue = await acquireLock(redis, lockKey);
@@ -30,10 +36,25 @@ class BookingService {
       if (!roomType) throw createError('Room type not found', 404);
       if (!hotel) throw createError('Hotel not found', 404);
 
-      // Enforce guest limit
-      const maxAllowed = roomType.maxGuests * numRooms;
-      if (numGuests > maxAllowed) {
-        throw createError(`Max ${maxAllowed} guest(s) allowed for ${numRooms} room(s) of this type`, 400);
+      // Enforce occupancy limits (scaled by number of rooms booked):
+      //  1. adults must not exceed max adults
+      //  2. children must not exceed max children
+      //  3. total (adults + children) must not exceed max occupancy
+      const maxAdults = (roomType.maxAdults ?? roomType.maxGuests) * numRooms;
+      const maxChildren = (roomType.maxChildren ?? 0) * numRooms;
+      const maxOccupancy = roomType.maxGuests * numRooms;
+
+      if (numAdults < 1) {
+        throw createError('At least 1 adult is required', 400);
+      }
+      if (numAdults > maxAdults) {
+        throw createError(`Max ${maxAdults} adult(s) allowed for ${numRooms} room(s) of this type`, 400);
+      }
+      if (numChildren > maxChildren) {
+        throw createError(`Max ${maxChildren} child(ren) allowed for ${numRooms} room(s) of this type`, 400);
+      }
+      if (numGuests > maxOccupancy) {
+        throw createError(`Max occupancy is ${maxOccupancy} guest(s) for ${numRooms} room(s) of this type`, 400);
       }
 
       const taxRate = hotel.gstRate ?? DEFAULT_TAX_RATE;
@@ -57,6 +78,8 @@ class BookingService {
         checkOutDate,
         numRooms,
         numGuests,
+        numAdults,
+        numChildren,
         numExtraGuests,
         guestName,
         guestEmail,

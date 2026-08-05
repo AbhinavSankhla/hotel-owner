@@ -162,12 +162,20 @@ export default function BookingDetailPage() {
             <p className="font-semibold">{dayjs(booking.checkOutDate).format('ddd, DD MMM YYYY')}</p>
           </div>
           <div>
-            <p className="text-xs text-gray-500 uppercase tracking-wide">Guests</p>
+            <p className="text-xs text-gray-500 uppercase tracking-wide">Total Number of Guests</p>
             <p className="font-semibold">{booking.numGuests}</p>
           </div>
           <div>
             <p className="text-xs text-gray-500 uppercase tracking-wide">Rooms</p>
             <p className="font-semibold">{booking.numRooms}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-500 uppercase tracking-wide">Adults</p>
+            <p className="font-semibold">{booking.numAdults ?? booking.numGuests}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-500 uppercase tracking-wide">Children</p>
+            <p className="font-semibold">{booking.numChildren ?? 0}</p>
           </div>
         </div>
 

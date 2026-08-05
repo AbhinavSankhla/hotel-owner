@@ -23,6 +23,8 @@ const createRoomType = [
     .isFloat({ min: 0 }).withMessage('Base price must be >= 0'),
   body('basePriceHourly').optional().isFloat({ min: 0 }),
   body('maxGuests').optional().isInt({ min: 1 }),
+  body('maxAdults').optional().isInt({ min: 1 }),
+  body('maxChildren').optional().isInt({ min: 0 }),
   body('totalRooms')
     .notEmpty().withMessage('Total rooms required')
     .isInt({ min: 1 }).withMessage('Total rooms must be at least 1'),
@@ -35,6 +37,8 @@ const updateRoomType = [
   body('basePriceDaily').optional().isFloat({ min: 0 }),
   body('basePriceHourly').optional().isFloat({ min: 0 }),
   body('maxGuests').optional().isInt({ min: 1 }),
+  body('maxAdults').optional().isInt({ min: 1 }),
+  body('maxChildren').optional().isInt({ min: 0 }),
   body('totalRooms').optional().isInt({ min: 1 }),
   body('amenities').optional().isArray(),
   body('images').optional().isArray(),

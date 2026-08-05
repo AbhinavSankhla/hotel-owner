@@ -7,6 +7,8 @@ import { useRouter } from 'next/navigation';
 import { formatCurrency } from '@/lib/utils';
 import Link from 'next/link';
 import dayjs from 'dayjs';
+import BookingDetailsModal from '@/components/admin/BookingDetailsModal';
+import { Eye } from 'lucide-react';
 
 const StatCard = ({ label, value, sub }) => (
   <div className="card p-5">
@@ -21,6 +23,7 @@ export default function AdminDashboardPage() {
   const router = useRouter();
   const [stats, setStats] = useState(null);
   const [loadingStats, setLoadingStats] = useState(true);
+  const [detailsBookingId, setDetailsBookingId] = useState(null);
 
   useEffect(() => {
     if (!loading && (!user || user.role !== 'HOTEL_ADMIN')) {
@@ -91,7 +94,7 @@ export default function AdminDashboardPage() {
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 border-b">
                   <tr>
-                    {['Booking #', 'Guest', 'Room', 'Dates', 'Total', 'Status'].map((h) => (
+                    {['Booking #', 'Guest', 'Room', 'Dates', 'Total', 'Status', 'Details'].map((h) => (
                       <th key={h} className="text-left px-4 py-3 text-gray-500 font-medium">{h}</th>
                     ))}
                   </tr>
@@ -111,6 +114,17 @@ export default function AdminDashboardPage() {
                           {b.status}
                         </span>
                       </td>
+                      <td className="px-4 py-3">
+                        <button
+                          type="button"
+                          onClick={() => setDetailsBookingId(b.id)}
+                          className="ps-2 text-gray-500 hover:text-primary-600 transition-colors"
+                          title="View booking details"
+                          aria-label="View booking details"
+                        >
+                          <Eye size={16} className='m-1'/>
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -121,6 +135,9 @@ export default function AdminDashboardPage() {
       ) : (
         <p className="text-gray-400">Could not load dashboard stats.</p>
       )}
+
+      {/* ── Booking Details Modal ─────────────────────────────────────────── */}
+      <BookingDetailsModal bookingId={detailsBookingId} onClose={() => setDetailsBookingId(null)} />
     </main>
   );
 }
