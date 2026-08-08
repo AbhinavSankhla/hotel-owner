@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { adminApi } from '@/lib/api';
+import { adminApi, roomsApi, hotelsApi } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { formatCurrency } from '@/lib/utils';
@@ -11,6 +11,10 @@ import toast from 'react-hot-toast';
 import dayjs from 'dayjs';
 
 const PAYMENT_METHODS = ['CASH', 'UPI', 'CARD', 'BANK_TRANSFER', 'OTHER'];
+// Same fallback used by the backend (booking.service.js / room.service.js /
+// admin.service.js) when a hotel has no gstRate saved yet.
+const DEFAULT_TAX_RATE = 0.12;
+const HOTEL_ID = '11111111-1111-1111-1111-111111111111';
 
 export default function OfflineBookingPage() {
   const { user, loading, isAuthenticated } = useAuth();
@@ -21,6 +25,9 @@ export default function OfflineBookingPage() {
   const [preview, setPreview] = useState(null);
   const [bookingType, setBookingType] = useState('DAILY');
   const [lastBooking, setLastBooking] = useState(null);
+  const [availability, setAvailability] = useState(null);
+  const [checkingAvailability, setCheckingAvailability] = useState(false);
+  const [gstRate, setGstRate] = useState(DEFAULT_TAX_RATE);
 
   const { register, handleSubmit, watch, reset, formState: { errors } } = useForm({
     defaultValues: {
@@ -34,7 +41,15 @@ export default function OfflineBookingPage() {
     },
   });
 
-  const watchedFields = watch(['roomTypeId', 'checkInDate', 'checkOutDate', 'numRooms', 'numExtraGuests', 'numHours']);
+  // Watch individual fields rather than watch([...]) — the array form returns a
+  // brand-new array reference on every render, which made effects below re-run
+  // every render (infinite update loop) even when values hadn't changed.
+  const roomTypeId = watch('roomTypeId');
+  const checkInDate = watch('checkInDate');
+  const checkOutDate = watch('checkOutDate');
+  const numRooms = watch('numRooms');
+  const numExtraGuests = watch('numExtraGuests');
+  const numHours = watch('numHours');
 
   useEffect(() => {
     if (!loading && (!isAuthenticated || !['HOTEL_ADMIN', 'HOTEL_STAFF'].includes(user?.role))) {
@@ -50,12 +65,27 @@ export default function OfflineBookingPage() {
       .finally(() => setLoadingRooms(false));
   }, [isAuthenticated]);
 
+  // Load the hotel's actual GST rate so the price preview matches what the
+  // backend will charge (previously hardcoded to 12% here, ignoring whatever
+  // rate was saved in Admin > Settings > Tax & GST).
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    hotelsApi.getById(HOTEL_ID)
+      .then((res) => {
+        const rate = res.data?.data?.gstRate;
+        if (rate !== undefined && rate !== null) setGstRate(rate);
+      })
+      .catch(() => {/* keep default fallback */});
+  }, [isAuthenticated]);
+
   // Real-time price preview
   useEffect(() => {
-    const [roomTypeId, checkInDate, checkOutDate, numRooms, numExtraGuests, numHours] = watchedFields;
     if (!roomTypeId) { setPreview(null); return; }
 
-    const rt = roomTypes.find((r) => r.id === roomTypeId);
+    // roomTypeId from the <select> is always a string; RoomType.id is an
+    // integer in the DB, so a strict `===` comparison never matches and the
+    // preview silently stayed null. Compare as strings instead.
+    const rt = roomTypes.find((r) => String(r.id) === String(roomTypeId));
     if (!rt) { setPreview(null); return; }
 
     let subtotal = 0;
@@ -72,14 +102,40 @@ export default function OfflineBookingPage() {
     }
 
     const extraCharge = (rt.extraGuestCharge || 0) * (parseInt(numExtraGuests) || 0) * (bookingType === 'DAILY' ? nights : hours);
-    const taxRate = 0.12;
+    const taxRate = gstRate ?? DEFAULT_TAX_RATE;
     const taxAmount = Math.round((subtotal + extraCharge) * taxRate);
     const total = subtotal + extraCharge + taxAmount;
 
-    setPreview({ subtotal, extraCharge, taxAmount, total, nights, hours, rtName: rt.name });
-  }, [watchedFields, bookingType, roomTypes]);
+    setPreview({ subtotal, extraCharge, taxAmount, total, nights, hours, rtName: rt.name, taxRate });
+  }, [roomTypeId, checkInDate, checkOutDate, numRooms, numExtraGuests, numHours, bookingType, roomTypes, gstRate]);
+
+  // Live "rooms available" check for daily bookings, so staff can see current
+  // stock for the selected room type + dates before confirming a walk-in.
+  useEffect(() => {
+    if (bookingType !== 'DAILY' || !roomTypeId || !checkInDate || !checkOutDate) {
+      setAvailability(null);
+      return;
+    }
+    if (!dayjs(checkOutDate).isAfter(dayjs(checkInDate))) {
+      setAvailability(null);
+      return;
+    }
+
+    let cancelled = false;
+    setCheckingAvailability(true);
+    roomsApi.checkDailyAvailability({ roomTypeId, checkInDate, checkOutDate })
+      .then((res) => { if (!cancelled) setAvailability(res.data.data); })
+      .catch(() => { if (!cancelled) setAvailability(null); })
+      .finally(() => { if (!cancelled) setCheckingAvailability(false); });
+
+    return () => { cancelled = true; };
+  }, [roomTypeId, checkInDate, checkOutDate, bookingType]);
 
   const onSubmit = async (data) => {
+    if (bookingType === 'DAILY' && availability && !availability.isAvailable) {
+      toast.error('Not enough rooms available for the selected dates');
+      return;
+    }
     setSubmitting(true);
     try {
       const res = await adminApi.createOfflineBooking({ ...data, bookingType });
@@ -96,6 +152,7 @@ export default function OfflineBookingPage() {
         checkOutDate: dayjs().add(1, 'day').format('YYYY-MM-DD'),
       });
       setPreview(null);
+      setAvailability(null);
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to create booking');
     } finally {
@@ -171,6 +228,27 @@ export default function OfflineBookingPage() {
                 )}
                 {errors.roomTypeId && <p className="error-message">{errors.roomTypeId.message}</p>}
               </div>
+
+              {bookingType === 'DAILY' && roomTypeId && (
+                <div className={`text-sm px-3 py-2 rounded-lg border ${
+                  checkingAvailability ? 'bg-gray-50 border-gray-200 text-gray-500'
+                  : availability?.isAvailable ? 'bg-green-50 border-green-200 text-green-700'
+                  : availability ? 'bg-red-50 border-red-200 text-red-700'
+                  : 'bg-gray-50 border-gray-200 text-gray-400'
+                }`}>
+                  {checkingAvailability ? (
+                    'Checking availability…'
+                  ) : availability ? (
+                    availability.isAvailable
+                      ? `✓ ${availability.availableRooms} room(s) available for selected dates`
+                      : availability.isClosed
+                        ? '✕ Closed for selected dates'
+                        : `✕ Only ${availability.availableRooms} room(s) available — not enough for this booking`
+                  ) : (
+                    'Select check-in/check-out dates to see availability'
+                  )}
+                </div>
+              )}
 
               {bookingType === 'DAILY' ? (
                 <div className="grid grid-cols-2 gap-4">
@@ -286,7 +364,7 @@ export default function OfflineBookingPage() {
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span className="text-gray-500">GST (12%)</span>
+                  <span className="text-gray-500">GST ({Math.round((preview.taxRate ?? DEFAULT_TAX_RATE) * 100)}%)</span>
                   <span>{formatCurrency(preview.taxAmount)}</span>
                 </div>
                 <div className="flex justify-between font-bold text-base border-t pt-3 mt-2">
